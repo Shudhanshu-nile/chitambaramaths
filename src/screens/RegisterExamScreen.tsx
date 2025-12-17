@@ -276,7 +276,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
           </View>
         </TouchableOpacity>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.centersScroll}>
+        <View style={styles.centersScroll}>
           {CENTERS.map((center) => {
             const isSelected = selectedCenter === center.id;
             return (
@@ -301,7 +301,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             )
           })}
-        </ScrollView>
+        </View>
 
         {/* TERMS */}
         <TouchableOpacity
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
     padding: 12,
     paddingRight: 35,
     borderRadius: 12,
-    marginRight: 10,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },

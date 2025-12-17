@@ -29,7 +29,6 @@ const COUNTRIES = [
     'Australia',
     'New Zealand',
     'France',
-    'Sri Lanka',
 ];
 
 const RegisterScreen = ({ navigation }: any) => {
@@ -230,7 +229,7 @@ const RegisterScreen = ({ navigation }: any) => {
 
                     {/* RADIO BUTTONS */}
                     <View style={{ marginBottom: 16 }}>
-                        <TouchableOpacity
+                        {/* <TouchableOpacity
                             style={styles.radioRow}
                             onPress={() =>
                                 setFormData({ ...formData, isExamCenter: true })
@@ -249,9 +248,9 @@ const RegisterScreen = ({ navigation }: any) => {
                             <Text style={styles.radioText}>
                                 My school is an examination center.
                             </Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
 
-                        <TouchableOpacity
+                        {/* <TouchableOpacity
                             style={styles.radioRow}
                             onPress={() =>
                                 setFormData({ ...formData, isExamCenter: false })
@@ -270,7 +269,7 @@ const RegisterScreen = ({ navigation }: any) => {
                             <Text style={styles.radioText}>
                                 My school is not an examination center.
                             </Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                     </View>
 
                     <CustomDropdown
