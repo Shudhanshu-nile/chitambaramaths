@@ -29,7 +29,7 @@ const EXAMS = [
     { id: 8, title: 'SriLanka Exam 2026' },
 ];
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }: any) => {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#1c75bc" />
@@ -62,7 +62,10 @@ const HomeScreen = () => {
                                     <Text style={styles.signInText}>Sign In</Text>
                                 </TouchableOpacity>
 
-                                <TouchableOpacity style={styles.registerBtn}>
+                                <TouchableOpacity
+                                    style={styles.registerBtn}
+                                    onPress={() => navigation.navigate('Register')}
+                                >
                                     <Text style={styles.registerText}>Register</Text>
                                 </TouchableOpacity>
                             </View>
