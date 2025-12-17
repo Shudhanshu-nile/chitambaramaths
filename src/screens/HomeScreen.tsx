@@ -6,18 +6,20 @@ import {
     TouchableOpacity,
     ScrollView,
     StatusBar,
+    Image,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
 import { Colors, Gradients, Fonts, ScreenNames } from '../constants';
+import { useAuth } from '../context/AuthContext';
 
 const QUICK_ACTIONS = [
-    { id: 1, title: 'Register\nExam', icon: 'calendar-check', bg: Colors.lightBlue1, color: Colors.iconBlue1 },
-    { id: 2, title: 'Rechecking\nExam', icon: 'calendar-search', bg: Colors.lightBlue1, color: Colors.iconBlue1 },
-    { id: 3, title: 'Past\nPapers', icon: 'file-document-outline', bg: Colors.lightGreen1, color: Colors.iconGreen },
-    { id: 4, title: 'Exam\nResults', icon: 'trophy-outline', bg: Colors.lightBlue1, color: Colors.iconBlue3 },
-    { id: 5, title: 'Event\nPhotos', icon: 'image-multiple', bg: Colors.lightGreen1, color: Colors.iconGreen },
+    { id: 1, title: 'Register\nExam', icon: 'calendar-check', bg: Colors.lightBlue1, color: Colors.iconBlue1, route: ScreenNames.RegisterExam },
+    // { id: 2, title: 'Rechecking\nExam', icon: 'calendar-search', bg: Colors.lightBlue1, color: Colors.iconBlue1 },
+    // { id: 3, title: 'Past\nPapers', icon: 'file-document-outline', bg: Colors.lightGreen1, color: Colors.iconGreen },
+    // { id: 4, title: 'Exam\nResults', icon: 'trophy-outline', bg: Colors.lightBlue1, color: Colors.iconBlue3 },
+    // { id: 5, title: 'Event\nPhotos', icon: 'image-multiple', bg: Colors.lightGreen1, color: Colors.iconGreen },
 ];
 
 const EXAMS = [
@@ -32,50 +34,92 @@ const EXAMS = [
 ];
 
 const HomeScreen = ({ navigation }: any) => {
+    const { user, isLoggedIn } = useAuth();
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={Colors.primaryBlue} />
 
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* ================= HEADER ================= */}
-                <LinearGradient colors={Gradients.primaryBlue} style={styles.header}>
-                    <View style={styles.headerTop}>
-                        <View style={styles.logoPill}>
-                            <Logo height={36} width={176} />
-                        </View>
+                <LinearGradient colors={Gradients.primaryBlue} style={[styles.header, isLoggedIn && user && styles.headerLoggedIn]}>
+                    {isLoggedIn && user ? (
+                        <>
+                            {/* TOP BELL NOTIFICATION */}
+                            {/* <TouchableOpacity style={styles.topLeftNotificationBtn}>
+                                <Icon name="bell" size={24} color="#fff" />
+                                <View style={styles.notificationDot} />
+                            </TouchableOpacity> */}
 
-                        <TouchableOpacity style={styles.notificationBtn}>
-                            <Icon name="bell" size={22} color="#fff" />
-                            <View style={styles.notificationDot} />
-                        </TouchableOpacity>
-                    </View>
+                            {/* WELCOME SECTION */}
+                            <View style={styles.welcomeSection}>
+                                {/* LEFT PROFILE AVATAR */}
+                                <View style={styles.profileContainer}>
+                                    {user.profileImage ? (
+                                        <Image
+                                            source={{ uri: user.profileImage }}
+                                            style={styles.profileImage}
+                                        />
+                                    ) : (
+                                        <View style={[styles.profileImage, { alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.whiteOverlay30 }]}>
+                                            <Icon name="account" size={40} color="#fff" />
+                                        </View>
+                                    )}
+                                </View>
 
-                    {/* LOGIN CARD */}
-                    <View style={styles.loginCard}>
-                        <View style={styles.userIcon}>
-                            <Icon name="account" size={28} color="#fff" />
-                        </View>
+                                {/* CENTER WELCOME TEXT */}
+                                <View style={styles.welcomeTextContainer}>
+                                    <Text style={styles.welcomeGreeting}>Welcome back,</Text>
+                                    <Text style={styles.welcomeName}>{user.fullName}</Text>
+                                </View>
 
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.loginText}>Please Login/Signup</Text>
-
-                            <View style={styles.authRow}>
-                                <TouchableOpacity
-                                    style={styles.signInBtn}
-                                    onPress={() => navigation.navigate(ScreenNames.Login)}
-                                >
-                                    <Text style={styles.signInText}>Sign In</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={styles.registerBtn}
-                                    onPress={() => navigation.navigate(ScreenNames.Register)}
-                                >
-                                    <Text style={styles.registerText}>Register</Text>
+                                {/* RIGHT NOTIFICATION BELL */}
+                                <TouchableOpacity style={styles.welcomeNotificationBtn}>
+                                    <Icon name="bell" size={20} color="#fff" />
+                                    <View style={styles.notificationDot} />
                                 </TouchableOpacity>
                             </View>
-                        </View>
-                    </View>
+                        </>
+                    ) : (
+                        <>
+                            <View style={styles.headerTop}>
+                                <View style={styles.logoPill}>
+                                    <Logo height={36} width={176} />
+                                </View>
+
+                                <TouchableOpacity style={styles.notificationBtn}>
+                                    <Icon name="bell" size={22} color="#fff" />
+                                    <View style={styles.notificationDot} />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* LOGIN CARD */}
+                            <View style={styles.loginCard}>
+                                <View style={styles.userIcon}>
+                                    <Icon name="account" size={28} color="#fff" />
+                                </View>
+
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.loginText}>Please Login/Signup</Text>
+
+                                    <View style={styles.authRow}>
+                                        <TouchableOpacity
+                                            style={styles.signInBtn}
+                                            onPress={() => navigation.navigate(ScreenNames.Login)}
+                                        >
+                                            <Text style={styles.signInText}>Sign In</Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            style={styles.registerBtn}
+                                            onPress={() => navigation.navigate(ScreenNames.Register)}
+                                        >
+                                            <Text style={styles.registerText}>Register</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            </View>
+                        </>
+                    )}
                 </LinearGradient>
 
                 {/* ================= QUICK ACTIONS ================= */}
@@ -88,7 +132,11 @@ const HomeScreen = ({ navigation }: any) => {
                         contentContainerStyle={styles.quickScrollContent}
                     >
                         {QUICK_ACTIONS.map(item => (
-                            <TouchableOpacity key={item.id} style={styles.quickItem}>
+                            <TouchableOpacity
+                                key={item.id}
+                                style={styles.quickItem}
+                                onPress={() => item.route && navigation.navigate(item.route)}
+                            >
                                 <View style={[styles.quickIcon, { backgroundColor: item.bg }]}>
                                     <Icon name={item.icon} size={28} color={item.color} />
                                 </View>
@@ -99,30 +147,32 @@ const HomeScreen = ({ navigation }: any) => {
                 </View>
 
                 {/* ================= KANITHA VIZHA (FIXED) ================= */}
-                <LinearGradient colors={Gradients.primaryBlue} style={styles.banner}>
-                    <View style={styles.bannerContent}>
-                        <View style={styles.tag}>
-                            <Text style={styles.tagText}>Limited Time</Text>
+                <View style={styles.bannerWrapper}>
+                    <LinearGradient colors={Gradients.primaryBlue} style={styles.banner}>
+                        <View style={styles.bannerContent}>
+                            <View style={styles.tag}>
+                                <Text style={styles.tagText}>Limited Time</Text>
+                            </View>
+
+                            <Text style={styles.bannerTitle}>KANITHA VIZHA{'\n'}2025</Text>
+
+                            <Text style={styles.bannerSub}>
+                                Book your tickets now and celebrate excellence in mathematics
+                            </Text>
+
+                            <TouchableOpacity style={styles.bookBtn}>
+                                <Text style={styles.bookText}>Book Now</Text>
+                            </TouchableOpacity>
                         </View>
 
-                        <Text style={styles.bannerTitle}>KANITHA VIZHA{'\n'}2025</Text>
-
-                        <Text style={styles.bannerSub}>
-                            Book your tickets now and celebrate excellence in mathematics
-                        </Text>
-
-                        <TouchableOpacity style={styles.bookBtn}>
-                            <Text style={styles.bookText}>Book Now</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.trophyBox}>
-                        <Icon name="trophy" size={36} color="#fff" />
-                    </View>
-                </LinearGradient>
+                        <View style={styles.trophyBox}>
+                            <Icon name="trophy" size={36} color="#fff" />
+                        </View>
+                    </LinearGradient>
+                </View>
 
                 {/* ================= REGISTER SCHOOL ================= */}
-                <View style={styles.schoolCard}>
+                {/* <View style={styles.schoolCard}>
                     <View style={styles.schoolIcon}>
                         <Icon name="office-building" size={28} color="#fff" />
                     </View>
@@ -133,7 +183,7 @@ const HomeScreen = ({ navigation }: any) => {
                             <Text style={styles.schoolBtnText}>Click Here</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
+                </View> */}
 
                 {/* ================= EXAM LIST ================= */}
                 <View style={styles.examList}>
@@ -163,7 +213,9 @@ export default HomeScreen;
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.lightGray },
 
-    header: { height: 430, paddingTop: 60 },
+    header: { height: 430, paddingTop: 50 },
+
+    headerLoggedIn: { height: 300 },
 
     headerTop: {
         flexDirection: 'row',
@@ -199,6 +251,71 @@ const styles = StyleSheet.create({
         height: 8,
         borderRadius: 4,
         backgroundColor: Colors.red,
+    },
+
+    topLeftNotificationBtn: {
+        position: 'absolute',
+        top: 20,
+        left: 20,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: Colors.whiteOverlay20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10,
+    },
+
+    welcomeNotificationBtn: {
+        width: 54,
+        height: 54,
+        borderRadius: 27,
+        backgroundColor: Colors.whiteOverlay20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    welcomeSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 30,
+    },
+
+    profileContainer: {
+        marginRight: 20,
+    },
+
+    welcomeContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+
+    profileImage: {
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        backgroundColor: Colors.whiteOverlay30,
+    },
+
+    welcomeTextContainer: {
+        flex: 1,
+        marginHorizontal: 16,
+    },
+
+    welcomeGreeting: {
+        color: Colors.whiteOverlay80,
+        fontSize: 14,
+        fontFamily: Fonts.InterRegular,
+        marginBottom: 2,
+    },
+
+    welcomeName: {
+        color: Colors.white,
+        fontSize: 20,
+        fontFamily: Fonts.InterBold,
     },
 
     loginCard: {
@@ -272,15 +389,19 @@ const styles = StyleSheet.create({
     quickText: { fontSize: 12, textAlign: 'center', fontFamily: Fonts.InterMedium },
 
     /* ===== FIXED BANNER STYLES ===== */
-    banner: {
+    bannerWrapper: {
         marginHorizontal: 10,
         borderRadius: 20,
-        padding: 20,
         marginTop: 20,
         marginBottom: 20,
         position: 'relative',
         overflow: 'hidden',
         height: 270,
+    },
+
+    banner: {
+        flex: 1,
+        padding: 20,
     },
 
     bannerContent: {
@@ -381,4 +502,26 @@ const styles = StyleSheet.create({
     },
 
     examTagText: { color: Colors.white, fontSize: 11, fontFamily: Fonts.InterBold },
+
+    /* ===== WELCOME CARD STYLES ===== */
+    welcomeCard: {
+        margin: 20,
+        padding: 20,
+        borderRadius: 20,
+        backgroundColor: Colors.whiteOverlay25,
+        borderWidth: 1,
+        borderColor: Colors.whiteOverlay60,
+    },
+
+    welcomeLabel: {
+        color: Colors.whiteOverlay80,
+        fontSize: 13,
+        fontFamily: Fonts.InterMedium,
+        marginBottom: 8,
+    },
+    welcomeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
 });

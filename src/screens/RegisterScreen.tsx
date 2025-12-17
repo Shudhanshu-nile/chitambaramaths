@@ -7,11 +7,13 @@ import {
     ScrollView,
     StatusBar,
     Dimensions,
+    Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
 import { Colors, Gradients, ScreenNames } from '../constants';
+import { useAuth } from '../context/AuthContext';
 
 import CustomTextInput from '../components/CustomTextInput';
 import CustomPasswordInput from '../components/CustomPasswordInput';
@@ -20,6 +22,7 @@ import CustomDropdown from '../components/CustomDropdown';
 const { width } = Dimensions.get('window');
 
 const RegisterScreen = ({ navigation }: any) => {
+    const { signUp } = useAuth();
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -35,7 +38,33 @@ const RegisterScreen = ({ navigation }: any) => {
     });
 
     const handleRegister = () => {
-        console.log(formData);
+        // Validate required fields
+        if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
+            Alert.alert('Validation Error', 'Please fill in all required fields');
+            return;
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+            Alert.alert('Validation Error', 'Passwords do not match');
+            return;
+        }
+
+        if (!formData.agreeToTerms) {
+            Alert.alert('Validation Error', 'Please agree to the Terms of Service and Privacy Policy');
+            return;
+        }
+
+        // Sign up user
+        signUp(formData.fullName, formData.email, formData.password, {
+            phone: formData.phone,
+            dateOfBirth: formData.dob,
+            country: formData.country,
+            academicYear: formData.academicYear,
+            isExamCenter: formData.isExamCenter,
+        });
+
+        // Navigate to home screen
+        navigation.navigate('Main');
     };
 
     return (
@@ -44,29 +73,32 @@ const RegisterScreen = ({ navigation }: any) => {
 
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* HEADER */}
-                <LinearGradient colors={Gradients.primaryBlue} style={styles.header}>
-                    <View style={styles.headerCircleLarge} />
-                    <View style={styles.headerCircleSmall} />
+                {/* HEADER */}
+                <View style={styles.headerWrapper}>
+                    <LinearGradient colors={Gradients.primaryBlue} style={styles.header}>
+                        <View style={styles.headerCircleLarge} />
+                        <View style={styles.headerCircleSmall} />
 
-                    <TouchableOpacity
-                        style={styles.backButton}
-                        onPress={() => navigation.goBack()}
-                    >
-                        <Icon name="arrow-left" size={22} color={Colors.white} />
-                    </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.backButton}
+                            onPress={() => navigation.goBack()}
+                        >
+                            <Icon name="arrow-left" size={22} color={Colors.white} />
+                        </TouchableOpacity>
 
-                    {/* HEADER CONTENT */}
-                    <View style={styles.headerContent}>
-                        <View style={styles.logoContainer} pointerEvents="none">
-                            <Logo width={width * 0.62} height={44} />
+                        {/* HEADER CONTENT */}
+                        <View style={styles.headerContent}>
+                            <View style={styles.logoContainer} pointerEvents="none">
+                                <Logo width={width * 0.62} height={44} />
+                            </View>
+
+                            <Text style={styles.headerTitle}>Create Account</Text>
+                            <Text style={styles.headerSubtitle}>
+                                Join thousands of students learning math
+                            </Text>
                         </View>
-
-                        <Text style={styles.headerTitle}>Create Account</Text>
-                        <Text style={styles.headerSubtitle}>
-                            Join thousands of students learning math
-                        </Text>
-                    </View>
-                </LinearGradient>
+                    </LinearGradient>
+                </View>
 
                 {/* FORM CARD */}
                 <View style={styles.formCard}>
@@ -246,7 +278,7 @@ const RegisterScreen = ({ navigation }: any) => {
                         Already have an account?{' '}
                         <Text
                             style={styles.signInLink}
-                            onPress={() => navigation.navigate(ScreenNames.Home)}
+                            onPress={() => navigation.navigate('Login')}
                         >
                             Sign In
                         </Text>
@@ -262,11 +294,15 @@ export default RegisterScreen;
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.primaryBlue },
 
+    headerWrapper: {
+        borderBottomLeftRadius: 60,
+        borderBottomRightRadius: 60,
+        overflow: 'hidden',
+    },
+
     header: {
         paddingTop: 54,
         paddingBottom: 40,
-        borderBottomLeftRadius: 60,
-        borderBottomRightRadius: 60,
         alignItems: 'center',
     },
 

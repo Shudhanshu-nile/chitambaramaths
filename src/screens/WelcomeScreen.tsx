@@ -21,27 +21,29 @@ const WelcomeScreen = ({ navigation }: any) => {
             <StatusBar barStyle="light-content" backgroundColor={Colors.primaryBlue} />
 
             {/* Header Section */}
-            <LinearGradient
-                colors={Gradients.primaryBlue}
-                style={styles.header}
-            >
-                <View style={styles.logoCard}>
-                    <Logo height={80} />
-                </View>
+            <View style={styles.headerWrapper}>
+                <LinearGradient
+                    colors={Gradients.primaryBlue}
+                    style={styles.header}
+                >
+                    <View style={styles.logoCard}>
+                        <Logo height={80} />
+                    </View>
 
-                <View style={styles.headerTextContainer}>
-                    <Text style={styles.welcomeText}>Welcome to</Text>
-                    <Text style={styles.brandName}>Chithambara Maths!</Text>
-                </View>
+                    <View style={styles.headerTextContainer}>
+                        <Text style={styles.welcomeText}>Welcome to</Text>
+                        <Text style={styles.brandName}>Chithambara Maths!</Text>
+                    </View>
 
-                <View style={styles.dividerContainer}>
-                    <View style={styles.dividerLine} />
-                    <View style={styles.dividerDot} />
-                    <View style={styles.dividerLine} />
-                </View>
+                    <View style={styles.dividerContainer}>
+                        <View style={styles.dividerLine} />
+                        <View style={styles.dividerDot} />
+                        <View style={styles.dividerLine} />
+                    </View>
 
-                <Text style={styles.subHeader}>Quick Start Guide</Text>
-            </LinearGradient>
+                    <Text style={styles.subHeader}>Quick Start Guide</Text>
+                </LinearGradient>
+            </View>
 
             {/* Content Section */}
             <View style={styles.contentContainer}>
@@ -84,14 +86,18 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#f5f5f5',
     },
+    headerWrapper: {
+        width: '100%',
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+        overflow: 'hidden',
+    },
     header: {
         width: '100%',
         paddingTop: 60,
         paddingBottom: 120, // Space for overlap + text
         paddingHorizontal: 0,
         alignItems: 'center',
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
     },
     logoCard: {
         backgroundColor: 'white',

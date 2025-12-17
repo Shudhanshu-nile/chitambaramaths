@@ -4,6 +4,7 @@ import SplashScreen from '../screens/SplashScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import LoginScreen from '../screens/LoginScreen';
+import RegisterExamScreen from '../screens/RegisterExamScreen';
 import BottomTabNavigator from './BottomTabNavigator';
 
 const Stack = createNativeStackNavigator();
@@ -15,6 +16,7 @@ const Appstack = () => {
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="RegisterExam" component={RegisterExamScreen} />
             <Stack.Screen name="Main" component={BottomTabNavigator} />
         </Stack.Navigator>
     );

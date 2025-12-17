@@ -79,6 +79,7 @@ export const ScreenNames = {
     Tickets: 'Tickets',
     Store: 'Store',
     Profile: 'Profile',
+    RegisterExam: 'RegisterExam',
 };
 
 // Gradient colors

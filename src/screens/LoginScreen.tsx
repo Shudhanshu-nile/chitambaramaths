@@ -8,11 +8,13 @@ import {
   StatusBar,
   Dimensions,
   ScrollView,
+  Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
 import { Colors, Gradients } from '../constants';
+import { useAuth } from '../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -20,6 +22,7 @@ const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [secure, setSecure] = useState(true);
+  const { signIn } = useAuth();
 
   return (
     <View style={styles.container}>
@@ -90,7 +93,19 @@ const LoginScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.signInBtn}>
+          <TouchableOpacity 
+            style={styles.signInBtn}
+            onPress={() => {
+              if (!email || !password) {
+                Alert.alert('Validation Error', 'Please enter both email and password');
+                return;
+              }
+              // Sign in user
+              signIn(email, password, { fullName: 'Sarah Johnson' });
+              // Navigate to home screen
+              navigation.navigate('Main');
+            }}
+          >
             <Text style={styles.signInText}>Sign In</Text>
           </TouchableOpacity>
 
@@ -101,10 +116,12 @@ const LoginScreen = ({ navigation }: any) => {
 
         {/* SIGN UP CARD */}
         <View style={styles.signUpCard}>
-          <Text style={styles.signUpText}>
-            Don't have an account?{' '}
-            <Text style={styles.signUpLink}>Sign Up</Text>
-          </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+            <Text style={styles.signUpText}>
+              Don't have an account?{' '}
+              <Text style={styles.signUpLink}>Sign Up</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -248,6 +265,11 @@ const styles = StyleSheet.create({
     borderColor: '#005c88',
     alignItems: 'center',
     backgroundColor: Colors.white,
+  },
+
+  signUpText: {
+    color: '#333',
+    fontSize: 14,
   },
 
   signUpLink: {
