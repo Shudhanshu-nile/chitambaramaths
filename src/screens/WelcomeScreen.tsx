@@ -69,7 +69,7 @@ const WelcomeScreen = ({ navigation }: any) => {
             <View style={styles.bottomSection}>
                 <TouchableOpacity
                     style={styles.exploreButton}
-                    onPress={() => navigation.navigate('Home')}
+                    onPress={() => navigation.navigate('Main')}
                 >
                     <Text style={styles.exploreButtonText}>Explore</Text>
                     <Icon name="arrow-right" size={20} color="white" />

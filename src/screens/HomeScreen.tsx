@@ -152,25 +152,9 @@ const HomeScreen = ({ navigation }: any) => {
 
                 <View style={{ height: 30 }} />
             </ScrollView>
-
-            {/* ================= BOTTOM NAV ================= */}
-            <View style={styles.bottomNav}>
-                <NavItem icon="home" label="Home" active />
-                <NavItem icon="map-marker" label="Centers" />
-                <NavItem icon="ticket-confirmation" label="Tickets" />
-                <NavItem icon="shopping" label="Store" />
-                <NavItem icon="account" label="Profile" />
-            </View>
         </View>
     );
 };
-
-const NavItem = ({ icon, label, active = false }: any) => (
-    <TouchableOpacity style={styles.navItem}>
-        <Icon name={icon} size={active ? 30 : 24} color={active ? '#0c4b8b' : '#999'} />
-        <Text style={[styles.navText, active && { color: '#0c4b8b' }]}>{label}</Text>
-    </TouchableOpacity>
-);
 
 export default HomeScreen;
 
@@ -397,17 +381,4 @@ const styles = StyleSheet.create({
     },
 
     examTagText: { color: Colors.white, fontSize: 11, fontFamily: Fonts.InterBold },
-
-    bottomNav: {
-        flexDirection: 'row',
-        backgroundColor: Colors.white,
-        paddingVertical: 12,
-        borderTopWidth: 1,
-        borderColor: Colors.borderGray,
-        justifyContent: 'space-around',
-    },
-
-    navItem: { alignItems: 'center' },
-
-    navText: { fontSize: 11, marginTop: 4, color: Colors.gray, fontFamily: Fonts.InterRegular },
 });
