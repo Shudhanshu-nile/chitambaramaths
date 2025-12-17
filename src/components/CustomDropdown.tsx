@@ -10,6 +10,7 @@ interface CustomDropdownProps {
     onPress: () => void;
     error?: string;
     required?: boolean;
+    rightIcon?: string;
 }
 
 const CustomDropdown: React.FC<CustomDropdownProps> = ({
@@ -20,6 +21,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
     onPress,
     error,
     required = false,
+    rightIcon,
 }) => {
     return (
         <View style={styles.container}>
@@ -37,7 +39,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
                 <Text style={[styles.dropdownText, !value && styles.placeholderText]}>
                     {value || placeholder}
                 </Text>
-                <Icon name="chevron-down" size={20} color="#999" />
+                <Icon name={rightIcon || 'chevron-down'} size={20} color="#999" />
             </TouchableOpacity>
             {error && <Text style={styles.errorText}>{error}</Text>}
         </View>

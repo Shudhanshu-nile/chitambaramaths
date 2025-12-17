@@ -12,6 +12,8 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
+import DatePicker from 'react-native-date-picker';
+import Toast from 'react-native-toast-message';
 import { Colors, Gradients, ScreenNames } from '../constants';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,6 +22,15 @@ import CustomPasswordInput from '../components/CustomPasswordInput';
 import CustomDropdown from '../components/CustomDropdown';
 
 const { width } = Dimensions.get('window');
+
+const COUNTRIES = [
+    'UK',
+    'Canada',
+    'Australia',
+    'New Zealand',
+    'France',
+    'Sri Lanka',
+];
 
 const RegisterScreen = ({ navigation }: any) => {
     const { signUp } = useAuth();
@@ -36,21 +47,51 @@ const RegisterScreen = ({ navigation }: any) => {
         agreeToTerms: false,
         sendUpdates: false,
     });
+    const [dobDate, setDobDate] = useState(new Date());
+    const [open, setOpen] = useState(false);
+    const [isCountryOpen, setIsCountryOpen] = useState(false);
 
     const handleRegister = () => {
-        // Validate required fields
-        if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
-            Alert.alert('Validation Error', 'Please fill in all required fields');
-            return;
+        // Validation mapping
+        const fields = [
+            { key: 'fullName', label: 'Full Name' },
+            { key: 'email', label: 'Email Address' },
+            { key: 'phone', label: 'Phone Number' },
+            { key: 'dob', label: 'Date of Birth' },
+            { key: 'password', label: 'Password' },
+            { key: 'confirmPassword', label: 'Confirm Password' },
+            { key: 'country', label: 'Country' },
+            { key: 'academicYear', label: 'Academic Year' },
+        ];
+
+        // Check for empty fields
+        for (const field of fields) {
+            // @ts-ignore
+            if (!formData[field.key]) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Validation Error',
+                    text2: `${field.label} is required`,
+                });
+                return;
+            }
         }
 
         if (formData.password !== formData.confirmPassword) {
-            Alert.alert('Validation Error', 'Passwords do not match');
+            Toast.show({
+                type: 'error',
+                text1: 'Validation Error',
+                text2: 'Passwords do not match',
+            });
             return;
         }
 
         if (!formData.agreeToTerms) {
-            Alert.alert('Validation Error', 'Please agree to the Terms of Service and Privacy Policy');
+            Toast.show({
+                type: 'error',
+                text1: 'Validation Error',
+                text2: 'Please agree to the Terms of Service and Privacy Policy',
+            });
             return;
         }
 
@@ -121,7 +162,7 @@ const RegisterScreen = ({ navigation }: any) => {
                     />
 
                     <CustomTextInput
-                        label="Phone Number (Optional)"
+                        label="Phone Number"
                         placeholder="+94 7X XXX XXXX"
                         icon="phone-outline"
                         keyboardType="phone-pad"
@@ -129,12 +170,12 @@ const RegisterScreen = ({ navigation }: any) => {
                         onChangeText={(v) => setFormData({ ...formData, phone: v })}
                     />
 
-                    <CustomTextInput
+                    <CustomDropdown
                         label="Date of Birth"
                         placeholder="mm/dd/yyyy"
-                        icon="calendar-outline"
+                        rightIcon="calendar-outline"
                         value={formData.dob}
-                        onChangeText={(v) => setFormData({ ...formData, dob: v })}
+                        onPress={() => setOpen(true)}
                     />
 
                     <CustomPasswordInput
@@ -158,8 +199,34 @@ const RegisterScreen = ({ navigation }: any) => {
                         placeholder={formData.country}
                         value={formData.country}
                         icon="earth"
-                        onPress={() => { }}
+                        rightIcon={isCountryOpen ? "chevron-up" : "chevron-down"}
+                        onPress={() => setIsCountryOpen(!isCountryOpen)}
                     />
+
+                    {isCountryOpen && (
+                        <View style={styles.dropdownList}>
+                            {COUNTRIES.map((item) => (
+                                <TouchableOpacity
+                                    key={item}
+                                    style={styles.dropdownItem}
+                                    onPress={() => {
+                                        setFormData({ ...formData, country: item });
+                                        setIsCountryOpen(false);
+                                    }}
+                                >
+                                    <Text style={[
+                                        styles.dropdownItemText,
+                                        formData.country === item && styles.selectedDropdownItemText
+                                    ]}>
+                                        {item}
+                                    </Text>
+                                    {formData.country === item && (
+                                        <Icon name="check" size={18} color={Colors.primaryDarkBlue} />
+                                    )}
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    )}
 
                     {/* RADIO BUTTONS */}
                     <View style={{ marginBottom: 16 }}>
@@ -285,7 +352,25 @@ const RegisterScreen = ({ navigation }: any) => {
                     </Text>
                 </View>
             </ScrollView>
-        </View>
+            <DatePicker
+                modal
+                open={open}
+                date={dobDate}
+                mode="date"
+                onConfirm={(date) => {
+                    setOpen(false);
+                    setDobDate(date);
+                    // Format date as mm/dd/yyyy
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const formattedDate = `${month}/${day}/${date.getFullYear()}`;
+                    setFormData({ ...formData, dob: formattedDate });
+                }}
+                onCancel={() => {
+                    setOpen(false);
+                }}
+            />
+        </View >
     );
 };
 
@@ -484,5 +569,33 @@ const styles = StyleSheet.create({
     signInLink: {
         color: Colors.primaryDarkBlue,
         fontWeight: '700',
+    },
+
+    // Dropdown List Styles
+    dropdownList: {
+        backgroundColor: '#f9f9f9',
+        borderRadius: 10,
+        marginBottom: 16,
+        marginTop: -10,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        padding: 8,
+    },
+    dropdownItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 12,
+        paddingHorizontal: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    dropdownItemText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    selectedDropdownItemText: {
+        color: Colors.primaryDarkBlue,
+        fontWeight: '600',
     },
 });
