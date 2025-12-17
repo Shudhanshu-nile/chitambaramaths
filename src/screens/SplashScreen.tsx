@@ -2,23 +2,24 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View, Text, Dimensions, StatusBar } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Logo from '../assets/images/logo.svg';
+import { Colors, Gradients, ScreenNames } from '../constants';
 
 const { width } = Dimensions.get('window');
 
 const SplashScreen = ({ navigation }: { navigation: any }) => {
     useEffect(() => {
         const timer = setTimeout(() => {
-            navigation.replace('Welcome');
+            navigation.replace(ScreenNames.Welcome);
         }, 3000);
         return () => clearTimeout(timer);
     }, [navigation]);
 
     return (
         <LinearGradient
-            colors={['#1c75bc', '#0c4b8b']} // Approximate colors from the image
+            colors={Gradients.primaryBlue}
             style={styles.container}
         >
-            <StatusBar barStyle="light-content" backgroundColor="#1c75bc" />
+            <StatusBar barStyle="light-content" backgroundColor={Colors.primaryBlue} />
             <View style={styles.topContainer}>
                 <View style={styles.card}>
                     <Logo width="100%" height={80} preserveAspectRatio="xMidYMid meet" />
@@ -58,7 +59,7 @@ const styles = StyleSheet.create({
         marginTop: 60,
     },
     card: {
-        backgroundColor: 'white',
+        backgroundColor: Colors.white,
         borderRadius: 15,
         padding: 20,
         width: width * 0.9,
@@ -66,7 +67,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         elevation: 5, // Android shadow
-        shadowColor: '#000', // iOS shadow
+        shadowColor: Colors.black, // iOS shadow
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
@@ -74,7 +75,7 @@ const styles = StyleSheet.create({
     cardTitle: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#0c4b8b',
+        color: Colors.primaryDarkBlue,
         flex: 1,
         marginRight: 10,
     },
@@ -94,13 +95,13 @@ const styles = StyleSheet.create({
     },
     welcomeText: {
         fontSize: 18,
-        color: 'white',
+        color: Colors.white,
         marginBottom: 5,
     },
     brandName: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: 'white',
+        color: Colors.white,
         marginBottom: 20,
         textAlign: 'center',
     },
@@ -114,18 +115,18 @@ const styles = StyleSheet.create({
     dividerLine: {
         flex: 1,
         height: 1,
-        backgroundColor: 'white',
+        backgroundColor: Colors.white,
     },
     dividerDot: {
         width: 6,
         height: 6,
         borderRadius: 3,
-        backgroundColor: 'white',
+        backgroundColor: Colors.white,
         marginHorizontal: 10,
     },
     tagline: {
         fontSize: 16,
-        color: 'white',
+        color: Colors.white,
         textAlign: 'center',
     },
     bottomContainer: {
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
     progressBar: {
         width: width * 0.8,
         height: 2,
-        backgroundColor: 'rgba(255,255,255,0.3)',
+        backgroundColor: Colors.whiteOverlay30,
         overflow: 'hidden',
     },
     progressFill: {

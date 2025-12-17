@@ -3,29 +3,30 @@ import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Dimensions, Statu
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
+import { Colors, Gradients } from '../constants';
 
 const { width } = Dimensions.get('window');
 
 const MENU_ITEMS = [
-    { id: 1, title: 'Exam Registration', icon: 'book-open-page-variant', color: '#D1E8E2', iconColor: '#0c4b8b' },
-    { id: 2, title: 'Nearby Exam Center', icon: 'map-marker', color: '#E1E8EE', iconColor: '#1c75bc' },
-    { id: 3, title: 'Exam Result', icon: 'trophy', color: '#E1F0F5', iconColor: '#2196f3' },
-    { id: 4, title: 'Event Photos', icon: 'image-multiple', color: '#E0E8E3', iconColor: '#4caf50' },
-    { id: 5, title: 'Book Event Tickets', icon: 'ticket-confirmation', color: '#E0EAE4', iconColor: '#009688' },
+    { id: 1, title: 'Exam Registration', icon: 'book-open-page-variant', color: Colors.lightGreen3, iconColor: Colors.iconBlue1 },
+    { id: 2, title: 'Nearby Exam Center', icon: 'map-marker', color: Colors.lightBlue2, iconColor: Colors.iconBlue2 },
+    { id: 3, title: 'Exam Result', icon: 'trophy', color: Colors.lightBlue3, iconColor: Colors.iconBlue3 },
+    { id: 4, title: 'Event Photos', icon: 'image-multiple', color: Colors.lightGreen2, iconColor: Colors.iconGreen },
+    { id: 5, title: 'Book Event Tickets', icon: 'ticket-confirmation', color: Colors.lightGreen4, iconColor: Colors.iconTeal },
 ];
 
 const WelcomeScreen = ({ navigation }: any) => {
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#1c75bc" />
+            <StatusBar barStyle="light-content" backgroundColor={Colors.primaryBlue} />
 
             {/* Header Section */}
             <LinearGradient
-                colors={['#1c75bc', '#0c4b8b']}
+                colors={Gradients.primaryBlue}
                 style={styles.header}
             >
                 <View style={styles.logoCard}>
-                    <Logo width="100%" height={80} preserveAspectRatio="xMidYMid meet" />
+                    <Logo height={80} />
                 </View>
 
                 <View style={styles.headerTextContainer}>
@@ -84,10 +85,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
     },
     header: {
-        width: '100%', // Critical for ensuring no side gaps
+        width: '100%',
         paddingTop: 60,
         paddingBottom: 120, // Space for overlap + text
-        paddingHorizontal: 20,
+        paddingHorizontal: 0,
         alignItems: 'center',
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,

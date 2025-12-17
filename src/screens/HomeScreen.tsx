@@ -10,12 +10,14 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
+import { Colors, Gradients, Fonts, ScreenNames } from '../constants';
 
 const QUICK_ACTIONS = [
-    { id: 1, title: 'Register\nExam', icon: 'calendar-check', bg: '#eef6f8', color: '#0c4b8b' },
-    { id: 2, title: 'Rechecking\nExam', icon: 'calendar-search', bg: '#eef6f8', color: '#0c4b8b' },
-    { id: 3, title: 'Past\nPapers', icon: 'file-document-outline', bg: '#f0f7f2', color: '#4caf50' },
-    { id: 4, title: 'Exam\nResults', icon: 'trophy-outline', bg: '#eef3f8', color: '#2196f3' },
+    { id: 1, title: 'Register\nExam', icon: 'calendar-check', bg: Colors.lightBlue1, color: Colors.iconBlue1 },
+    { id: 2, title: 'Rechecking\nExam', icon: 'calendar-search', bg: Colors.lightBlue1, color: Colors.iconBlue1 },
+    { id: 3, title: 'Past\nPapers', icon: 'file-document-outline', bg: Colors.lightGreen1, color: Colors.iconGreen },
+    { id: 4, title: 'Exam\nResults', icon: 'trophy-outline', bg: Colors.lightBlue1, color: Colors.iconBlue3 },
+    { id: 5, title: 'Event\nPhotos', icon: 'image-multiple', bg: Colors.lightGreen1, color: Colors.iconGreen },
 ];
 
 const EXAMS = [
@@ -32,14 +34,14 @@ const EXAMS = [
 const HomeScreen = ({ navigation }: any) => {
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#1c75bc" />
+            <StatusBar barStyle="light-content" backgroundColor={Colors.primaryBlue} />
 
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* ================= HEADER ================= */}
-                <LinearGradient colors={['#1c75bc', '#0c4b8b']} style={styles.header}>
+                <LinearGradient colors={Gradients.primaryBlue} style={styles.header}>
                     <View style={styles.headerTop}>
                         <View style={styles.logoPill}>
-                            <Logo height={36} width="100%" preserveAspectRatio="xMinYMid meet" />
+                            <Logo height={36} width={176} />
                         </View>
 
                         <TouchableOpacity style={styles.notificationBtn}>
@@ -58,13 +60,16 @@ const HomeScreen = ({ navigation }: any) => {
                             <Text style={styles.loginText}>Please Login/Signup</Text>
 
                             <View style={styles.authRow}>
-                                <TouchableOpacity style={styles.signInBtn}>
+                                <TouchableOpacity
+                                    style={styles.signInBtn}
+                                    onPress={() => navigation.navigate(ScreenNames.Login)}
+                                >
                                     <Text style={styles.signInText}>Sign In</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
                                     style={styles.registerBtn}
-                                    onPress={() => navigation.navigate('Register')}
+                                    onPress={() => navigation.navigate(ScreenNames.Register)}
                                 >
                                     <Text style={styles.registerText}>Register</Text>
                                 </TouchableOpacity>
@@ -77,7 +82,11 @@ const HomeScreen = ({ navigation }: any) => {
                 <View style={styles.quickCard}>
                     <Text style={styles.sectionTitle}>Quick Actions</Text>
 
-                    <View style={styles.quickRow}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.quickScrollContent}
+                    >
                         {QUICK_ACTIONS.map(item => (
                             <TouchableOpacity key={item.id} style={styles.quickItem}>
                                 <View style={[styles.quickIcon, { backgroundColor: item.bg }]}>
@@ -86,11 +95,11 @@ const HomeScreen = ({ navigation }: any) => {
                                 <Text style={styles.quickText}>{item.title}</Text>
                             </TouchableOpacity>
                         ))}
-                    </View>
+                    </ScrollView>
                 </View>
 
                 {/* ================= KANITHA VIZHA (FIXED) ================= */}
-                <LinearGradient colors={['#1c75bc', '#0c4b8b']} style={styles.banner}>
+                <LinearGradient colors={Gradients.primaryBlue} style={styles.banner}>
                     <View style={styles.bannerContent}>
                         <View style={styles.tag}>
                             <Text style={styles.tagText}>Limited Time</Text>
@@ -168,7 +177,7 @@ export default HomeScreen;
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
+    container: { flex: 1, backgroundColor: Colors.lightGray },
 
     header: { height: 430, paddingTop: 60 },
 
@@ -180,19 +189,20 @@ const styles = StyleSheet.create({
     },
 
     logoPill: {
-        backgroundColor: '#fff',
+        backgroundColor: Colors.white,
         height: 50,
-        paddingHorizontal: 24,
-        borderRadius: 30,
+        paddingHorizontal: 16,
+        borderRadius: 10,
         justifyContent: 'center',
-        maxWidth: 240,
+        alignItems: 'center',
+        width: 208,
     },
 
     notificationBtn: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: 'rgba(255,255,255,0.2)',
+        backgroundColor: Colors.whiteOverlay20,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -204,16 +214,16 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: '#ff5252',
+        backgroundColor: Colors.red,
     },
 
     loginCard: {
         margin: 20,
         padding: 20,
         borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.25)',
+        backgroundColor: Colors.whiteOverlay25,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.6)',
+        borderColor: Colors.whiteOverlay60,
         flexDirection: 'row',
         alignItems: 'center',
     },
@@ -222,37 +232,37 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 14,
-        backgroundColor: 'rgba(255,255,255,0.3)',
+        backgroundColor: Colors.whiteOverlay30,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 15,
     },
 
-    loginText: { color: '#fff', fontWeight: '600', marginBottom: 10 },
+    loginText: { color: Colors.white, fontFamily: Fonts.InterSemiBold, marginBottom: 10 },
 
     authRow: { flexDirection: 'row', gap: 10 },
 
     signInBtn: {
-        backgroundColor: '#fff',
+        backgroundColor: Colors.white,
         paddingHorizontal: 20,
         paddingVertical: 8,
         borderRadius: 10,
     },
 
-    signInText: { color: '#0c4b8b', fontWeight: '700' },
+    signInText: { color: Colors.primaryDarkBlue, fontFamily: Fonts.InterBold },
 
     registerBtn: {
         borderWidth: 1.5,
-        borderColor: '#fff',
+        borderColor: Colors.white,
         paddingHorizontal: 20,
         paddingVertical: 8,
         borderRadius: 10,
     },
 
-    registerText: { color: '#fff', fontWeight: '700' },
+    registerText: { color: Colors.white, fontFamily: Fonts.InterBold },
 
     quickCard: {
-        backgroundColor: '#fff',
+        backgroundColor: Colors.white,
         marginHorizontal: 20,
         marginTop: -80,
         borderRadius: 20,
@@ -260,11 +270,11 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
 
-    sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 20 },
+    sectionTitle: { fontSize: 16, fontFamily: Fonts.InterBold, marginBottom: 20 },
 
-    quickRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    quickScrollContent: { paddingRight: 20 },
 
-    quickItem: { alignItems: 'center', width: '23%' },
+    quickItem: { alignItems: 'center', width: 80, marginRight: 15 },
 
     quickIcon: {
         width: 58,
@@ -275,16 +285,18 @@ const styles = StyleSheet.create({
         marginBottom: 6,
     },
 
-    quickText: { fontSize: 12, textAlign: 'center', fontWeight: '500' },
+    quickText: { fontSize: 12, textAlign: 'center', fontFamily: Fonts.InterMedium },
 
     /* ===== FIXED BANNER STYLES ===== */
     banner: {
-        marginHorizontal: 20,
+        marginHorizontal: 10,
         borderRadius: 20,
         padding: 20,
+        marginTop: 20,
         marginBottom: 20,
         position: 'relative',
         overflow: 'hidden',
+        height: 270,
     },
 
     bannerContent: {
@@ -292,7 +304,7 @@ const styles = StyleSheet.create({
     },
 
     tag: {
-        backgroundColor: '#ff5252',
+        backgroundColor: Colors.red,
         paddingHorizontal: 12,
         paddingVertical: 4,
         borderRadius: 12,
@@ -300,44 +312,44 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
     },
 
-    tagText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+    tagText: { color: Colors.white, fontSize: 11, fontFamily: Fonts.InterBold },
 
-    bannerTitle: { color: '#fff', fontSize: 20, fontWeight: '700' },
+    bannerTitle: { color: Colors.white, fontSize: 20, fontFamily: Fonts.InterBold },
 
-    bannerSub: { color: '#fff', fontSize: 13, marginVertical: 10 },
+    bannerSub: { color: Colors.white, fontSize: 13, marginVertical: 10, fontFamily: Fonts.InterRegular },
 
     bookBtn: {
         borderWidth: 1,
-        borderColor: '#fff',
+        borderColor: Colors.white,
         borderRadius: 8,
         paddingHorizontal: 20,
         paddingVertical: 8,
         alignSelf: 'flex-start',
     },
 
-    bookText: { color: '#fff', fontWeight: '700' },
+    bookText: { color: Colors.white, fontFamily: Fonts.InterBold },
 
     trophyBox: {
         position: 'absolute',
-        right: 16,
+        right: 45,
         top: 24,
         width: 60,
         height: 60,
         borderRadius: 15,
         borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.8)',
-        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderColor: Colors.whiteOverlay80,
+        backgroundColor: Colors.whiteOverlay20,
         alignItems: 'center',
         justifyContent: 'center',
     },
 
     schoolCard: {
-        backgroundColor: '#fff',
+        backgroundColor: Colors.white,
         marginHorizontal: 20,
         borderRadius: 20,
         padding: 15,
         borderWidth: 1,
-        borderColor: '#0c4b8b',
+        borderColor: Colors.primaryDarkBlue,
         flexDirection: 'row',
         alignItems: 'center',
     },
@@ -346,28 +358,28 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         borderRadius: 12,
-        backgroundColor: '#2e7db5',
+        backgroundColor: Colors.iconBlue4,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 15,
     },
 
-    schoolTitle: { fontWeight: '700', marginBottom: 5 },
+    schoolTitle: { fontFamily: Fonts.InterBold, marginBottom: 5 },
 
     schoolBtn: {
-        backgroundColor: '#0c4b8b',
+        backgroundColor: Colors.primaryDarkBlue,
         paddingHorizontal: 20,
         paddingVertical: 8,
         borderRadius: 8,
         alignSelf: 'flex-start',
     },
 
-    schoolBtnText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+    schoolBtnText: { color: Colors.white, fontFamily: Fonts.InterBold, fontSize: 12 },
 
     examList: { margin: 20 },
 
     examItem: {
-        backgroundColor: '#fff',
+        backgroundColor: Colors.white,
         borderRadius: 18,
         padding: 18,
         marginBottom: 12,
@@ -375,27 +387,27 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
 
-    examText: { fontWeight: '600' },
+    examText: { fontFamily: Fonts.InterSemiBold },
 
     examTag: {
-        backgroundColor: '#ff5252',
+        backgroundColor: Colors.red,
         paddingHorizontal: 12,
         paddingVertical: 4,
         borderRadius: 12,
     },
 
-    examTagText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+    examTagText: { color: Colors.white, fontSize: 11, fontFamily: Fonts.InterBold },
 
     bottomNav: {
         flexDirection: 'row',
-        backgroundColor: '#fff',
+        backgroundColor: Colors.white,
         paddingVertical: 12,
         borderTopWidth: 1,
-        borderColor: '#eee',
+        borderColor: Colors.borderGray,
         justifyContent: 'space-around',
     },
 
     navItem: { alignItems: 'center' },
 
-    navText: { fontSize: 11, marginTop: 4, color: '#999' },
+    navText: { fontSize: 11, marginTop: 4, color: Colors.gray, fontFamily: Fonts.InterRegular },
 });

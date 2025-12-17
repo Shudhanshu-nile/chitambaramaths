@@ -11,6 +11,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
+import { Colors, Gradients, ScreenNames } from '../constants';
 
 import CustomTextInput from '../components/CustomTextInput';
 import CustomPasswordInput from '../components/CustomPasswordInput';
@@ -39,33 +40,36 @@ const RegisterScreen = ({ navigation }: any) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#1c75bc" />
+            <StatusBar barStyle="light-content" backgroundColor={Colors.primaryBlue} />
 
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* HEADER */}
-                <LinearGradient colors={['#1c75bc', '#0c4b8b']} style={styles.header}>
+                <LinearGradient colors={Gradients.primaryBlue} style={styles.header}>
                     <View style={styles.headerCircleLarge} />
                     <View style={styles.headerCircleSmall} />
 
-                    <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                        <Icon name="arrow-left" size={22} color="#fff" />
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={() => navigation.goBack()}
+                    >
+                        <Icon name="arrow-left" size={22} color={Colors.white} />
                     </TouchableOpacity>
 
-                    {/* <View style={styles.logoContainer}> */}
-                    {/* <Text style={styles.logoText}>CHITAMBARA MATHS CHALLENGE</Text> */}
-                    <View style={styles.logoBadge}>
-                        <Logo width={22} height={22} />
+                    {/* HEADER CONTENT */}
+                    <View style={styles.headerContent}>
+                        <View style={styles.logoContainer} pointerEvents="none">
+                            <Logo width={width * 0.62} height={44} />
+                        </View>
+
+                        <Text style={styles.headerTitle}>Create Account</Text>
+                        <Text style={styles.headerSubtitle}>
+                            Join thousands of students learning math
+                        </Text>
                     </View>
-                    {/* </View> */}
                 </LinearGradient>
 
                 {/* FORM CARD */}
                 <View style={styles.formCard}>
-                    <Text style={styles.title}>Create Account</Text>
-                    <Text style={styles.subtitle}>
-                        Join thousands of students learning math
-                    </Text>
-
                     <CustomTextInput
                         label="Full Name"
                         placeholder="Enter your full name"
@@ -112,12 +116,15 @@ const RegisterScreen = ({ navigation }: any) => {
                         label="Confirm Password"
                         placeholder="Confirm your password"
                         value={formData.confirmPassword}
-                        onChangeText={(v) => setFormData({ ...formData, confirmPassword: v })}
+                        onChangeText={(v) =>
+                            setFormData({ ...formData, confirmPassword: v })
+                        }
                     />
 
                     <CustomDropdown
                         label="Country"
                         placeholder={formData.country}
+                        value={formData.country}
                         icon="earth"
                         onPress={() => { }}
                     />
@@ -126,13 +133,19 @@ const RegisterScreen = ({ navigation }: any) => {
                     <View style={{ marginBottom: 16 }}>
                         <TouchableOpacity
                             style={styles.radioRow}
-                            onPress={() => setFormData({ ...formData, isExamCenter: true })}
+                            onPress={() =>
+                                setFormData({ ...formData, isExamCenter: true })
+                            }
                         >
-                            <View style={[
-                                styles.radioOuter,
-                                formData.isExamCenter && styles.radioOuterActive
-                            ]}>
-                                {formData.isExamCenter && <View style={styles.radioInner} />}
+                            <View
+                                style={[
+                                    styles.radioOuter,
+                                    formData.isExamCenter && styles.radioOuterActive,
+                                ]}
+                            >
+                                {formData.isExamCenter && (
+                                    <View style={styles.radioInner} />
+                                )}
                             </View>
                             <Text style={styles.radioText}>
                                 My school is an examination center.
@@ -141,13 +154,19 @@ const RegisterScreen = ({ navigation }: any) => {
 
                         <TouchableOpacity
                             style={styles.radioRow}
-                            onPress={() => setFormData({ ...formData, isExamCenter: false })}
+                            onPress={() =>
+                                setFormData({ ...formData, isExamCenter: false })
+                            }
                         >
-                            <View style={[
-                                styles.radioOuter,
-                                !formData.isExamCenter && styles.radioOuterActive
-                            ]}>
-                                {!formData.isExamCenter && <View style={styles.radioInner} />}
+                            <View
+                                style={[
+                                    styles.radioOuter,
+                                    !formData.isExamCenter && styles.radioOuterActive,
+                                ]}
+                            >
+                                {!formData.isExamCenter && (
+                                    <View style={styles.radioInner} />
+                                )}
                             </View>
                             <Text style={styles.radioText}>
                                 My school is not an examination center.
@@ -158,6 +177,7 @@ const RegisterScreen = ({ navigation }: any) => {
                     <CustomDropdown
                         label="Academic Year"
                         placeholder="Select your year"
+                        value={formData.academicYear}
                         icon="school-outline"
                         onPress={() => { }}
                     />
@@ -166,39 +186,56 @@ const RegisterScreen = ({ navigation }: any) => {
                     <TouchableOpacity
                         style={styles.checkboxRow}
                         onPress={() =>
-                            setFormData({ ...formData, agreeToTerms: !formData.agreeToTerms })
+                            setFormData({
+                                ...formData,
+                                agreeToTerms: !formData.agreeToTerms,
+                            })
                         }
                     >
-                        <View style={[
-                            styles.checkbox,
-                            formData.agreeToTerms && styles.checkboxChecked
-                        ]}>
-                            {formData.agreeToTerms && <Icon name="check" size={14} color="#fff" />}
+                        <View
+                            style={[
+                                styles.checkbox,
+                                formData.agreeToTerms && styles.checkboxChecked,
+                            ]}
+                        >
+                            {formData.agreeToTerms && (
+                                <Icon name="check" size={14} color={Colors.white} />
+                            )}
                         </View>
                         <Text style={styles.checkboxText}>
-                            I agree to the <Text style={styles.link}>Terms of Service</Text> &{' '}
-                            <Text style={styles.link}>Privacy Policy</Text>
+                            I agree to the <Text style={styles.link}>Terms of Service</Text>{' '}
+                            & <Text style={styles.link}>Privacy Policy</Text>
                         </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={styles.checkboxRow}
                         onPress={() =>
-                            setFormData({ ...formData, sendUpdates: !formData.sendUpdates })
+                            setFormData({
+                                ...formData,
+                                sendUpdates: !formData.sendUpdates,
+                            })
                         }
                     >
-                        <View style={[
-                            styles.checkbox,
-                            formData.sendUpdates && styles.checkboxChecked
-                        ]}>
-                            {formData.sendUpdates && <Icon name="check" size={14} color="#fff" />}
+                        <View
+                            style={[
+                                styles.checkbox,
+                                formData.sendUpdates && styles.checkboxChecked,
+                            ]}
+                        >
+                            {formData.sendUpdates && (
+                                <Icon name="check" size={14} color={Colors.white} />
+                            )}
                         </View>
                         <Text style={styles.checkboxText}>
                             Send me updates about new past papers, events, and special offers
                         </Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+                    <TouchableOpacity
+                        style={styles.registerButton}
+                        onPress={handleRegister}
+                    >
                         <Text style={styles.registerButtonText}>Create Account</Text>
                     </TouchableOpacity>
                 </View>
@@ -209,7 +246,7 @@ const RegisterScreen = ({ navigation }: any) => {
                         Already have an account?{' '}
                         <Text
                             style={styles.signInLink}
-                            onPress={() => navigation.navigate('Home')}
+                            onPress={() => navigation.navigate(ScreenNames.Home)}
                         >
                             Sign In
                         </Text>
@@ -223,15 +260,14 @@ const RegisterScreen = ({ navigation }: any) => {
 export default RegisterScreen;
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#1c75bc' },
+    container: { flex: 1, backgroundColor: Colors.primaryBlue },
 
     header: {
-        paddingTop: 50,
-        paddingBottom: 120,
+        paddingTop: 54,
+        paddingBottom: 40,
+        borderBottomLeftRadius: 60,
+        borderBottomRightRadius: 60,
         alignItems: 'center',
-        borderBottomLeftRadius: 40,
-        borderBottomRightRadius: 40,
-        overflow: 'hidden',
     },
 
     headerCircleLarge: {
@@ -255,65 +291,64 @@ const styles = StyleSheet.create({
     },
 
     backButton: {
-        alignSelf: 'flex-start',
-        marginLeft: 20,
-        marginBottom: 24,
+        position: 'absolute',
+        top: 46,
+        left: 18,
         width: 38,
         height: 38,
-        borderRadius: 19,
-        backgroundColor: 'rgba(255,255,255,0.2)',
+        // borderRadius: 19,
+        // backgroundColor: 'rgba(255,255,255,0.2)',
         alignItems: 'center',
         justifyContent: 'center',
+        zIndex: 200,
+    },
+
+    headerContent: {
+        alignItems: 'center',
+        zIndex: 200,
     },
 
     logoContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        paddingVertical: 14,
+        backgroundColor: Colors.white,
+        paddingVertical: 8,
         paddingHorizontal: 18,
         borderRadius: 28,
-        width: width * 0.9,
-    },
-
-    logoText: {
-        fontSize: 11,
-        fontWeight: '700',
-        color: '#0c4b8b',
-        flex: 1,
-        letterSpacing: 0.4,
-    },
-
-    logoBadge: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#f0f7ff',
+        width: width * 0.72,
         alignItems: 'center',
-        justifyContent: 'center',
+        marginBottom: 14,
+        shadowColor: Colors.black,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+
+    headerTitle: {
+        color: Colors.white,
+        fontSize: 26,
+        fontWeight: '700',
+        textAlign: 'center',
+    },
+
+    headerSubtitle: {
+        color: Colors.white,
+        fontSize: 13,
+        marginTop: 4,
+        textAlign: 'center',
     },
 
     formCard: {
-        backgroundColor: '#fff',
-        marginTop: -80,
+        backgroundColor: Colors.white,
+        marginTop: -30,
         borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
         padding: 24,
         paddingBottom: 40,
         elevation: 8,
-    },
-
-    title: {
-        fontSize: 24,
-        fontWeight: '700',
-        textAlign: 'center',
-        marginBottom: 6,
-    },
-
-    subtitle: {
-        textAlign: 'center',
-        color: '#666',
-        marginBottom: 24,
+        shadowColor: Colors.black,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
     },
 
     radioRow: {
@@ -334,14 +369,14 @@ const styles = StyleSheet.create({
     },
 
     radioOuterActive: {
-        borderColor: '#0c4b8b',
+        borderColor: Colors.primaryDarkBlue,
     },
 
     radioInner: {
         width: 10,
         height: 10,
         borderRadius: 5,
-        backgroundColor: '#0c4b8b',
+        backgroundColor: Colors.primaryDarkBlue,
     },
 
     radioText: {
@@ -366,8 +401,8 @@ const styles = StyleSheet.create({
     },
 
     checkboxChecked: {
-        backgroundColor: '#0c4b8b',
-        borderColor: '#0c4b8b',
+        backgroundColor: Colors.primaryDarkBlue,
+        borderColor: Colors.primaryDarkBlue,
     },
 
     checkboxText: {
@@ -377,12 +412,12 @@ const styles = StyleSheet.create({
     },
 
     link: {
-        color: '#0c4b8b',
+        color: Colors.primaryDarkBlue,
         fontWeight: '600',
     },
 
     registerButton: {
-        backgroundColor: '#0c4b8b',
+        backgroundColor: Colors.primaryDarkBlue,
         paddingVertical: 18,
         borderRadius: 14,
         alignItems: 'center',
@@ -390,19 +425,19 @@ const styles = StyleSheet.create({
     },
 
     registerButtonText: {
-        color: '#fff',
+        color: Colors.white,
         fontSize: 16,
         fontWeight: '700',
     },
 
     signInCard: {
         margin: 20,
-        backgroundColor: '#fff',
+        backgroundColor: Colors.white,
         padding: 18,
         borderRadius: 14,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#0c4b8b',
+        borderColor: Colors.primaryDarkBlue,
     },
 
     signInText: {
@@ -411,7 +446,7 @@ const styles = StyleSheet.create({
     },
 
     signInLink: {
-        color: '#0c4b8b',
+        color: Colors.primaryDarkBlue,
         fontWeight: '700',
     },
 });

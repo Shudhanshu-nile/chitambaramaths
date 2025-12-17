@@ -34,7 +34,7 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string/>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -52,6 +52,60 @@
 	<key>UIAppFonts</key>
 	<array>
 		<string>MaterialCommunityIcons.ttf</string>
+		<string>AntDesign.ttf</string>
+		<string>Entypo.ttf</string>
+		<string>EvilIcons.ttf</string>
+		<string>Feather.ttf</string>
+		<string>FontAwesome.ttf</string>
+		<string>FontAwesome5_Brands.ttf</string>
+		<string>FontAwesome5_Regular.ttf</string>
+		<string>FontAwesome5_Solid.ttf</string>
+		<string>FontAwesome6_Brands.ttf</string>
+		<string>FontAwesome6_Regular.ttf</string>
+		<string>FontAwesome6_Solid.ttf</string>
+		<string>Fontisto.ttf</string>
+		<string>Foundation.ttf</string>
+		<string>Ionicons.ttf</string>
+		<string>MaterialIcons.ttf</string>
+		<string>Octicons.ttf</string>
+		<string>SimpleLineIcons.ttf</string>
+		<string>Zocial.ttf</string>
+		<string>Inter-Black.ttf</string>
+		<string>Inter-BlackItalic.ttf</string>
+		<string>Inter-Bold.ttf</string>
+		<string>Inter-BoldItalic.ttf</string>
+		<string>Inter-ExtraBold.ttf</string>
+		<string>Inter-ExtraBoldItalic.ttf</string>
+		<string>Inter-ExtraLight.ttf</string>
+		<string>Inter-ExtraLightItalic.ttf</string>
+		<string>Inter-Italic.ttf</string>
+		<string>Inter-Light.ttf</string>
+		<string>Inter-LightItalic.ttf</string>
+		<string>Inter-Medium.ttf</string>
+		<string>Inter-MediumItalic.ttf</string>
+		<string>Inter-Regular.ttf</string>
+		<string>Inter-SemiBold.ttf</string>
+		<string>Inter-SemiBoldItalic.ttf</string>
+		<string>Inter-Thin.ttf</string>
+		<string>Inter-ThinItalic.ttf</string>
+		<string>InterDisplay-Black.ttf</string>
+		<string>InterDisplay-BlackItalic.ttf</string>
+		<string>InterDisplay-Bold.ttf</string>
+		<string>InterDisplay-BoldItalic.ttf</string>
+		<string>InterDisplay-ExtraBold.ttf</string>
+		<string>InterDisplay-ExtraBoldItalic.ttf</string>
+		<string>InterDisplay-ExtraLight.ttf</string>
+		<string>InterDisplay-ExtraLightItalic.ttf</string>
+		<string>InterDisplay-Italic.ttf</string>
+		<string>InterDisplay-Light.ttf</string>
+		<string>InterDisplay-LightItalic.ttf</string>
+		<string>InterDisplay-Medium.ttf</string>
+		<string>InterDisplay-MediumItalic.ttf</string>
+		<string>InterDisplay-Regular.ttf</string>
+		<string>InterDisplay-SemiBold.ttf</string>
+		<string>InterDisplay-SemiBoldItalic.ttf</string>
+		<string>InterDisplay-Thin.ttf</string>
+		<string>InterDisplay-ThinItalic.ttf</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
