@@ -40,7 +40,7 @@ const RegisterScreen = ({ navigation }: any) => {
         dob: '',
         password: '',
         confirmPassword: '',
-        country: 'Sri Lanka',
+        country: '',
         academicYear: '',
         isExamCenter: true,
         agreeToTerms: false,
@@ -376,7 +376,7 @@ const RegisterScreen = ({ navigation }: any) => {
 export default RegisterScreen;
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.primaryBlue },
+    container: { flex: 1, backgroundColor: Colors.lightGray },
 
     headerWrapper: {
         borderBottomLeftRadius: 60,
@@ -388,6 +388,9 @@ const styles = StyleSheet.create({
         paddingTop: 54,
         paddingBottom: 40,
         alignItems: 'center',
+        height: 330,
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
     },
 
     headerCircleLarge: {
@@ -459,7 +462,7 @@ const styles = StyleSheet.create({
 
     formCard: {
         backgroundColor: Colors.white,
-        marginTop: -30,
+        marginTop: -80,
         borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
         padding: 24,
@@ -469,6 +472,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.08,
         shadowRadius: 12,
+        marginHorizontal: 24,
     },
 
     radioRow: {

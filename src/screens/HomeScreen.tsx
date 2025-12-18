@@ -135,7 +135,15 @@ const HomeScreen = ({ navigation }: any) => {
                             <TouchableOpacity
                                 key={item.id}
                                 style={styles.quickItem}
-                                onPress={() => item.route && navigation.navigate(item.route)}
+                                onPress={() => {
+                                    if (item.route) {
+                                        if (item.route === ScreenNames.RegisterExam && !isLoggedIn) {
+                                            navigation.navigate(ScreenNames.Login);
+                                        } else {
+                                            navigation.navigate(item.route);
+                                        }
+                                    }
+                                }}
                             >
                                 <View style={[styles.quickIcon, { backgroundColor: item.bg }]}>
                                     <Icon name={item.icon} size={28} color={item.color} />
