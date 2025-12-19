@@ -18,6 +18,8 @@ export const responsiveScreenWidth = (value: number) => {
 // Colors
 export const Colors = {
     // Primary colors
+    blueDark: '#005884',
+
     primaryBlue: '#1c75bc',
     primaryDarkBlue: '#0c4b8b',
 

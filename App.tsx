@@ -11,7 +11,7 @@ import Toast from 'react-native-toast-message';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { navigationRef } from './src/navigation/GlobalNavigation';
-import { AuthProvider } from './src/context/AuthContext';
+// import { AuthProvider } from './src/context/AuthContext';
 import Appstack from './src/navigation/Appstack';
 import { initializeTokenRefresh, NotificationPayload, refreshTokenOnForeground } from './src/utils/notificationHelpers';
 import NotificationService from './src/utils/NotificationServices';
@@ -118,12 +118,10 @@ function App() {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <SafeAreaProvider>
-          <AuthProvider>
-            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-            <NavigationContainer ref={navigationRef}>
-              <Appstack />
-            </NavigationContainer>
-          </AuthProvider>
+          <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+          <NavigationContainer ref={navigationRef}>
+            <Appstack />
+          </NavigationContainer>
           <Toast topOffset={60} />
         </SafeAreaProvider>
       </PersistGate>

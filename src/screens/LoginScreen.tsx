@@ -1,29 +1,108 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
+  StyleSheet,
   View,
   Text,
-  StyleSheet,
-  TouchableOpacity,
   TextInput,
-  StatusBar,
-  Dimensions,
+  TouchableOpacity,
   ScrollView,
+  Dimensions,
+  StatusBar,
   Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
 import { Colors, Gradients } from '../constants';
-import { useAuth } from '../context/AuthContext';
+import UserAuthService from '../service/UserAuthService';
+// import { useAuth } from '../context/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUser, clearError } from '../redux/Reducer/User';
+import { RootState } from '../redux/Reducer/RootReducer';
+import { navigate, replaceToMain } from '../navigation/GlobalNavigation';
+import Toast from 'react-native-toast-message';
+import { BottomTabBar } from '@react-navigation/bottom-tabs';
+import BottomTabNavigator from '../navigation/BottomTabNavigator';
 
 const { width } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }: any) => {
+  const passwordInputRef = React.useRef<TextInput>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [secure, setSecure] = useState(true);
-  const { signIn } = useAuth();
 
+  const dispatch = useDispatch<any>();
+  const { isLoading, error } = useSelector((state: RootState) => state.user);
+
+  const [localErrors, setLocalErrors] = useState<{ email?: string; password?: string }>({});
+
+  useEffect(() => {
+    if (error) {
+      showErrorToast(error);
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
+
+
+  const showErrorToast = (message: string) => {
+    Toast.show({
+      type: 'info',
+      text1: 'info',
+      text2: message,
+      visibilityTime: 3000,
+    });
+  };
+
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+    let isValid = true;
+
+    // Email validation
+    if (!email) {
+      newErrors.email = 'Email is required';
+      showErrorToast('Email is required');
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+      showErrorToast('Please enter a valid email address');
+      isValid = false;
+    }
+
+    // Password validation
+    if (!password) {
+      newErrors.password = 'Password is required';
+      if (isValid) showErrorToast('Password is required');
+      isValid = false;
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+      if (isValid) showErrorToast('Password must be at least 6 characters');
+      isValid = false;
+    }
+
+    setLocalErrors(newErrors);
+    return isValid;
+  };
+
+  const handleLogin = async () => {
+    if (!validateForm()) return;
+
+    try {
+      const resultAction = await dispatch(loginUser({ email: email.trim(), password: password }));
+
+      if (loginUser.fulfilled.match(resultAction)) {
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Login successful',
+          visibilityTime: 3000,
+        });
+        replaceToMain("Home");
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+    }
+  };
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0b5f8f" />
@@ -35,21 +114,37 @@ const LoginScreen = ({ navigation }: any) => {
       >
         {/* HEADER (SCROLLS WITH CONTENT) */}
         <LinearGradient colors={['#1b77a8', '#0b5f8f']} style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+          <View
+            style={{
+              paddingTop: 100,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <Icon name="arrow-left" size={22} color={Colors.white} />
-          </TouchableOpacity>
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                // flexDirection: 'row',
+              }}
+            >
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Icon name="arrow-left" size={22} color={Colors.white} />
+              </TouchableOpacity>
 
-          <View style={styles.logoCard}>
-            <Logo width={width * 0.6} height={50} />
+              <View style={styles.logoCard}>
+                <Logo width={width * 0.6} height={50} />
+              </View>
+            </View>
+
+            <Text style={styles.welcomeTitle}>Welcome Back!</Text>
+            <Text style={styles.welcomeSubtitle}>
+              Sign in to continue your learning journey
+            </Text>
           </View>
-
-          <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-          <Text style={styles.welcomeSubtitle}>
-            Sign in to continue your learning journey
-          </Text>
         </LinearGradient>
 
         {/* LOGIN CARD */}
@@ -70,6 +165,14 @@ const LoginScreen = ({ navigation }: any) => {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              returnKeyType="next"
+              onSubmitEditing={() => {
+                // Focus password input on next/done press
+                passwordInputRef.current?.focus();
+              }}
+              blurOnSubmit={false}
             />
           </View>
 
@@ -77,13 +180,19 @@ const LoginScreen = ({ navigation }: any) => {
           <View style={styles.inputBox}>
             <Icon name="lock-outline" size={20} color="#9aa3af" />
             <TextInput
+              ref={passwordInputRef}
               placeholder="Enter your password"
               placeholderTextColor="#b0b8c4"
               style={styles.input}
               secureTextEntry={secure}
               value={password}
               onChangeText={setPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleLogin}
             />
+
             <TouchableOpacity onPress={() => setSecure(!secure)}>
               <Icon
                 name={secure ? 'eye-off-outline' : 'eye-outline'}
@@ -93,23 +202,22 @@ const LoginScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.signInBtn}
             onPress={() => {
-              if (!email || !password) {
-                Alert.alert('Validation Error', 'Please enter both email and password');
-                return;
-              }
-              // Sign in user
-              signIn(email, password, { fullName: 'Sarah Johnson' });
-              // Navigate to home screen
-              navigation.navigate('Main');
+              handleLogin();
+
+
             }}
           >
-            <Text style={styles.signInText}>Sign In</Text>
+            <Text style={styles.signInText}>
+              {isLoading ? 'Signing In...' : 'Sign In'}
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => {
+            navigate('Forgot');
+          }}>
             <Text style={styles.forgot}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
@@ -124,6 +232,7 @@ const LoginScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <Toast />
     </View>
   );
 };
@@ -145,13 +254,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     alignItems: 'center',
-    paddingTop: 60,
   },
 
   backButton: {
     position: 'absolute',
-    top: 30,
-    left: 18,
+    top: -35,
+    left: -10,
     width: 38,
     height: 38,
     // borderRadius: 19,
@@ -163,7 +271,7 @@ const styles = StyleSheet.create({
   logoCard: {
     backgroundColor: Colors.white,
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: 50,
     borderRadius: 10,
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 6 },
@@ -221,6 +329,7 @@ const styles = StyleSheet.create({
   },
 
   inputBox: {
+    marginBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f4f6fa',
@@ -234,6 +343,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 14,
   },
+
 
   signInBtn: {
     backgroundColor: '#005c88',

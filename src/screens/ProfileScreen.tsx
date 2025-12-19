@@ -15,24 +15,36 @@ import { Colors, Gradients, Fonts } from '../constants';
 import Logo from '../assets/images/logo.svg';
 import { BlurView } from '@react-native-community/blur';
 import { navigate } from '../navigation/GlobalNavigation';
+// import { useAuth } from '../context/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { logoutUser } from '../redux/Reducer/User';
+import { RootState } from '../redux/Reducer/RootReducer';
 
 const ProfileScreen = () => {
-    const [userProfile] = useState({
-        name: 'Sarah Johnson',
-        email: 'sarah973@gmail.com',
-        profileImage: require('../assets/images/profile.png'),
-    });
+    // const { signOut } = useAuth();
+    const dispatch = useDispatch<any>();
+    const { user } = useSelector((state: RootState) => state.user);
 
-    const handleSignOut = () => {
-        navigate('PurchaseSuccessful');
-        // Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-        //   { text: 'Cancel', onPress: () => {}, style: 'cancel' },
-        //   {
-        //     text: 'Sign Out',
-        //     onPress: () => console.log('Signing out...'),
-        //     style: 'destructive',
-        //   },
-        // ]);
+    // Fallback to local state if Redux user is null (though validation should prevent access)
+    // Or just use Redux user data directly
+    const userProfile = {
+        name: user?.fullName || 'Guest User',
+        email: user?.email || 'guest@example.com',
+        profileImage: require('../assets/images/avatar.png'),
+    };
+
+    const handleSignOut = async () => {
+        Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+            { text: 'Cancel', onPress: () => { }, style: 'cancel' },
+            {
+                text: 'Sign Out',
+                onPress: async () => {
+                    await dispatch(logoutUser());
+                    navigate('Welcome');
+                },
+                style: 'destructive',
+            },
+        ]);
     };
 
     const handleDeleteAccount = () => {

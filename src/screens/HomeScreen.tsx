@@ -8,13 +8,18 @@ import {
     StatusBar,
     Image,
     ImageBackground,
+    Dimensions,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
 import HomeBackground from '../assets/images/Homebackground.png';
 import { Colors, Gradients, Fonts, ScreenNames } from '../constants';
-import { useAuth } from '../context/AuthContext';
+import NotificationService from '../utils/NotificationServices';
+// import { useAuth } from '../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Reducer/RootReducer';
+import { navigate } from '../navigation/GlobalNavigation';
 
 const QUICK_ACTIONS = [
     { id: 1, title: 'Register\nExam', icon: 'calendar-check', bg: Colors.lightBlue1, color: Colors.iconBlue1, route: ScreenNames.RegisterExam },
@@ -36,7 +41,9 @@ const EXAMS = [
 ];
 
 const HomeScreen = ({ navigation }: any) => {
-    const { user, isLoggedIn } = useAuth();
+    // const { user, isLoggedIn } = useAuth();
+    const { isLoggedIn, user } = useSelector((state: RootState) => state.user);
+    const { width } = Dimensions.get('window');
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={Colors.primaryBlue} />

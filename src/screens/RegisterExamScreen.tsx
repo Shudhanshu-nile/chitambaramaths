@@ -11,7 +11,10 @@ import {
   Image,
   Modal,
   FlatList,
+  Platform,
+  PermissionsAndroid,
 } from 'react-native';
+import Geolocation from 'react-native-geolocation-service';
 import Toast from 'react-native-toast-message';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Colors, Fonts } from '../constants';
@@ -142,6 +145,104 @@ const RegisterExamScreen = ({ navigation }: any) => {
   };
 
   const [loading, setLoading] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+
+  const requestLocationPermission = async () => {
+    if (Platform.OS === 'ios') {
+      const auth = await Geolocation.requestAuthorization('whenInUse');
+      return auth === 'granted';
+    }
+
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Location Permission',
+          message: 'Chitambaramaths needs access to your location to autofill address details.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    }
+    return false;
+  };
+
+  const handleGeolocation = async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) {
+      Toast.show({
+        type: 'error',
+        text1: 'Permission Denied',
+        text2: 'Location permission is required to use this feature.',
+      });
+      return;
+    }
+
+    setGeoLoading(true);
+    Geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log('Current Position:', latitude, longitude);
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                'User-Agent': 'ChitambaramathsApp/1.0'
+              }
+            }
+          );
+          const data = await response.json();
+          console.log('Address Data:', data);
+
+          if (data && data.address) {
+            const addr = data.address;
+            const fetchedTown = addr.town || addr.city || addr.village || addr.suburb || addr.hamlet || '';
+            const fetchedStreet = addr.road || addr.pedestrian || addr.street || '';
+
+            setTown(fetchedTown);
+            setStreet(fetchedStreet);
+
+            Toast.show({
+              type: 'success',
+              text1: 'Location Found',
+              text2: 'Address details autofilled.',
+            });
+
+          } else {
+            Toast.show({
+              type: 'error',
+              text1: 'Address Not Found',
+              text2: 'Could not fetch address details.',
+            });
+          }
+
+        } catch (error) {
+          console.error('Reverse Geocoding Error:', error);
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: 'Failed to fetch address from location.',
+          });
+        } finally {
+          setGeoLoading(false);
+        }
+      },
+      (error) => {
+        console.error('Location Error:', error);
+        setGeoLoading(false);
+        Toast.show({
+          type: 'error',
+          text1: 'Location Error',
+          text2: 'Failed to get current location.',
+        });
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    );
+  };
 
   const handleProceed = async () => {
     const fields = [
@@ -395,13 +496,21 @@ const RegisterExamScreen = ({ navigation }: any) => {
           onChangeText={setStreet}
           required
         />
-        <CustomTextInput
-          label="Town"
-          placeholder="Enter Town"
-          value={town}
-          onChangeText={setTown}
-          required
-        />
+        <View style={{ position: 'relative' }}>
+          <CustomTextInput
+            label="Town"
+            placeholder={geoLoading ? "Fetching location..." : "Enter Town"}
+            value={town}
+            onChangeText={setTown}
+            required
+          />
+          <TouchableOpacity
+            style={styles.geoButton}
+            onPress={handleGeolocation}
+          >
+            <Icon name="crosshairs-gps" size={20} color={Colors.primaryBlue} />
+          </TouchableOpacity>
+        </View>
         <CustomTextInput
           label="Email Address"
           placeholder="Enter Email Address"
@@ -535,6 +644,19 @@ const RegisterExamScreen = ({ navigation }: any) => {
           )}
         </View>
 
+        {/* INFO BOX */}
+        <View style={styles.infoBox}>
+          {selectedCountry?.terms && selectedCountry.terms.length > 0 && selectedCountry.terms[0].name ? (
+            selectedCountry.terms[0].name.split(/\r?\n/).map((line: string, index: number) => (
+              line.trim() ? <Text key={index} style={styles.infoText}>{line.trim()}</Text> : null
+            ))
+          ) : (
+            <Text style={styles.infoText}>No specific terms available for this country.</Text>
+          )}
+        </View>
+
+        <Text style={styles.noteText}>Note: please print and bring on the exam day</Text>
+
         {/* TERMS */}
         <TouchableOpacity
           style={styles.checkboxRow}
@@ -550,15 +672,6 @@ const RegisterExamScreen = ({ navigation }: any) => {
         <Text style={styles.disclaimerText}>
           By registering, you confirm that all information provided is accurate and you understand the exam policies.
         </Text>
-
-        {/* INFO BOX */}
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>1) Award Ceremony date 11th of July (Saturday) 2026</Text>
-          <Text style={styles.infoText}>2) Only awards those who will be selected and attend the award ceremony (No show no awards)</Text>
-          <Text style={styles.infoText}>3) Marking papers will not be handed over to parents</Text>
-          <Text style={styles.infoText}>4) Exam Date 14/03/2026</Text>
-          <Text style={styles.infoText}>5) Exam fee non refundable</Text>
-        </View>
 
         {/* SUMMARY CARD */}
         <Text style={styles.sectionTitle}>Registration Summary</Text>
@@ -795,6 +908,12 @@ const styles = StyleSheet.create({
   centerCardIcon: {
     marginRight: 10,
   },
+  geoButton: {
+    position: 'absolute',
+    right: 15,
+    top: 38, // Adjust based on label height + margin
+    zIndex: 1,
+  },
   centerName: {
     fontSize: 14,
     fontFamily: Fonts.InterBold,
@@ -1003,6 +1122,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#eee',
+  },
+  noteText: {
+    fontSize: 14,
+    color: '#333',
+    fontFamily: Fonts.InterMedium,
+    marginBottom: 10,
+    marginTop: 10,
   },
   closeModalText: {
     color: Colors.red,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     StyleSheet,
     View,
@@ -14,10 +14,10 @@ import Logo from '../assets/images/logo.svg';
 import DatePicker from 'react-native-date-picker';
 import Toast from 'react-native-toast-message';
 import { Colors, Gradients } from '../constants';
-import { useAuth } from '../context/AuthContext';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../redux/Reducer/RootReducer';
-import { updateRegistrationField } from '../redux/Reducer/User';
+// import { useAuth } from '../context/AuthContext';
+import { useDispatch } from 'react-redux';
+import { registerUser } from '../redux/Reducer/User';
+
 
 import CustomTextInput from '../components/CustomTextInput';
 import CustomPasswordInput from '../components/CustomPasswordInput';
@@ -25,36 +25,91 @@ import CustomDropdown from '../components/CustomDropdown';
 
 const { width } = Dimensions.get('window');
 
-const COUNTRIES = [
-    'UK',
-    'Canada',
-    'Australia',
-    'New Zealand',
-    'France',
-];
+import OtherService from '../service/OtherService';
 
-const ACADEMIC_YEARS = [
-    '2023',
-    '2024',
-    '2025',
-    '2026',
-    '2027',
-];
+
 
 const RegisterScreen = ({ navigation }: any) => {
-    const { signUp } = useAuth();
-    const dispatch = useDispatch();
-    const formData = useSelector((state: RootState) => state.user.registrationData);
+    // const { signUp } = useAuth();
+    const dispatch = useDispatch<any>();
+    const [formData, setFormData] = useState({
+        fullName: '',
+        email: '',
+        phone: '',
+        dob: '',
+        password: '',
+        confirmPassword: '',
+        country: '',
+        academicYear: '',
+        agreeToTerms: false,
+        sendUpdates: false,
+        isExamCenter: false,
+    });
+
+    // Dynamic Data State
+    const [countries, setCountries] = useState<any[]>([]);
+    const [studyYears, setStudyYears] = useState<any[]>([]);
+    const [selectedCountryId, setSelectedCountryId] = useState<number | null>(null);
+
+    useEffect(() => {
+        fetchCountries();
+    }, []);
+
+    const fetchCountries = async () => {
+        try {
+            const response = await OtherService.getCountries();
+            if (response.data && response.data.status && response.data.data) {
+                setCountries(response.data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch countries', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Failed to load countries',
+            });
+        }
+    };
+
+    const fetchStudyYears = async (countryId: number) => {
+        try {
+            const response = await OtherService.getStudyYears(countryId);
+            if (response.data && response.data.status && response.data.data) {
+                const sortedData = response.data.data.sort((a: any, b: any) => {
+                    const getNum = (str: string) => {
+                        const parts = str.split('-');
+                        return parts.length > 1 ? parseInt(parts[1], 10) : 0;
+                    };
+                    return getNum(a.name) - getNum(b.name);
+                });
+                setStudyYears(sortedData);
+            } else {
+                setStudyYears([]);
+            }
+        } catch (error) {
+            console.error('Failed to fetch study years', error);
+            setStudyYears([]);
+        }
+    };
+
+    const handleCountrySelect = (item: any) => {
+        updateField('country', item.name);
+        setSelectedCountryId(item.id);
+        setStudyYears([]); // Clear previous study years
+        updateField('academicYear', ''); // Clear previous selection
+        fetchStudyYears(item.id);
+        setIsCountryOpen(false);
+    };
 
     const updateField = (field: string, value: any) => {
-        dispatch(updateRegistrationField({ field, value }));
+        setFormData(prev => ({ ...prev, [field]: value }));
     };
     const [dobDate, setDobDate] = useState(new Date());
     const [open, setOpen] = useState(false);
     const [isCountryOpen, setIsCountryOpen] = useState(false);
     const [isYearOpen, setIsYearOpen] = useState(false);
 
-    const handleRegister = () => {
+    const handleRegister = async () => {
         // Validation mapping
         const fields = [
             { key: 'fullName', label: 'Full Name' },
@@ -98,17 +153,59 @@ const RegisterScreen = ({ navigation }: any) => {
             return;
         }
 
-        // Sign up user
-        signUp(formData.fullName, formData.email, formData.password, {
-            phone: formData.phone,
-            dateOfBirth: formData.dob,
-            country: formData.country,
-            academicYear: formData.academicYear,
-            isExamCenter: formData.isExamCenter,
-        });
+        try {
+            // Convert MM/DD/YYYY to YYYY-MM-DD
+            const [month, day, year] = formData.dob.split('/');
+            const formattedDob = `${year}-${month}-${day}`;
 
-        // Navigate to home screen
-        navigation.navigate('Main');
+            // Sign up user
+            const payload = {
+                name: formData.fullName,
+                email: formData.email,
+                password: formData.password,
+                password_confirmation: formData.confirmPassword,
+                date_of_birth: formattedDob,
+                phone: formData.phone,
+                country: formData.country,
+                year: formData.academicYear,
+                grade: '10', // Default grade
+                accepted_terms: 1,
+                receive_updates: formData.sendUpdates ? 1 : 0,
+            };
+
+            const resultAction = await dispatch(registerUser(payload));
+
+            if (registerUser.fulfilled.match(resultAction)) {
+                Toast.show({
+                    type: 'success',
+                    text1: 'Success',
+                    text2: 'Account created successfully',
+                });
+
+                // Navigate to home screen
+                navigation.navigate('Main');
+            } else {
+                // Error handled in thunk rejection or caught below if strictly needed
+                // But payload check above handles success branch.
+                // Display error from action payload
+                if (resultAction.payload) {
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Registration Failed',
+                        text2: resultAction.payload as string,
+                    });
+                }
+            }
+
+
+        } catch (error: any) {
+            // Logic moved inside logic block above mostly, but for unexpected errors:
+            Toast.show({
+                type: 'error',
+                text1: 'Registration Failed',
+                text2: error.response?.data?.message || error.message || 'Something went wrong',
+            });
+        }
     };
 
     return (
@@ -208,22 +305,19 @@ const RegisterScreen = ({ navigation }: any) => {
 
                     {isCountryOpen && (
                         <View style={styles.dropdownList}>
-                            {COUNTRIES.map((item) => (
+                            {countries.map((item) => (
                                 <TouchableOpacity
-                                    key={item}
+                                    key={item.id}
                                     style={styles.dropdownItem}
-                                    onPress={() => {
-                                        updateField('country', item);
-                                        setIsCountryOpen(false);
-                                    }}
+                                    onPress={() => handleCountrySelect(item)}
                                 >
                                     <Text style={[
                                         styles.dropdownItemText,
-                                        formData.country === item && styles.selectedDropdownItemText
+                                        formData.country === item.name && styles.selectedDropdownItemText
                                     ]}>
-                                        {item}
+                                        {item.name}
                                     </Text>
-                                    {formData.country === item && (
+                                    {formData.country === item.name && (
                                         <Icon name="check" size={18} color={Colors.primaryDarkBlue} />
                                     )}
                                 </TouchableOpacity>
@@ -287,26 +381,34 @@ const RegisterScreen = ({ navigation }: any) => {
 
                     {isYearOpen && (
                         <View style={styles.dropdownList}>
-                            {ACADEMIC_YEARS.map((item) => (
-                                <TouchableOpacity
-                                    key={item}
-                                    style={styles.dropdownItem}
-                                    onPress={() => {
-                                        updateField('academicYear', item);
-                                        setIsYearOpen(false);
-                                    }}
-                                >
-                                    <Text style={[
-                                        styles.dropdownItemText,
-                                        formData.academicYear === item && styles.selectedDropdownItemText
-                                    ]}>
-                                        {item}
+                            {studyYears.length > 0 ? (
+                                studyYears.map((item) => (
+                                    <TouchableOpacity
+                                        key={item.id}
+                                        style={styles.dropdownItem}
+                                        onPress={() => {
+                                            updateField('academicYear', item.name);
+                                            setIsYearOpen(false);
+                                        }}
+                                    >
+                                        <Text style={[
+                                            styles.dropdownItemText,
+                                            formData.academicYear === item.name && styles.selectedDropdownItemText
+                                        ]}>
+                                            {item.name}
+                                        </Text>
+                                        {formData.academicYear === item.name && (
+                                            <Icon name="check" size={18} color={Colors.primaryDarkBlue} />
+                                        )}
+                                    </TouchableOpacity>
+                                ))
+                            ) : (
+                                <View style={styles.dropdownItem}>
+                                    <Text style={styles.dropdownItemText}>
+                                        {selectedCountryId ? "No study years available" : "Select a country first"}
                                     </Text>
-                                    {formData.academicYear === item && (
-                                        <Icon name="check" size={18} color={Colors.primaryDarkBlue} />
-                                    )}
-                                </TouchableOpacity>
-                            ))}
+                                </View>
+                            )}
                         </View>
                     )}
 
