@@ -7,10 +7,12 @@ import {
     ScrollView,
     StatusBar,
     Image,
+    ImageBackground,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
+import HomeBackground from '../assets/images/Homebackground.png';
 import { Colors, Gradients, Fonts, ScreenNames } from '../constants';
 import { useAuth } from '../context/AuthContext';
 
@@ -44,12 +46,6 @@ const HomeScreen = ({ navigation }: any) => {
                 <LinearGradient colors={Gradients.primaryBlue} style={[styles.header, isLoggedIn && user && styles.headerLoggedIn]}>
                     {isLoggedIn && user ? (
                         <>
-                            {/* TOP BELL NOTIFICATION */}
-                            {/* <TouchableOpacity style={styles.topLeftNotificationBtn}>
-                                <Icon name="bell" size={24} color="#fff" />
-                                <View style={styles.notificationDot} />
-                            </TouchableOpacity> */}
-
                             {/* WELCOME SECTION */}
                             <View style={styles.welcomeSection}>
                                 {/* LEFT PROFILE AVATAR */}
@@ -123,9 +119,9 @@ const HomeScreen = ({ navigation }: any) => {
                 </LinearGradient>
 
                 {/* ================= QUICK ACTIONS ================= */}
-                <View style={styles.quickCard}>
+                {/* <View style={styles.quickCard}>
                     <Text style={styles.sectionTitle}>Quick Actions</Text>
-
+                    
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
@@ -152,10 +148,34 @@ const HomeScreen = ({ navigation }: any) => {
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
+                </View> */}
+
+                {/* ================= HERO BANNER ================= */}
+                <View style={styles.heroBannerContainer}>
+                    <ImageBackground
+                        source={HomeBackground}
+                        style={styles.heroBanner}
+                        imageStyle={{ borderRadius: 20 }}
+                    >
+                        <View style={styles.heroOverlay}>
+                            <Text style={styles.heroTitle}>
+                                Empowering the Next Generation of Mathematicians
+                            </Text>
+                            <Text style={styles.heroSubtitle}>
+                                Join the prestigious Chithambara Maths Challenge and unlock your child's true potential in mathematics.
+                            </Text>
+
+                            <View style={styles.paginationDots}>
+                                <View style={[styles.dot, styles.activeDot]} />
+                                <View style={styles.dot} />
+                                <View style={styles.dot} />
+                            </View>
+                        </View>
+                    </ImageBackground>
                 </View>
 
-                {/* ================= KANITHA VIZHA (FIXED) ================= */}
-                <View style={styles.bannerWrapper}>
+                {/* ================= KANITHA VIZHA (FIXED - Commented as requested) ================= */}
+                {/* <View style={styles.bannerWrapper}>
                     <LinearGradient colors={Gradients.primaryBlue} style={styles.banner}>
                         <View style={styles.bannerContent}>
                             <View style={styles.tag}>
@@ -177,7 +197,44 @@ const HomeScreen = ({ navigation }: any) => {
                             <Icon name="trophy" size={36} color="#fff" />
                         </View>
                     </LinearGradient>
-                </View>
+                </View> */}
+
+                {/* ================= EXAM REGISTRATION CARD ================= */}
+                <LinearGradient colors={Gradients.primaryBlue} style={styles.regCard}>
+                    <View style={styles.regCardContent}>
+                        <View style={styles.regTag}>
+                            <Text style={styles.regTagText}>Exam Registration</Text>
+                        </View>
+
+                        <Text style={styles.regTitle}>
+                            Empowering Young Minds Through Mathematics
+                        </Text>
+
+                        <Text style={styles.regSubtitle}>
+                            Serving Students in the UK, Canada, Australia, and New Zealand
+                        </Text>
+
+                        <TouchableOpacity
+                            style={styles.regBtn}
+                            onPress={() => {
+                                if (!isLoggedIn) {
+                                    navigation.navigate(ScreenNames.Login);
+                                } else {
+                                    navigation.navigate(ScreenNames.RegisterExam);
+                                }
+                            }}
+                        >
+                            <Text style={styles.regBtnText}>Register</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.regIllustration}>
+                        <View style={styles.circleIconMock}>
+                            <Icon name="file-document-edit-outline" size={40} color={Colors.primaryBlue} />
+                            <Icon name="star-four-points" size={16} color="#FFD700" style={styles.starIcon} />
+                        </View>
+                    </View>
+                </LinearGradient>
 
                 {/* ================= REGISTER SCHOOL ================= */}
                 {/* <View style={styles.schoolCard}>
@@ -370,6 +427,7 @@ const styles = StyleSheet.create({
 
     registerText: { color: Colors.white, fontFamily: Fonts.InterBold },
 
+    /* ===== OLD QUICK ACTIONS STYLES (Restored) ===== */
     quickCard: {
         backgroundColor: Colors.white,
         marginHorizontal: 20,
@@ -396,7 +454,61 @@ const styles = StyleSheet.create({
 
     quickText: { fontSize: 12, textAlign: 'center', fontFamily: Fonts.InterMedium },
 
-    /* ===== FIXED BANNER STYLES ===== */
+    /* ===== HERO BANNER STYLES ===== */
+    heroBannerContainer: {
+        marginHorizontal: 20,
+        height: 200,
+        marginTop: -60, // Overlap with header
+        borderRadius: 20,
+        overflow: 'hidden',
+        marginBottom: 20,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+    },
+    heroBanner: {
+        width: '100%',
+        height: '100%',
+        justifyContent: 'flex-end',
+    },
+    heroOverlay: {
+        padding: 15,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    heroTitle: {
+        color: Colors.white,
+        fontFamily: Fonts.InterBold,
+        fontSize: 16,
+        marginBottom: 4,
+        textAlign: 'center',
+    },
+    heroSubtitle: {
+        color: Colors.whiteOverlay80,
+        fontFamily: Fonts.InterRegular,
+        fontSize: 11,
+        textAlign: 'center',
+        marginBottom: 10,
+    },
+    paginationDots: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 6,
+    },
+    dot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: Colors.whiteOverlay60,
+    },
+    activeDot: {
+        backgroundColor: Colors.white,
+        width: 8,
+    },
+
+    /* ===== KANITHA VIZHA BANNER STYLES (Commented as requested) ===== */
+    /*
     bannerWrapper: {
         marginHorizontal: 10,
         borderRadius: 20,
@@ -455,7 +567,84 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    */
 
+    /* ===== REGISTRATION CARD STYLES ===== */
+    regCard: {
+        marginHorizontal: 20,
+        borderRadius: 20,
+        padding: 0,
+        flexDirection: 'row',
+        marginBottom: 20,
+        minHeight: 220, // RESTORED: Flexible height
+        alignItems: 'center',
+    },
+    regCardContent: {
+        flex: 1,
+        paddingHorizontal: 20,
+        justifyContent: 'center',
+    },
+    regTag: {
+        backgroundColor: Colors.red,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        alignSelf: 'flex-start',
+        marginBottom: 10,
+    },
+    regTagText: {
+        color: Colors.white,
+        fontSize: 10,
+        fontFamily: Fonts.InterBold,
+    },
+    regTitle: {
+        color: Colors.white,
+        fontSize: 18,
+        fontFamily: Fonts.InterBold,
+        marginBottom: 8,
+        lineHeight: 24,
+    },
+    regSubtitle: {
+        color: Colors.whiteOverlay80,
+        fontSize: 12,
+        fontFamily: Fonts.InterRegular,
+        marginBottom: 15,
+    },
+    regBtn: {
+        borderWidth: 1,
+        borderColor: Colors.white,
+        paddingHorizontal: 20,
+        paddingVertical: 8,
+        borderRadius: 8,
+        alignSelf: 'flex-start',
+    },
+    regBtnText: {
+        color: Colors.white,
+        fontFamily: Fonts.InterBold,
+    },
+    regIllustration: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10,
+        marginBottom: 40,
+    },
+    circleIconMock: {
+        width: 90,
+        height: 90,
+        borderRadius: 45,
+        backgroundColor: Colors.white,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 4,
+        borderColor: Colors.whiteOverlay30,
+    },
+    starIcon: {
+        position: 'absolute',
+        top: 15,
+        right: 15,
+    },
+
+    /* ===== OLD SCHOOL CARD STYLES (Restored) ===== */
     schoolCard: {
         backgroundColor: Colors.white,
         marginHorizontal: 20,

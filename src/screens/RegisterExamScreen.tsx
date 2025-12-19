@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -9,35 +9,19 @@ import {
   SafeAreaView,
   TextInput,
   Image,
+  Modal,
+  FlatList,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Colors, Fonts } from '../constants';
+import OtherService from '../service/OtherService';
 import CustomTextInput from '../components/CustomTextInput';
-// Assuming Logo is available as an SVG or image common in the app, or I'll just skip the top branding image for now or use a placeholder if it's not a standard component.
-// The image shows "Chitambaramaths" logo at the very top. I'll check if I can import the logo.
 import Logo from '../assets/images/logo.svg';
 
-const STUDY_LEVELS = [
-  { id: 'g1', label: 'Grade-1' },
-  { id: 'g2', label: 'Grade-2' },
-  { id: 'g3', label: 'Grade-3' },
-  { id: 'g4', label: 'Grade-4' },
-  { id: 'g5', label: 'Grade-5' },
-  { id: 'g6', label: 'Grade-6' },
-  { id: 'g7', label: 'Grade-7' },
-  { id: 'g8', label: 'Grade-8' },
-  { id: 'g9', label: 'Grade-9' },
-  { id: 'g10', label: 'Grade-10' },
-];
 
-const CENTERS = [
-  { id: '1', name: 'Alperton', seats_remaining: 67, selected: true },
-  { id: '2', name: 'Bradford', seats_remaining: 45, selected: false },
-  { id: '3', name: 'Coventry', seats_remaining: 12, selected: false },
-  { id: '4', name: 'Derby', seats_remaining: 28, selected: false },
-  { id: '5', name: 'Edinburgh', seats_remaining: 5, selected: false },
-];
+
+
 
 const RegisterExamScreen = ({ navigation }: any) => {
   // Form State
@@ -53,10 +37,113 @@ const RegisterExamScreen = ({ navigation }: any) => {
   const [mobile, setMobile] = useState('');
 
   const [selectedYear, setSelectedYear] = useState('2');
-  const [selectedCenter, setSelectedCenter] = useState('1');
+
   const [agreed, setAgreed] = useState(true);
 
-  const handleProceed = () => {
+  // Dynamic Country State
+  const [countries, setCountries] = useState<any[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<any>(null);
+  const [showCountryModal, setShowCountryModal] = useState(false);
+
+  // Dynamic Exam Center State
+  const [examCenters, setExamCenters] = useState<any[]>([]);
+  const [selectedCenterId, setSelectedCenterId] = useState<number | null>(null);
+
+  // Dynamic Study Years State
+  const [studyYears, setStudyYears] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchCountries();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCountry?.id) {
+      fetchExamCenters(selectedCountry.id);
+      fetchStudyYears(selectedCountry.id);
+    }
+  }, [selectedCountry]);
+
+  const fetchExamCenters = async (countryId: number) => {
+    try {
+      console.log('Fetching Exam Centers for ID:', countryId);
+      const response = await OtherService.getExamCenters(countryId);
+
+      console.log('Exam Centers API Response:', JSON.stringify(response.data, null, 2));
+
+      if (response.data && response.data.status && response.data.data) {
+        setExamCenters(response.data.data);
+        // Reset selection when country changes
+        setSelectedCenterId(null);
+      } else {
+        setExamCenters([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch exam centers', error);
+      setExamCenters([]);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to load exam centers',
+      });
+    }
+  }
+
+  const fetchStudyYears = async (countryId: number) => {
+    try {
+      console.log('Fetching Study Years for ID:', countryId);
+      const response = await OtherService.getStudyYears(countryId);
+
+      console.log('Study Years API Response:', JSON.stringify(response.data, null, 2));
+
+      if (response.data && response.data.status && response.data.data) {
+        const sortedData = response.data.data.sort((a: any, b: any) => {
+          const getNum = (str: string) => {
+            const parts = str.split('-');
+            return parts.length > 1 ? parseInt(parts[1], 10) : 0;
+          };
+          return getNum(a.name) - getNum(b.name);
+        });
+        setStudyYears(sortedData);
+      } else {
+        setStudyYears([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch study years', error);
+      setStudyYears([]);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to load study years',
+      });
+    }
+  }
+
+  const fetchCountries = async () => {
+    try {
+      console.log('Fetching Countries...');
+      const response = await OtherService.getCountries();
+
+      console.log('Countries API Response:', JSON.stringify(response.data, null, 2));
+
+      if (response.data && response.data.status && response.data.data) {
+        setCountries(response.data.data);
+        // Default to United Kingdom (id: 1) or the first available country
+        const defaultCountry = response.data.data.find((c: any) => c.name === 'United Kingdom') || response.data.data[0];
+        setSelectedCountry(defaultCountry);
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch countries', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to load countries',
+      });
+    }
+  };
+
+  const [loading, setLoading] = useState(false);
+
+  const handleProceed = async () => {
     const fields = [
       { value: firstName, name: 'First Name' },
       { value: lastName, name: 'Last Name' },
@@ -81,6 +168,33 @@ const RegisterExamScreen = ({ navigation }: any) => {
       }
     }
 
+    if (!selectedCountry) {
+      Toast.show({
+        type: 'error',
+        text1: 'Selection Missing',
+        text2: 'Please select a country.',
+      });
+      return;
+    }
+
+    if (!selectedYear) { // Check if year is selected
+      Toast.show({
+        type: 'error',
+        text1: 'Selection Missing',
+        text2: 'Please select a grade of study.',
+      });
+      return;
+    }
+
+    if (!selectedCenterId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Selection Missing',
+        text2: 'Please select an exam center.',
+      });
+      return;
+    }
+
     if (!agreed) {
       Toast.show({
         type: 'error',
@@ -90,12 +204,62 @@ const RegisterExamScreen = ({ navigation }: any) => {
       return;
     }
 
-    // Proceed to Payment Logic
-    Toast.show({
-      type: 'success',
-      text1: 'Success',
-      text2: 'Proceeding to payment...',
-    });
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('first_name', firstName);
+      formData.append('last_name', lastName);
+      formData.append('parent_name', parentName);
+      formData.append('door_number', doorNo);
+      formData.append('street_name', street);
+      formData.append('town', town);
+      formData.append('postal_code', postalCode);
+      formData.append('email', email);
+      formData.append('phone', telephone);
+      formData.append('mobile', mobile);
+
+      // IDs
+      formData.append('country_id', selectedCountry.id);
+      formData.append('study_year', selectedYear); // Assuming selectedYear is the ID string/number
+      formData.append('center_id', selectedCenterId);
+
+      formData.append('agree_terms', '1');
+
+      console.log('Submitting Registration:', formData);
+
+      const response = await OtherService.registerExam(formData);
+      console.log('Registration Response:', response.data);
+
+      if (response.data && response.data.status) {
+        Toast.show({
+          type: 'success',
+          text1: 'Registration Successful',
+          text2: response.data.message || 'You have successfully registered.',
+        });
+        // Reset form or navigate away? 
+        // For now, maybe just clear inputs or go back?
+        // navigation.goBack(); 
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Registration Failed',
+          text2: response.data.message || 'Something went wrong.',
+        });
+      }
+    } catch (error: any) {
+      console.error('Registration Error:', error);
+      let errorMsg = 'Failed to register. Please try again.';
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMsg = error.response.data.message;
+      }
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: errorMsg,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -130,12 +294,66 @@ const RegisterExamScreen = ({ navigation }: any) => {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.registeringLabel}>Registering for</Text>
-            <Text style={styles.registeringValue}>United Kingdom</Text>
+            <Text style={styles.registeringValue}>
+              {selectedCountry ? selectedCountry.name : 'Loading...'}
+            </Text>
           </View>
-          <TouchableOpacity style={styles.changeButton}>
+          <TouchableOpacity
+            style={styles.changeButton}
+            onPress={() => setShowCountryModal(true)}
+          >
             <Text style={styles.changeButtonText}>Change</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Country Selection Modal */}
+        <Modal
+          visible={showCountryModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowCountryModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Select Country</Text>
+
+              <FlatList
+                data={countries}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.countryOption,
+                      selectedCountry?.id === item.id && styles.countryOptionSelected
+                    ]}
+                    onPress={() => {
+                      setSelectedCountry(item);
+                      setShowCountryModal(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.countryOptionText,
+                      selectedCountry?.id === item.id && styles.countryOptionTextSelected
+                    ]}>
+                      {item.name}
+                    </Text>
+                    {selectedCountry?.id === item.id && (
+                      <Icon name="check" size={20} color={Colors.primaryBlue} />
+                    )}
+                  </TouchableOpacity>
+                )}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+              />
+
+              <TouchableOpacity
+                style={styles.closeModalButton}
+                onPress={() => setShowCountryModal(false)}
+              >
+                <Text style={styles.closeModalText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         {/* FORM FIELDS */}
         <CustomTextInput
@@ -229,30 +447,40 @@ const RegisterExamScreen = ({ navigation }: any) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.yearsScrollContent}
           >
-            {STUDY_LEVELS.map((level) => {
-              const isSelected = selectedYear === level.id;
-              return (
-                <TouchableOpacity
-                  key={level.id}
-                  style={[styles.yearCard, isSelected && styles.yearCardSelected]}
-                  onPress={() => setSelectedYear(level.id)}
-                >
-                  <View style={styles.levelContent}>
-                    <Text style={[styles.yearTextLarge, isSelected && styles.yearTextSelected]}>
-                      {level.label.split('-')[1]}
-                    </Text>
-                    <Text style={[styles.yearTextSmall, isSelected && styles.yearTextSelected]}>
-                      {level.label.split('-')[0]}
-                    </Text>
-                  </View>
-                  {isSelected && (
-                    <View style={styles.checkBadge}>
-                      <Icon name="check" size={8} color={Colors.white} />
+            {studyYears.length > 0 ? (
+              studyYears.map((level) => {
+                const isSelected = selectedYear === level.id;
+                // API returns { id: 11, name: "Grade-1" }
+                // Parse "Grade-1" -> mainText: "1", subText: "Grade"
+                const parts = level.name ? level.name.split('-') : ['Grade', ''];
+                const subText = parts[0] || 'Grade';
+                const mainText = parts[1] || '';
+
+                return (
+                  <TouchableOpacity
+                    key={level.id}
+                    style={[styles.yearCard, isSelected && styles.yearCardSelected]}
+                    onPress={() => setSelectedYear(level.id)}
+                  >
+                    <View style={styles.levelContent}>
+                      <Text style={[styles.yearTextLarge, isSelected && styles.yearTextSelected]}>
+                        {mainText}
+                      </Text>
+                      <Text style={[styles.yearTextSmall, isSelected && styles.yearTextSelected]}>
+                        {subText}
+                      </Text>
                     </View>
-                  )}
-                </TouchableOpacity>
-              )
-            })}
+                    {isSelected && (
+                      <View style={styles.checkBadge}>
+                        <Icon name="check" size={8} color={Colors.white} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )
+              })
+            ) : (
+              <Text style={styles.noDataText}>Please select a country to see grades</Text>
+            )}
           </ScrollView>
         </View>
 
@@ -277,30 +505,34 @@ const RegisterExamScreen = ({ navigation }: any) => {
         </TouchableOpacity>
 
         <View style={styles.centersScroll}>
-          {CENTERS.map((center) => {
-            const isSelected = selectedCenter === center.id;
-            return (
-              <TouchableOpacity
-                key={center.id}
-                style={[styles.centerCard, isSelected && styles.centerCardSelected]}
-                onPress={() => setSelectedCenter(center.id)}
-              >
-                <View style={styles.centerCardIcon}>
-                  <Icon name="map-marker" size={20} color={Colors.primaryBlue} />
-                </View>
-                <View>
-                  <Text style={styles.centerName}>{center.name}</Text>
-                  {/* using variable seats_remaining from api */}
-                  <Text style={styles.centerSeats}>{center.seats_remaining} Seats remaining</Text>
-                </View>
-                {isSelected && (
-                  <View style={styles.centerCheck}>
-                    <Icon name="check" size={10} color={Colors.white} />
+          {examCenters.length > 0 ? (
+            examCenters.map((center) => {
+              const isSelected = selectedCenterId === center.id;
+              return (
+                <TouchableOpacity
+                  key={center.id}
+                  style={[styles.centerCard, isSelected && styles.centerCardSelected]}
+                  onPress={() => setSelectedCenterId(center.id)}
+                >
+                  <View style={styles.centerCardIcon}>
+                    <Icon name="map-marker" size={20} color={Colors.primaryBlue} />
                   </View>
-                )}
-              </TouchableOpacity>
-            )
-          })}
+                  <View>
+                    <Text style={styles.centerName}>{center.center_name}</Text>
+                    <Text style={styles.centerSeats}>{center.seats} Seats remaining</Text>
+                    {center.city && <Text style={styles.centerCity}>{center.city}</Text>}
+                  </View>
+                  {isSelected && (
+                    <View style={styles.centerCheck}>
+                      <Icon name="check" size={10} color={Colors.white} />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )
+            })
+          ) : (
+            <Text style={styles.noDataText}>No exam centers available for this country.</Text>
+          )}
         </View>
 
         {/* TERMS */}
@@ -350,9 +582,13 @@ const RegisterExamScreen = ({ navigation }: any) => {
             <Text style={styles.refundText}>Registration is non-refundable. Please review all details before proceeding.</Text>
           </View>
 
-          <TouchableOpacity style={styles.proceedButton} onPress={handleProceed}>
-            <Text style={styles.proceedText}>Proceed to Payment</Text>
-            <Icon name="arrow-right" size={18} color={Colors.white} />
+          <TouchableOpacity
+            style={[styles.proceedButton, loading && { opacity: 0.7 }]}
+            onPress={handleProceed}
+            disabled={loading}
+          >
+            <Text style={styles.proceedText}>{loading ? 'Processing...' : 'Proceed to Payment'}</Text>
+            {!loading && <Icon name="arrow-right" size={18} color={Colors.white} />}
           </TouchableOpacity>
         </View>
 
@@ -574,6 +810,18 @@ const styles = StyleSheet.create({
     right: 8,
   },
 
+  centerCity: {
+    fontSize: 10,
+    color: '#888',
+  },
+  noDataText: {
+    textAlign: 'center',
+    color: '#888',
+    marginTop: 10,
+    fontFamily: Fonts.InterMedium,
+    fontSize: 12,
+  },
+
   /* Terms */
   checkboxRow: {
     flexDirection: 'row',
@@ -703,6 +951,63 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: Fonts.InterBold,
     marginRight: 8,
+  },
+
+  /* Modal Styles */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 20,
+    maxHeight: '70%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: Fonts.InterBold,
+    color: '#333',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  countryOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+  },
+  countryOptionSelected: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: 8,
+  },
+  countryOptionText: {
+    fontSize: 16,
+    color: '#333',
+    fontFamily: Fonts.InterMedium,
+  },
+  countryOptionTextSelected: {
+    color: Colors.primaryBlue,
+    fontFamily: Fonts.InterBold,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#eee',
+  },
+  closeModalButton: {
+    marginTop: 15,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  closeModalText: {
+    color: Colors.red,
+    fontFamily: Fonts.InterMedium,
+    fontSize: 16,
   },
 });
 

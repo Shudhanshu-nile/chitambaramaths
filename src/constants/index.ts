@@ -4,6 +4,8 @@ const { width, height } = Dimensions.get('window');
 const SCREEN_HEIGHT = Math.max(width, height);
 const SCREEN_WIDTH = Math.min(width, height);
 
+
+
 // Screen dimension helpers
 export const responsiveScreenHeight = (value: number) => {
     return (value / 100) * SCREEN_HEIGHT;
@@ -80,6 +82,7 @@ export const ScreenNames = {
     Store: 'Store',
     Profile: 'Profile',
     RegisterExam: 'RegisterExam',
+    PurchaseSuccessful: 'PurchaseSuccessful',
 };
 
 // Gradient colors
@@ -115,11 +118,12 @@ export const Spacing = {
 export const FontSizes = {
     xs: 11,
     sm: 12,
-    md: 13,
+    md: 14,
     base: 16,
     lg: 18,
     xl: 20,
     xxl: 24,
+    xxxl: 30,
 };
 
 // Validation helpers
@@ -131,4 +135,8 @@ export function isValidPassword(password: string) {
 export function isValidEmail(email: string) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+}
+
+export enum DataType {
+    FORMDATA = 'FORMDATA',
 }

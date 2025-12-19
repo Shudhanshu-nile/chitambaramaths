@@ -7,15 +7,17 @@ import {
     ScrollView,
     StatusBar,
     Dimensions,
-    Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
 import DatePicker from 'react-native-date-picker';
 import Toast from 'react-native-toast-message';
-import { Colors, Gradients, ScreenNames } from '../constants';
+import { Colors, Gradients } from '../constants';
 import { useAuth } from '../context/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../redux/Reducer/RootReducer';
+import { updateRegistrationField } from '../redux/Reducer/User';
 
 import CustomTextInput from '../components/CustomTextInput';
 import CustomPasswordInput from '../components/CustomPasswordInput';
@@ -31,24 +33,26 @@ const COUNTRIES = [
     'France',
 ];
 
+const ACADEMIC_YEARS = [
+    '2023',
+    '2024',
+    '2025',
+    '2026',
+    '2027',
+];
+
 const RegisterScreen = ({ navigation }: any) => {
     const { signUp } = useAuth();
-    const [formData, setFormData] = useState({
-        fullName: '',
-        email: '',
-        phone: '',
-        dob: '',
-        password: '',
-        confirmPassword: '',
-        country: '',
-        academicYear: '',
-        isExamCenter: true,
-        agreeToTerms: false,
-        sendUpdates: false,
-    });
+    const dispatch = useDispatch();
+    const formData = useSelector((state: RootState) => state.user.registrationData);
+
+    const updateField = (field: string, value: any) => {
+        dispatch(updateRegistrationField({ field, value }));
+    };
     const [dobDate, setDobDate] = useState(new Date());
     const [open, setOpen] = useState(false);
     const [isCountryOpen, setIsCountryOpen] = useState(false);
+    const [isYearOpen, setIsYearOpen] = useState(false);
 
     const handleRegister = () => {
         // Validation mapping
@@ -147,7 +151,7 @@ const RegisterScreen = ({ navigation }: any) => {
                         placeholder="Enter your full name"
                         icon="account-outline"
                         value={formData.fullName}
-                        onChangeText={(v) => setFormData({ ...formData, fullName: v })}
+                        onChangeText={(v) => updateField('fullName', v)}
                     />
 
                     <CustomTextInput
@@ -157,7 +161,7 @@ const RegisterScreen = ({ navigation }: any) => {
                         keyboardType="email-address"
                         autoCapitalize="none"
                         value={formData.email}
-                        onChangeText={(v) => setFormData({ ...formData, email: v })}
+                        onChangeText={(v) => updateField('email', v)}
                     />
 
                     <CustomTextInput
@@ -166,7 +170,7 @@ const RegisterScreen = ({ navigation }: any) => {
                         icon="phone-outline"
                         keyboardType="phone-pad"
                         value={formData.phone}
-                        onChangeText={(v) => setFormData({ ...formData, phone: v })}
+                        onChangeText={(v) => updateField('phone', v)}
                     />
 
                     <CustomDropdown
@@ -181,7 +185,7 @@ const RegisterScreen = ({ navigation }: any) => {
                         label="Password"
                         placeholder="Create a strong password"
                         value={formData.password}
-                        onChangeText={(v) => setFormData({ ...formData, password: v })}
+                        onChangeText={(v) => updateField('password', v)}
                     />
 
                     <CustomPasswordInput
@@ -189,7 +193,7 @@ const RegisterScreen = ({ navigation }: any) => {
                         placeholder="Confirm your password"
                         value={formData.confirmPassword}
                         onChangeText={(v) =>
-                            setFormData({ ...formData, confirmPassword: v })
+                            updateField('confirmPassword', v)
                         }
                     />
 
@@ -209,7 +213,7 @@ const RegisterScreen = ({ navigation }: any) => {
                                     key={item}
                                     style={styles.dropdownItem}
                                     onPress={() => {
-                                        setFormData({ ...formData, country: item });
+                                        updateField('country', item);
                                         setIsCountryOpen(false);
                                     }}
                                 >
@@ -274,20 +278,43 @@ const RegisterScreen = ({ navigation }: any) => {
 
                     <CustomDropdown
                         label="Academic Year"
-                        placeholder="Select your year"
+                        placeholder={formData.academicYear || "Select your year"}
                         value={formData.academicYear}
                         icon="school-outline"
-                        onPress={() => { }}
+                        rightIcon={isYearOpen ? "chevron-up" : "chevron-down"}
+                        onPress={() => setIsYearOpen(!isYearOpen)}
                     />
+
+                    {isYearOpen && (
+                        <View style={styles.dropdownList}>
+                            {ACADEMIC_YEARS.map((item) => (
+                                <TouchableOpacity
+                                    key={item}
+                                    style={styles.dropdownItem}
+                                    onPress={() => {
+                                        updateField('academicYear', item);
+                                        setIsYearOpen(false);
+                                    }}
+                                >
+                                    <Text style={[
+                                        styles.dropdownItemText,
+                                        formData.academicYear === item && styles.selectedDropdownItemText
+                                    ]}>
+                                        {item}
+                                    </Text>
+                                    {formData.academicYear === item && (
+                                        <Icon name="check" size={18} color={Colors.primaryDarkBlue} />
+                                    )}
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    )}
 
                     {/* TERMS */}
                     <TouchableOpacity
                         style={styles.checkboxRow}
                         onPress={() =>
-                            setFormData({
-                                ...formData,
-                                agreeToTerms: !formData.agreeToTerms,
-                            })
+                            updateField('agreeToTerms', !formData.agreeToTerms)
                         }
                     >
                         <View
@@ -309,10 +336,7 @@ const RegisterScreen = ({ navigation }: any) => {
                     <TouchableOpacity
                         style={styles.checkboxRow}
                         onPress={() =>
-                            setFormData({
-                                ...formData,
-                                sendUpdates: !formData.sendUpdates,
-                            })
+                            updateField('sendUpdates', !formData.sendUpdates)
                         }
                     >
                         <View
@@ -363,7 +387,7 @@ const RegisterScreen = ({ navigation }: any) => {
                     const month = (date.getMonth() + 1).toString().padStart(2, '0');
                     const day = date.getDate().toString().padStart(2, '0');
                     const formattedDate = `${month}/${day}/${date.getFullYear()}`;
-                    setFormData({ ...formData, dob: formattedDate });
+                    updateField('dob', formattedDate);
                 }}
                 onCancel={() => {
                     setOpen(false);
