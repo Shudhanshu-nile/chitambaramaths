@@ -10,4 +10,5 @@ export const API = {
   REGISTER: DOMAIN + 'register',
   LOGOUT: DOMAIN + 'logout',
   FORGOT_PASSWORD: DOMAIN + 'auth/forgot-password',
+  UPDATE_PROFILE: DOMAIN + 'update-profile',
 };

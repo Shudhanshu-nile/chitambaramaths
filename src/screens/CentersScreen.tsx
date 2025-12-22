@@ -205,12 +205,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
     },
     headerContainer: {
-        paddingTop: Platform.OS === 'ios' ? 60 : 40,
+        // paddingTop: Platform.OS === 'ios' ? 60 : 40,
         paddingBottom: 0,
         // paddingHorizontal: 16,
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
         height: 300,
+        justifyContent: 'center',
 
     },
     headerTopRow: {

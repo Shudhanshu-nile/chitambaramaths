@@ -53,6 +53,18 @@ const HomeScreen = ({ navigation }: any) => {
                 <LinearGradient colors={Gradients.primaryBlue} style={[styles.header, isLoggedIn && user && styles.headerLoggedIn]}>
                     {isLoggedIn && user ? (
                         <>
+                            {/* HEADER TOP ROW (Logo + Notification) */}
+                            <View style={styles.headerTop}>
+                                <View style={styles.logoPill}>
+                                    <Logo height={36} width={176} />
+                                </View>
+
+                                <TouchableOpacity style={styles.notificationBtn}>
+                                    <Icon name="bell" size={22} color="#fff" />
+                                    <View style={styles.notificationDot} />
+                                </TouchableOpacity>
+                            </View>
+
                             {/* WELCOME SECTION */}
                             <View style={styles.welcomeSection}>
                                 {/* LEFT PROFILE AVATAR */}
@@ -74,12 +86,6 @@ const HomeScreen = ({ navigation }: any) => {
                                     <Text style={styles.welcomeGreeting}>Welcome back,</Text>
                                     <Text style={styles.welcomeName}>{user.fullName}</Text>
                                 </View>
-
-                                {/* RIGHT NOTIFICATION BELL */}
-                                <TouchableOpacity style={styles.welcomeNotificationBtn}>
-                                    <Icon name="bell" size={20} color="#fff" />
-                                    <View style={styles.notificationDot} />
-                                </TouchableOpacity>
                             </View>
                         </>
                     ) : (
@@ -285,9 +291,17 @@ export default HomeScreen;
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.lightGray },
 
-    header: { height: 430, paddingTop: 50 },
+    header: {
+        height: 340,
+        // alignItems: 'center',
+        justifyContent: 'center',
+    },
 
-    headerLoggedIn: { height: 300 },
+    headerLoggedIn: {
+        height: 300,
+        // alignItems: 'center',
+        justifyContent: 'center',
+    },
 
     headerTop: {
         flexDirection: 'row',
@@ -352,7 +366,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 20,
-        paddingVertical: 30,
+        paddingVertical: 15,
     },
 
     profileContainer: {
@@ -465,7 +479,7 @@ const styles = StyleSheet.create({
     heroBannerContainer: {
         marginHorizontal: 20,
         height: 200,
-        marginTop: -60, // Overlap with header
+        marginTop: -50, // Overlap with header
         borderRadius: 20,
         overflow: 'hidden',
         marginBottom: 20,

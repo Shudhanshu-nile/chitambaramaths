@@ -110,53 +110,62 @@ const RegisterScreen = ({ navigation }: any) => {
     const [isYearOpen, setIsYearOpen] = useState(false);
 
     const handleRegister = async () => {
-        // Validation mapping
-        const fields = [
-            { key: 'fullName', label: 'Full Name' },
-            { key: 'email', label: 'Email Address' },
-            { key: 'phone', label: 'Phone Number' },
-            { key: 'dob', label: 'Date of Birth' },
-            { key: 'password', label: 'Password' },
-            { key: 'confirmPassword', label: 'Confirm Password' },
-            { key: 'country', label: 'Country' },
-            { key: 'academicYear', label: 'Academic Year' },
-        ];
+        try {
+            // Validation mapping
+            const fields = [
+                { key: 'fullName', label: 'Full Name' },
+                { key: 'email', label: 'Email Address' },
+                { key: 'phone', label: 'Phone Number' },
+                { key: 'dob', label: 'Date of Birth' },
+                { key: 'password', label: 'Password' },
+                { key: 'confirmPassword', label: 'Confirm Password' },
+                { key: 'country', label: 'Country' },
+                { key: 'academicYear', label: 'Academic Year' },
+            ];
 
-        // Check for empty fields
-        for (const field of fields) {
-            // @ts-ignore
-            if (!formData[field.key]) {
+            // Check for empty fields
+            for (const field of fields) {
+                // @ts-ignore
+                if (!formData[field.key]) {
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Validation Error',
+                        text2: `${field.label} is required`,
+                    });
+                    return;
+                }
+            }
+
+            if (formData.password !== formData.confirmPassword) {
                 Toast.show({
                     type: 'error',
                     text1: 'Validation Error',
-                    text2: `${field.label} is required`,
+                    text2: 'Passwords do not match',
                 });
                 return;
             }
-        }
 
-        if (formData.password !== formData.confirmPassword) {
-            Toast.show({
-                type: 'error',
-                text1: 'Validation Error',
-                text2: 'Passwords do not match',
-            });
-            return;
-        }
+            if (!formData.agreeToTerms) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Validation Error',
+                    text2: 'Please agree to the Terms of Service and Privacy Policy',
+                });
+                return;
+            }
 
-        if (!formData.agreeToTerms) {
-            Toast.show({
-                type: 'error',
-                text1: 'Validation Error',
-                text2: 'Please agree to the Terms of Service and Privacy Policy',
-            });
-            return;
-        }
-
-        try {
             // Convert MM/DD/YYYY to YYYY-MM-DD
-            const [month, day, year] = formData.dob.split('/');
-            const formattedDob = `${year}-${month}-${day}`;
+            // Add safety check for dob format
+            let formattedDob = formData.dob;
+            if (formData.dob && formData.dob.includes('/')) {
+                const parts = formData.dob.split('/');
+                if (parts.length === 3) {
+                    const [month, day, year] = parts;
+                    formattedDob = `${year}-${month}-${day}`;
+                } else {
+                    console.warn('Invalid DOB format, using raw value:', formData.dob);
+                }
+            }
 
             // Sign up user
             const payload = {
@@ -173,6 +182,8 @@ const RegisterScreen = ({ navigation }: any) => {
                 receive_updates: formData.sendUpdates ? 1 : 0,
             };
 
+            console.log('Registering with payload:', JSON.stringify(payload, null, 2));
+
             const resultAction = await dispatch(registerUser(payload));
 
             if (registerUser.fulfilled.match(resultAction)) {
@@ -183,10 +194,12 @@ const RegisterScreen = ({ navigation }: any) => {
                 });
 
                 // Navigate to home screen
-                navigation.navigate('Main');
+                if (navigation && navigation.navigate) {
+                    navigation.navigate('Main');
+                } else {
+                    console.error('Navigation object or navigate method not found');
+                }
             } else {
-                // Error handled in thunk rejection or caught below if strictly needed
-                // But payload check above handles success branch.
                 // Display error from action payload
                 if (resultAction.payload) {
                     Toast.show({
@@ -194,16 +207,21 @@ const RegisterScreen = ({ navigation }: any) => {
                         text1: 'Registration Failed',
                         text2: resultAction.payload as string,
                     });
+                } else {
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Registration Failed',
+                        text2: 'Unknown error occurred',
+                    });
                 }
             }
 
-
         } catch (error: any) {
-            // Logic moved inside logic block above mostly, but for unexpected errors:
+            console.error('Crash averted in handleRegister:', error);
             Toast.show({
                 type: 'error',
-                text1: 'Registration Failed',
-                text2: error.response?.data?.message || error.message || 'Something went wrong',
+                text1: 'Registration Error',
+                text2: error.message || 'An unexpected error occurred',
             });
         }
     };
@@ -296,7 +314,7 @@ const RegisterScreen = ({ navigation }: any) => {
 
                     <CustomDropdown
                         label="Country"
-                        placeholder={formData.country}
+                        placeholder={formData.country || "Select Country"}
                         value={formData.country}
                         icon="earth"
                         rightIcon={isCountryOpen ? "chevron-up" : "chevron-down"}
@@ -505,18 +523,17 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.lightGray },
 
     headerWrapper: {
-        borderBottomLeftRadius: 60,
-        borderBottomRightRadius: 60,
+        borderBottomLeftRadius: 16,
+        borderBottomRightRadius: 16,
         overflow: 'hidden',
     },
 
     header: {
-        paddingTop: 54,
-        paddingBottom: 40,
-        alignItems: 'center',
-        height: 330,
+        height: 310,
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
+        // alignItems: 'center',
+        justifyContent: 'center',
     },
 
     headerCircleLarge: {
@@ -535,13 +552,13 @@ const styles = StyleSheet.create({
         height: 160,
         borderRadius: 80,
         backgroundColor: 'rgba(255,255,255,0.08)',
-        bottom: -80,
+        bottom: -50,
         left: -40,
     },
 
     backButton: {
         position: 'absolute',
-        top: 46,
+        top: 56,
         left: 18,
         width: 38,
         height: 38,
@@ -561,7 +578,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.white,
         paddingVertical: 8,
         paddingHorizontal: 18,
-        borderRadius: 28,
+        borderRadius: 13,
         width: width * 0.72,
         alignItems: 'center',
         marginBottom: 14,

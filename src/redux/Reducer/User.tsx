@@ -142,6 +142,22 @@ export const logoutUser = createAsyncThunk(
     }
 );
 
+export const updateUserProfile = createAsyncThunk(
+    'user/updateProfile',
+    async (payload: any, { rejectWithValue }) => {
+        try {
+            const response = await UserAuthService.updateProfile(payload);
+            if (response.data && response.data.status) {
+                return payload;
+            } else {
+                return rejectWithValue(response.data.message || 'Profile update failed');
+            }
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Profile update failed');
+        }
+    }
+);
+
 export const UserSlice = createSlice({
     name: 'user',
     initialState,
@@ -200,6 +216,37 @@ export const UserSlice = createSlice({
             state.isLoggedIn = false;
             state.user = null;
             state.isLoading = false;
+        });
+
+
+        // Update Profile
+        builder.addCase(updateUserProfile.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
+        });
+        builder.addCase(updateUserProfile.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.error = null;
+            if (state.user) {
+                // Determine what fields were updated and merge them
+                // The payload has keys like 'stuname', 'grade', etc.
+                // We need to map them back to our local UserProfile model if we want to update the store immediately
+                // Or clearer: we might just fetch the user details again.
+                // For now, let's map what we know.
+                const payload = action.payload;
+                state.user = {
+                    ...state.user,
+                    fullName: payload.stuname || state.user.fullName,
+                    academicYear: payload.grade || state.user.academicYear,
+                    // Map other fields if necessary
+                    dateOfBirth: payload.dob || state.user.dateOfBirth,
+                    country: payload.country || state.user.country,
+                };
+            }
+        });
+        builder.addCase(updateUserProfile.rejected, (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload as string;
         });
     }
 });

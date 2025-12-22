@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { AppState, StatusBar, useColorScheme } from 'react-native';
+import { AppState, StatusBar, useColorScheme, Linking } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -50,6 +50,40 @@ function App() {
   };
 
   useEffect(() => {
+
+    // Handle Deep Linking
+    const handleDeepLink = (event: { url: string }) => {
+      console.log('🔗 Deep Link received:', event.url);
+      const url = event.url;
+
+      // Check for Stripe success URL (Custom Scheme OR HTTPS)
+      const isStripeSuccess =
+        (url.includes('stripe/webhook') || url.includes('niletechinnovations.com')) &&
+        url.includes('status=success');
+
+      if (isStripeSuccess) {
+        console.log('✅ Payment success detected from deep link');
+        if (navigationRef.isReady()) {
+          // Small delay to ensure navigation is ready if app just moved to foreground
+          setTimeout(() => {
+            navigationRef.navigate('PurchaseSuccessful' as never);
+          }, 500);
+        } else {
+          console.warn('Navigation not ready for deep link');
+        }
+      }
+    };
+
+    // Check for initial URL (if app opened from closed state)
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    // Add listener
+    const linkingSubscription = Linking.addEventListener('url', handleDeepLink);
+
     // Initialize app with notifications - wrap in try-catch to prevent crashes
     const initializeApp = async () => {
       try {
@@ -111,6 +145,7 @@ function App() {
       if (unsubscribeForeground) unsubscribeForeground();
       if (unsubscribeTokenRefresh) unsubscribeTokenRefresh();
       appStateSubscription.remove();
+      linkingSubscription.remove();
     };
   }, []);
 

@@ -59,6 +59,13 @@ class UserAuthService {
     return response;
   }
 
+  public static async updateProfile(userData: any) {
+    const url = `${API.UPDATE_PROFILE}`;
+    const response = await Http.post(url, userData);
+    return response;
+  }
+
+
 }
 
 export default UserAuthService;

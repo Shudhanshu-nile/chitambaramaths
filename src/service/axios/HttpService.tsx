@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 //internal imports
 import Axios from './AxiosHttpService';
 import AxiosInterceptor from './AxiosInterceptor';
-import {DataType} from '../../constants/index';
+import { DataType } from '../../constants/index';
 
 class Http extends Axios {
   public static async headerBuilder() {
@@ -62,8 +62,8 @@ class Http extends Axios {
     headers?: any,
   ): Promise<any> {
     dataType === DataType.FORMDATA
-    ? (headers = await this.headerBuilderFormData())
-    : (headers = await this.headerBuilder());
+      ? (headers = await this.headerBuilderFormData())
+      : (headers = await this.headerBuilder());
     this.InjectMiddleware();
     return await Axios.put(url, data, headers);
   }

@@ -8,6 +8,7 @@ import RegisterExamScreen from '../screens/RegisterExamScreen';
 import BottomTabNavigator from './BottomTabNavigator';
 import PurchaseSuccessful from '../screens/PurchaseSuccessful';
 import ForgotScreen from '../screens/ForgetScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +23,7 @@ const Appstack = () => {
             <Stack.Screen name="Main" component={BottomTabNavigator} />
             <Stack.Screen name="PurchaseSuccessful" component={PurchaseSuccessful} />
             <Stack.Screen name="Forgot" component={ForgotScreen} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
 
 
         </Stack.Navigator>

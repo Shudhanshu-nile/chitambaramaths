@@ -32,7 +32,11 @@ class AxiosInterceptor {
         },
         (error: any) => {
           // handle the response error
-          console.log('API ERROR', error.message, '-->', error.config.url);
+          if (error.response) {
+            console.log('API ERROR RESPONSE:', JSON.stringify(error.response.data, null, 2));
+          } else {
+            console.log('API ERROR', error.message, '-->', error.config.url);
+          }
 
           return Promise.reject(error);
         },

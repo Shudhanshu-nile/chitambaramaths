@@ -11,10 +11,11 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Colors, Gradients, Fonts } from '../constants';
+import { Colors, Gradients, Fonts, ScreenNames } from '../constants';
 import Logo from '../assets/images/logo.svg';
 import { BlurView } from '@react-native-community/blur';
-import { navigate } from '../navigation/GlobalNavigation';
+import { useNavigation } from '@react-navigation/native';
+// import { navigate } from '../navigation/GlobalNavigation';
 // import { useAuth } from '../context/AuthContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../redux/Reducer/User';
@@ -23,6 +24,7 @@ import { RootState } from '../redux/Reducer/RootReducer';
 const ProfileScreen = () => {
     // const { signOut } = useAuth();
     const dispatch = useDispatch<any>();
+    const navigation = useNavigation<any>();
     const { user } = useSelector((state: RootState) => state.user);
 
     // Fallback to local state if Redux user is null (though validation should prevent access)
@@ -40,7 +42,7 @@ const ProfileScreen = () => {
                 text: 'Sign Out',
                 onPress: async () => {
                     await dispatch(logoutUser());
-                    navigate('Welcome');
+                    navigation.navigate('Welcome');
                 },
                 style: 'destructive',
             },
@@ -94,28 +96,145 @@ const ProfileScreen = () => {
                         <Text style={styles.profileHeading}>My Profile</Text>
                     </View>
                     {/* Profile Card with BlurView */}
+                    {/* Profile Card Container with Edit Icon */}
+                    <View style={styles.cardContainer}>
+                        <BlurView
+                            style={styles.blurContainer}
+                            blurType="thinMaterialLight"
+                            blurAmount={4}
+                            reducedTransparencyFallbackColor="white"
+                        >
+                            <View style={styles.profileCard}>
+                                <View style={styles.profileImageContainer}>
+                                    <Image
+                                        source={userProfile.profileImage}
+                                        style={styles.profileImage}
+                                    />
+                                </View>
 
-                    <BlurView
-                        style={styles.blurContainer}
-                        blurType="thinMaterialLight"
-                        blurAmount={4}
-                        reducedTransparencyFallbackColor="white"
-                    >
-                        <View style={styles.profileCard}>
-                            <View style={styles.profileImageContainer}>
-                                <Image
-                                    source={userProfile.profileImage}
-                                    style={styles.profileImage}
-                                />
+                                <View style={styles.profileInfoContainer}>
+                                    <Text style={styles.userName}>{userProfile.name}</Text>
+                                    <View style={styles.divider} />
+                                    <Text style={styles.userEmail}>{userProfile.email}</Text>
+                                </View>
                             </View>
+                        </BlurView>
 
-                            <View style={styles.profileInfoContainer}>
-                                <Text style={styles.userName}>{userProfile.name}</Text>
-                                <View style={styles.divider} />
-                                <Text style={styles.userEmail}>{userProfile.email}</Text>
+                        {/* Edit Icon - Placed outside BlurView for better touch handling */}
+                        <TouchableOpacity
+                            style={styles.editIcon}
+                            onPress={() => {
+                                console.log('Edit icon pressed (outside blur)');
+                                navigation.navigate(ScreenNames.EditProfile);
+                            }}
+                            activeOpacity={0.7}
+                        >
+                            <Icon name="pencil" size={20} color={Colors.white} />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Stats Row */}
+                    {/* <View style={styles.statsRow}>
+                        <View style={styles.statCard}>
+                            <Icon name="camera" size={24} color="#005884" />
+                            <Text style={styles.statValue}>24</Text>
+                            <Text style={styles.statLabel}>My Photos</Text>
+                        </View>
+                        <View style={styles.statCard}>
+                            <Icon name="download" size={24} color="#005884" />
+                            <Text style={styles.statValue}>48</Text>
+                            <Text style={styles.statLabel}>Downloads</Text>
+                        </View>
+                        <View style={styles.statCard}>
+                            <Icon name="ticket-confirmation" size={24} color="#005884" />
+                            <Text style={styles.statValue}>3</Text>
+                            <Text style={styles.statLabel}>Tickets</Text>
+                        </View>
+                    </View> */}
+
+                    {/* Tab Switcher */}
+                    <View style={styles.tabContainer}>
+                        <TouchableOpacity style={[styles.tabButton, styles.activeTab]}>
+                            <Icon name="shopping" size={18} color="#005884" style={{ marginRight: 8 }} />
+                            <Text style={[styles.tabText, styles.activeTabText]}>Orders</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.tabButton}>
+                            <Icon name="download" size={18} color="#666" style={{ marginRight: 8 }} />
+                            <Text style={styles.tabText}>Downloads</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Recent Orders Section */}
+                    <View style={styles.ordersSection}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>Recent Orders</Text>
+                            <View style={styles.filterButtons}>
+                                <TouchableOpacity style={styles.filterBtn}>
+                                    <Icon name="filter-variant" size={16} color="#666" />
+                                    <Text style={styles.filterBtnText}>Filter</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.filterBtn}>
+                                    <Icon name="sort" size={16} color="#666" />
+                                    <Text style={styles.filterBtnText}>Sort</Text>
+                                </TouchableOpacity>
                             </View>
                         </View>
-                    </BlurView>
+
+                        {/* Order List */}
+                        {MOCK_ORDERS.map((order) => (
+                            <View key={order.id} style={styles.orderCard}>
+                                <View style={styles.orderHeader}>
+                                    <View style={styles.orderIconBg}>
+                                        <Icon
+                                            name={order.type === 'pdf' ? 'file-pdf-box' : 'image'}
+                                            size={24}
+                                            color={order.type === 'pdf' ? '#4CAF50' : '#2196F3'}
+                                        />
+                                    </View>
+                                    <View style={styles.orderHeaderText}>
+                                        <Text style={styles.orderTitle}>{order.title}</Text>
+                                        <Text style={styles.orderSubtitle}>{order.subtitle}</Text>
+                                    </View>
+                                    <View style={{ alignItems: 'flex-end' }}>
+                                        <Text style={styles.orderPrice}>{order.price}</Text>
+                                        <Text style={styles.orderDate}>{order.date}</Text>
+                                    </View>
+                                </View>
+
+                                <Text style={styles.orderId}>Order #{order.id}</Text>
+                                <View style={styles.statusBadge}>
+                                    <Text style={styles.statusText}>{order.status}</Text>
+                                </View>
+
+                                <View style={styles.orderMeta}>
+                                    <View>
+                                        <Text style={styles.metaLabel}>Visa Payment</Text>
+                                        <Text style={styles.metaValue}>**** 4242</Text>
+                                    </View>
+                                    <View>
+                                        <Text style={styles.metaLabel}>Items</Text>
+                                        <Text style={styles.metaValue}>{order.items} Papers</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.orderActions}>
+                                    <TouchableOpacity style={styles.downloadBtn}>
+                                        <Icon name="download" size={18} color="white" />
+                                        <Text style={styles.downloadBtnText}>Download</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.invoiceBtn}>
+                                        <Icon name="file-document-outline" size={18} color="#005884" />
+                                        <Text style={styles.invoiceBtnText}>Invoice</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        ))}
+
+                        <TouchableOpacity style={styles.loadMoreBtn}>
+                            <Text style={styles.loadMoreText}>Load More Orders</Text>
+                            <Icon name="chevron-down" size={20} color="#333" />
+                        </TouchableOpacity>
+                    </View>
 
                     {/* Action Buttons */}
                     <View style={styles.buttonsContainer}>
@@ -148,6 +267,39 @@ const ProfileScreen = () => {
         </View>
     );
 };
+
+const MOCK_ORDERS = [
+    {
+        id: 'ORD-2024-1547',
+        title: 'Past Papers',
+        subtitle: '3 GCSE Mathematics Papers',
+        price: '£14.97',
+        date: '15 Jan 2025',
+        status: 'Completed',
+        items: 3,
+        type: 'pdf',
+    },
+    {
+        id: 'ORD-2024-1792',
+        title: 'Event Photos 2023',
+        subtitle: '12 Original Photos',
+        price: '£24.00',
+        date: '08 Jan 2025',
+        status: 'Completed',
+        items: 12,
+        type: 'image',
+    },
+    {
+        id: 'ORD-2024-1842',
+        title: 'Past Papers',
+        subtitle: '3 GCSE Mathematics Papers',
+        price: '£14.97',
+        date: '15 Jan 2025',
+        status: 'Completed',
+        items: 3,
+        type: 'pdf',
+    },
+];
 
 export default ProfileScreen;
 
@@ -248,6 +400,22 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.5)',
     },
+    cardContainer: {
+        position: 'relative',
+        borderRadius: 16,
+    },
+    editIcon: {
+        position: 'absolute',
+        top: 25,
+        right: 25,
+        zIndex: 9999, // High z-index
+        elevation: 10, // Android elevation
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        padding: 8,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+    },
     blurContainer: {
         borderRadius: 16,
         //   overflow: 'visible',
@@ -287,6 +455,7 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
         paddingHorizontal: 20,
         alignItems: 'center',
+        marginTop: 12,
     },
     userName: {
         fontSize: 18,
@@ -348,5 +517,253 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.InterSemiBold,
         color: '#005884',
         textAlign: 'center',
+    },
+
+    // Stats Row
+    statsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingBottom: 10,
+        marginTop: 16,
+    },
+    statCard: {
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        borderRadius: 12,
+        width: '30%',
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    statValue: {
+        fontSize: 18,
+        fontFamily: Fonts.InterBold,
+        color: '#005884',
+        marginTop: 4,
+    },
+    statLabel: {
+        fontSize: 11,
+        fontFamily: Fonts.InterRegular,
+        color: '#666',
+    },
+
+    // Tabs
+    tabContainer: {
+        flexDirection: 'row',
+        backgroundColor: Colors.white,
+        borderRadius: 12,
+        marginTop: 20,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        overflow: 'hidden',
+    },
+    tabButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 16,
+        borderBottomWidth: 3,
+        borderBottomColor: 'transparent',
+    },
+    activeTab: {
+        borderBottomColor: '#005884',
+    },
+    tabText: {
+        fontSize: 14,
+        fontFamily: Fonts.InterSemiBold,
+        color: '#666',
+    },
+    activeTabText: {
+        color: '#005884',
+    },
+
+    // Orders Section
+    ordersSection: {
+        marginTop: 20,
+        paddingHorizontal: 0,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontFamily: Fonts.InterBold,
+        color: '#333',
+    },
+    filterButtons: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    filterBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#eee',
+    },
+    filterBtnText: {
+        fontSize: 12,
+        color: '#666',
+        marginLeft: 4,
+        fontFamily: Fonts.InterMedium,
+    },
+
+    // Order Card
+    orderCard: {
+        backgroundColor: Colors.white,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 16,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        borderLeftWidth: 4,
+        borderLeftColor: '#4CAF50',
+    },
+    orderHeader: {
+        flexDirection: 'row',
+        marginBottom: 12,
+    },
+    orderIconBg: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: '#F5F9FF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 12,
+    },
+    orderHeaderText: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    orderTitle: {
+        fontSize: 15,
+        fontFamily: Fonts.InterBold,
+        color: '#333',
+    },
+    orderSubtitle: {
+        fontSize: 12,
+        fontFamily: Fonts.InterRegular,
+        color: '#666',
+        marginTop: 2,
+    },
+    orderPrice: {
+        fontSize: 16,
+        fontFamily: Fonts.InterBold,
+        color: '#005884',
+    },
+    orderDate: {
+        fontSize: 11,
+        color: '#999',
+        fontFamily: Fonts.InterRegular,
+        marginTop: 4,
+    },
+    orderId: {
+        fontSize: 12,
+        color: '#888',
+        marginBottom: 8,
+        fontFamily: Fonts.InterRegular,
+    },
+    statusBadge: {
+        position: 'absolute',
+        top: 60,
+        left: 16,
+        backgroundColor: '#E8F5E9',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 4,
+        alignSelf: 'flex-start',
+        marginBottom: 12,
+        display: 'none'
+    },
+    statusText: {
+        fontSize: 10,
+        color: '#4CAF50',
+        fontFamily: Fonts.InterBold,
+    },
+    orderMeta: {
+        flexDirection: 'row',
+        backgroundColor: '#FAFAFA',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 16,
+        gap: 20,
+    },
+    metaLabel: {
+        fontSize: 11,
+        color: '#888',
+        marginBottom: 2,
+        fontFamily: Fonts.InterRegular,
+    },
+    metaValue: {
+        fontSize: 12,
+        color: '#333',
+        fontFamily: Fonts.InterSemiBold,
+    },
+    orderActions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    downloadBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: '#005884',
+        paddingVertical: 10,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    downloadBtnText: {
+        color: 'white',
+        fontSize: 13,
+        fontFamily: Fonts.InterSemiBold,
+        marginLeft: 6,
+    },
+    invoiceBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#005884',
+        paddingVertical: 10,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    invoiceBtnText: {
+        color: '#005884',
+        fontSize: 13,
+        fontFamily: Fonts.InterSemiBold,
+        marginLeft: 6,
+    },
+    loadMoreBtn: {
+        flexDirection: 'row',
+        backgroundColor: Colors.white,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 30,
+        borderWidth: 1,
+        borderColor: '#eee',
+    },
+    loadMoreText: {
+        fontSize: 14,
+        fontFamily: Fonts.InterSemiBold,
+        color: '#333',
+        marginRight: 6,
     },
 });

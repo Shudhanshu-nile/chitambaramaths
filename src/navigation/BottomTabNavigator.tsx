@@ -12,7 +12,12 @@ import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Reducer/RootReducer';
+
 const BottomTabNavigator = () => {
+    const { isLoggedIn } = useSelector((state: RootState) => state.user);
+
     return (
         <Tab.Navigator
             screenOptions={{
@@ -91,20 +96,22 @@ const BottomTabNavigator = () => {
                     ),
                 }}
             />
-            <Tab.Screen
-                name={ScreenNames.Profile}
-                component={ProfileScreen}
-                options={{
-                    tabBarLabel: 'Profile',
-                    tabBarIcon: ({ color, focused }) => (
-                        <Icon
-                            name="account"
-                            size={focused ? 30 : 24}
-                            color={color}
-                        />
-                    ),
-                }}
-            />
+            {isLoggedIn && (
+                <Tab.Screen
+                    name={ScreenNames.Profile}
+                    component={ProfileScreen}
+                    options={{
+                        tabBarLabel: 'Profile',
+                        tabBarIcon: ({ color, focused }) => (
+                            <Icon
+                                name="account"
+                                size={focused ? 30 : 24}
+                                color={color}
+                            />
+                        ),
+                    }}
+                />
+            )}
         </Tab.Navigator>
     );
 };

@@ -87,17 +87,20 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
     },
     headerWrapper: {
+        flex: 1,
         width: '100%',
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
         overflow: 'hidden',
     },
     header: {
-        width: '100%',
-        paddingTop: 60,
-        paddingBottom: 120, // Space for overlap + text
+        height: 410,
+        // width: '100%',
+        // paddingTop: 60,
+        // paddingBottom: 120, // Space for overlap + text
         paddingHorizontal: 0,
         alignItems: 'center',
+        justifyContent: 'center',
     },
     logoCard: {
         backgroundColor: 'white',
@@ -155,8 +158,8 @@ const styles = StyleSheet.create({
         marginBottom: 10, // Push text up from bottom edge
     },
     contentContainer: {
-        flex: 1,
-        marginTop: -60, // Overlap
+        // flex: 1,
+        marginTop: -150, // Overlap
         alignItems: 'center',
     },
     scrollContent: {

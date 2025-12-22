@@ -85,6 +85,7 @@ export const ScreenNames = {
     Profile: 'Profile',
     RegisterExam: 'RegisterExam',
     PurchaseSuccessful: 'PurchaseSuccessful',
+    EditProfile: 'EditProfile',
 };
 
 // Gradient colors

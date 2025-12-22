@@ -13,6 +13,8 @@ import {
   FlatList,
   Platform,
   PermissionsAndroid,
+  Linking,
+  AppState,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import Toast from 'react-native-toast-message';
@@ -21,7 +23,6 @@ import { Colors, Fonts } from '../constants';
 import OtherService from '../service/OtherService';
 import CustomTextInput from '../components/CustomTextInput';
 import Logo from '../assets/images/logo.svg';
-
 
 
 
@@ -65,6 +66,55 @@ const RegisterExamScreen = ({ navigation }: any) => {
       fetchStudyYears(selectedCountry.id);
     }
   }, [selectedCountry]);
+
+  // Payment Countdown State
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [countDown, setCountDown] = useState(10);
+  const [paymentStartTime, setPaymentStartTime] = useState<number | null>(null);
+  const timerIntervalRef = React.useRef<any>(null);
+
+  // Handle Countdown and AppState
+  useEffect(() => {
+    // Timer Logic
+    if (showPaymentModal && paymentStartTime) {
+      timerIntervalRef.current = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - paymentStartTime) / 1000);
+        const remaining = 10 - elapsed;
+
+        if (remaining <= 0) {
+          finishCountdown();
+        } else {
+          setCountDown(remaining);
+        }
+      }, 1000);
+    } else {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    }
+
+    // AppState Logic to check when user returns
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active' && showPaymentModal && paymentStartTime) {
+        const elapsed = Math.floor((Date.now() - paymentStartTime) / 1000);
+        if (elapsed >= 10) {
+          finishCountdown();
+        } else {
+          setCountDown(10 - elapsed);
+        }
+      }
+    });
+
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      subscription.remove();
+    };
+  }, [showPaymentModal, paymentStartTime]);
+
+  const finishCountdown = () => {
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    setShowPaymentModal(false);
+    setPaymentStartTime(null);
+    navigation.navigate('PurchaseSuccessful');
+  };
 
   const fetchExamCenters = async (countryId: number) => {
     try {
@@ -244,6 +294,10 @@ const RegisterExamScreen = ({ navigation }: any) => {
     );
   };
 
+
+
+
+
   const handleProceed = async () => {
     const fields = [
       { value: firstName, name: 'First Name' },
@@ -278,7 +332,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
       return;
     }
 
-    if (!selectedYear) { // Check if year is selected
+    if (!selectedYear) {
       Toast.show({
         type: 'error',
         text1: 'Selection Missing',
@@ -321,7 +375,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
 
       // IDs
       formData.append('country_id', selectedCountry.id);
-      formData.append('study_year', selectedYear); // Assuming selectedYear is the ID string/number
+      formData.append('study_year', selectedYear);
       formData.append('center_id', selectedCenterId);
 
       formData.append('agree_terms', '1');
@@ -337,9 +391,23 @@ const RegisterExamScreen = ({ navigation }: any) => {
           text1: 'Registration Successful',
           text2: response.data.message || 'You have successfully registered.',
         });
-        // Reset form or navigate away? 
-        // For now, maybe just clear inputs or go back?
-        // navigation.goBack(); 
+
+        if (response.data.payment_url) {
+          Linking.openURL(response.data.payment_url).catch(err => {
+            console.error("Failed to open payment URL:", err);
+            Toast.show({
+              type: 'error',
+              text1: 'Error',
+              text2: 'Could not open payment page.',
+            });
+          });
+
+          // Start Countdown for Auto-Navigation
+          setCountDown(10);
+          setPaymentStartTime(Date.now());
+          setShowPaymentModal(true);
+
+        }
       } else {
         Toast.show({
           type: 'error',
@@ -382,10 +450,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
 
         {/* TOP BRANDING (OPTIONAL based on image) */}
         <View style={styles.brandingContainer}>
-          {/* Placeholder for the top banner logo if needed */}
-          {/* <Logo height={40} width={150} /> */}
-          {/* Since I don't see the top banner in the previous file imports, I'll skip adding the graphic banner to keep it clean unless requested, 
-                         but the image has a distinct white card with "United Kingdom". */}
+          {/* Branding logic if any */}
         </View>
 
         {/* REGISTERING FOR CARD */}
@@ -451,6 +516,46 @@ const RegisterExamScreen = ({ navigation }: any) => {
                 onPress={() => setShowCountryModal(false)}
               >
                 <Text style={styles.closeModalText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Payment Countdown Modal */}
+        <Modal
+          visible={showPaymentModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => {
+            // Optional: Allow cancel on back press?
+            // setShowPaymentModal(false);
+            // if (countDownRef.current) clearInterval(countDownRef.current);
+          }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { alignItems: 'center' }]}>
+              <View style={{ marginBottom: 20, backgroundColor: '#E1F0F5', padding: 15, borderRadius: 50 }}>
+                <Icon name="timer-sand" size={40} color={Colors.primaryBlue} />
+              </View>
+              <Text style={styles.modalTitle}>Completing Payment</Text>
+              <Text style={{ textAlign: 'center', color: '#666', marginBottom: 20, fontSize: 14 }}>
+                Please complete the payment in the browser.
+              </Text>
+              <Text style={{ fontSize: 48, fontFamily: Fonts.InterBold, color: Colors.primaryBlue, marginBottom: 10 }}>
+                {countDown}
+              </Text>
+              <Text style={{ textAlign: 'center', color: '#888', marginBottom: 30, fontSize: 12 }}>
+                Redirecting back to app automatically...
+              </Text>
+
+              <TouchableOpacity
+                style={[styles.closeModalButton, { width: '100%', backgroundColor: '#f0f0f0' }]}
+                onPress={() => {
+                  setShowPaymentModal(false);
+                  setPaymentStartTime(null);
+                }}
+              >
+                <Text style={[styles.closeModalText, { color: '#333' }]}>Cancel Auto-Redirect</Text>
               </TouchableOpacity>
             </View>
           </View>
