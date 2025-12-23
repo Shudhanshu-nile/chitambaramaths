@@ -1,10 +1,14 @@
 import { Dimensions } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const { width, height } = Dimensions.get('window');
 const SCREEN_HEIGHT = Math.max(width, height);
 const SCREEN_WIDTH = Math.min(width, height);
 
-
+export const Sizes = {
+    fixPadding: SCREEN_HEIGHT * 0.02,
+    fixHorizontalPadding: SCREEN_WIDTH*0.02
+}
 
 // Screen dimension helpers
 export const responsiveScreenHeight = (value: number) => {
@@ -13,6 +17,19 @@ export const responsiveScreenHeight = (value: number) => {
 
 export const responsiveScreenWidth = (value: number) => {
     return (value / 100) * SCREEN_WIDTH;
+};
+
+export const showToastMessage = ({ message = '' }) => {
+    console.log('taost check ',message)
+    Toast.show({
+        type: 'success',
+        text1: message,
+        position: 'top',
+        visibilityTime:2000,
+        autoHide: true,
+        
+    });
+
 };
 
 // Colors
@@ -86,6 +103,8 @@ export const ScreenNames = {
     RegisterExam: 'RegisterExam',
     PurchaseSuccessful: 'PurchaseSuccessful',
     EditProfile: 'EditProfile',
+    Forgot: 'Forgot',
+    ResetPassword: 'ResetPassword',
 };
 
 // Gradient colors

@@ -19,13 +19,10 @@ import {
 import Geolocation from 'react-native-geolocation-service';
 import Toast from 'react-native-toast-message';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Colors, Fonts } from '../constants';
+import { Colors, Fonts, showToastMessage } from '../constants';
 import OtherService from '../service/OtherService';
 import CustomTextInput from '../components/CustomTextInput';
 import Logo from '../assets/images/logo.svg';
-
-
-
 
 const RegisterExamScreen = ({ navigation }: any) => {
   // Form State
@@ -92,7 +89,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
     }
 
     // AppState Logic to check when user returns
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
       if (nextAppState === 'active' && showPaymentModal && paymentStartTime) {
         const elapsed = Math.floor((Date.now() - paymentStartTime) / 1000);
         if (elapsed >= 10) {
@@ -121,7 +118,10 @@ const RegisterExamScreen = ({ navigation }: any) => {
       console.log('Fetching Exam Centers for ID:', countryId);
       const response = await OtherService.getExamCenters(countryId);
 
-      console.log('Exam Centers API Response:', JSON.stringify(response.data, null, 2));
+      console.log(
+        'Exam Centers API Response:',
+        JSON.stringify(response.data, null, 2),
+      );
 
       if (response.data && response.data.status && response.data.data) {
         setExamCenters(response.data.data);
@@ -133,20 +133,19 @@ const RegisterExamScreen = ({ navigation }: any) => {
     } catch (error) {
       console.error('Failed to fetch exam centers', error);
       setExamCenters([]);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to load exam centers',
-      });
+      showToastMessage({ message: 'Failed to load exam centers' });
     }
-  }
+  };
 
   const fetchStudyYears = async (countryId: number) => {
     try {
       console.log('Fetching Study Years for ID:', countryId);
       const response = await OtherService.getStudyYears(countryId);
 
-      console.log('Study Years API Response:', JSON.stringify(response.data, null, 2));
+      console.log(
+        'Study Years API Response:',
+        JSON.stringify(response.data, null, 2),
+      );
 
       if (response.data && response.data.status && response.data.data) {
         const sortedData = response.data.data.sort((a: any, b: any) => {
@@ -163,34 +162,31 @@ const RegisterExamScreen = ({ navigation }: any) => {
     } catch (error) {
       console.error('Failed to fetch study years', error);
       setStudyYears([]);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to load study years',
-      });
+      showToastMessage({ message: 'Failed to load study years' });
     }
-  }
+  };
 
   const fetchCountries = async () => {
     try {
       console.log('Fetching Countries...');
       const response = await OtherService.getCountries();
 
-      console.log('Countries API Response:', JSON.stringify(response.data, null, 2));
+      console.log(
+        'Countries API Response:',
+        JSON.stringify(response.data, null, 2),
+      );
 
       if (response.data && response.data.status && response.data.data) {
         setCountries(response.data.data);
         // Default to United Kingdom (id: 1) or the first available country
-        const defaultCountry = response.data.data.find((c: any) => c.name === 'United Kingdom') || response.data.data[0];
+        const defaultCountry =
+          response.data.data.find((c: any) => c.name === 'United Kingdom') ||
+          response.data.data[0];
         setSelectedCountry(defaultCountry);
       }
     } catch (error: any) {
       console.error('Failed to fetch countries', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to load countries',
-      });
+      showToastMessage({ message: 'Failed to load countries' });
     }
   };
 
@@ -208,7 +204,8 @@ const RegisterExamScreen = ({ navigation }: any) => {
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         {
           title: 'Location Permission',
-          message: 'Chitambaramaths needs access to your location to autofill address details.',
+          message:
+            'Chitambaramaths needs access to your location to autofill address details.',
           buttonNeutral: 'Ask Me Later',
           buttonNegative: 'Cancel',
           buttonPositive: 'OK',
@@ -222,17 +219,16 @@ const RegisterExamScreen = ({ navigation }: any) => {
   const handleGeolocation = async () => {
     const hasPermission = await requestLocationPermission();
     if (!hasPermission) {
-      Toast.show({
-        type: 'error',
-        text1: 'Permission Denied',
-        text2: 'Location permission is required to use this feature.',
+      showToastMessage({
+        message: 'Location permission is required to use this feature.',
       });
+
       return;
     }
 
     setGeoLoading(true);
     Geolocation.getCurrentPosition(
-      async (position) => {
+      async position => {
         const { latitude, longitude } = position.coords;
         console.log('Current Position:', latitude, longitude);
 
@@ -241,62 +237,48 @@ const RegisterExamScreen = ({ navigation }: any) => {
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
             {
               headers: {
-                'User-Agent': 'ChitambaramathsApp/1.0'
-              }
-            }
+                'User-Agent': 'ChitambaramathsApp/1.0',
+              },
+            },
           );
           const data = await response.json();
           console.log('Address Data:', data);
 
           if (data && data.address) {
             const addr = data.address;
-            const fetchedTown = addr.town || addr.city || addr.village || addr.suburb || addr.hamlet || '';
-            const fetchedStreet = addr.road || addr.pedestrian || addr.street || '';
+            const fetchedTown =
+              addr.town ||
+              addr.city ||
+              addr.village ||
+              addr.suburb ||
+              addr.hamlet ||
+              '';
+            const fetchedStreet =
+              addr.road || addr.pedestrian || addr.street || '';
 
             setTown(fetchedTown);
             setStreet(fetchedStreet);
-
-            Toast.show({
-              type: 'success',
-              text1: 'Location Found',
-              text2: 'Address details autofilled.',
-            });
-
+            showToastMessage({ message: 'Address details autofilled.' });
           } else {
-            Toast.show({
-              type: 'error',
-              text1: 'Address Not Found',
-              text2: 'Could not fetch address details.',
-            });
+            showToastMessage({ message: 'Could not fetch address details.' });
           }
-
         } catch (error) {
           console.error('Reverse Geocoding Error:', error);
-          Toast.show({
-            type: 'error',
-            text1: 'Error',
-            text2: 'Failed to fetch address from location.',
+          showToastMessage({
+            message: 'Failed to fetch address from location.',
           });
         } finally {
           setGeoLoading(false);
         }
       },
-      (error) => {
+      error => {
         console.error('Location Error:', error);
         setGeoLoading(false);
-        Toast.show({
-          type: 'error',
-          text1: 'Location Error',
-          text2: 'Failed to get current location.',
-        });
+        showToastMessage({ message: 'Failed to get current location.' });
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
     );
   };
-
-
-
-
 
   const handleProceed = async () => {
     const fields = [
@@ -314,47 +296,29 @@ const RegisterExamScreen = ({ navigation }: any) => {
 
     for (const field of fields) {
       if (!field.value.trim()) {
-        Toast.show({
-          type: 'error',
-          text1: 'Missing Information',
-          text2: `Please enter your ${field.name}`,
-        });
+        showToastMessage({ message: `Please enter your ${field.name}` });
         return;
       }
     }
 
     if (!selectedCountry) {
-      Toast.show({
-        type: 'error',
-        text1: 'Selection Missing',
-        text2: 'Please select a country.',
-      });
+      showToastMessage({ message: `Please select a country.` });
       return;
     }
 
     if (!selectedYear) {
-      Toast.show({
-        type: 'error',
-        text1: 'Selection Missing',
-        text2: 'Please select a grade of study.',
-      });
+      showToastMessage({ message: `Please select a grade of study.` });
       return;
     }
 
     if (!selectedCenterId) {
-      Toast.show({
-        type: 'error',
-        text1: 'Selection Missing',
-        text2: 'Please select an exam center.',
-      });
+      showToastMessage({ message: `Please select an exam center.` });
       return;
     }
 
     if (!agreed) {
-      Toast.show({
-        type: 'error',
-        text1: 'Terms and Conditions',
-        text2: 'Please agree to the Terms and Conditions.',
+      showToastMessage({
+        message: `Please agree to the Terms and Conditions.`,
       });
       return;
     }
@@ -386,46 +350,37 @@ const RegisterExamScreen = ({ navigation }: any) => {
       console.log('Registration Response:', response.data);
 
       if (response.data && response.data.status) {
-        Toast.show({
-          type: 'success',
-          text1: 'Registration Successful',
-          text2: response.data.message || 'You have successfully registered.',
+        showToastMessage({
+          message: response.data.message || 'You have successfully registered.',
         });
 
         if (response.data.payment_url) {
           Linking.openURL(response.data.payment_url).catch(err => {
-            console.error("Failed to open payment URL:", err);
-            Toast.show({
-              type: 'error',
-              text1: 'Error',
-              text2: 'Could not open payment page.',
-            });
+            console.error('Failed to open payment URL:', err);
+            showToastMessage({ message: 'Could not open payment page.' });
           });
 
           // Start Countdown for Auto-Navigation
           setCountDown(10);
           setPaymentStartTime(Date.now());
           setShowPaymentModal(true);
-
         }
       } else {
-        Toast.show({
-          type: 'error',
-          text1: 'Registration Failed',
-          text2: response.data.message || 'Something went wrong.',
+        showToastMessage({
+          message: response.data.message || 'Something went wrong.',
         });
       }
     } catch (error: any) {
       console.error('Registration Error:', error);
       let errorMsg = 'Failed to register. Please try again.';
-      if (error.response && error.response.data && error.response.data.message) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
         errorMsg = error.response.data.message;
       }
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: errorMsg,
-      });
+      showToastMessage({ message: errorMsg });
     } finally {
       setLoading(false);
     }
@@ -437,7 +392,10 @@ const RegisterExamScreen = ({ navigation }: any) => {
       <Logo height={40} width={150} style={{ marginLeft: 120 }} />
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
           <Icon name="arrow-left" size={24} color={Colors.textGray} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Registration Form 2026</Text>
@@ -446,8 +404,10 @@ const RegisterExamScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* TOP BRANDING (OPTIONAL based on image) */}
         <View style={styles.brandingContainer}>
           {/* Branding logic if any */}
@@ -485,22 +445,26 @@ const RegisterExamScreen = ({ navigation }: any) => {
 
               <FlatList
                 data={countries}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={item => item.id.toString()}
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     style={[
                       styles.countryOption,
-                      selectedCountry?.id === item.id && styles.countryOptionSelected
+                      selectedCountry?.id === item.id &&
+                        styles.countryOptionSelected,
                     ]}
                     onPress={() => {
                       setSelectedCountry(item);
                       setShowCountryModal(false);
                     }}
                   >
-                    <Text style={[
-                      styles.countryOptionText,
-                      selectedCountry?.id === item.id && styles.countryOptionTextSelected
-                    ]}>
+                    <Text
+                      style={[
+                        styles.countryOptionText,
+                        selectedCountry?.id === item.id &&
+                          styles.countryOptionTextSelected,
+                      ]}
+                    >
                       {item.name}
                     </Text>
                     {selectedCountry?.id === item.id && (
@@ -534,28 +498,61 @@ const RegisterExamScreen = ({ navigation }: any) => {
         >
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, { alignItems: 'center' }]}>
-              <View style={{ marginBottom: 20, backgroundColor: '#E1F0F5', padding: 15, borderRadius: 50 }}>
+              <View
+                style={{
+                  marginBottom: 20,
+                  backgroundColor: '#E1F0F5',
+                  padding: 15,
+                  borderRadius: 50,
+                }}
+              >
                 <Icon name="timer-sand" size={40} color={Colors.primaryBlue} />
               </View>
               <Text style={styles.modalTitle}>Completing Payment</Text>
-              <Text style={{ textAlign: 'center', color: '#666', marginBottom: 20, fontSize: 14 }}>
+              <Text
+                style={{
+                  textAlign: 'center',
+                  color: '#666',
+                  marginBottom: 20,
+                  fontSize: 14,
+                }}
+              >
                 Please complete the payment in the browser.
               </Text>
-              <Text style={{ fontSize: 48, fontFamily: Fonts.InterBold, color: Colors.primaryBlue, marginBottom: 10 }}>
+              <Text
+                style={{
+                  fontSize: 48,
+                  fontFamily: Fonts.InterBold,
+                  color: Colors.primaryBlue,
+                  marginBottom: 10,
+                }}
+              >
                 {countDown}
               </Text>
-              <Text style={{ textAlign: 'center', color: '#888', marginBottom: 30, fontSize: 12 }}>
+              <Text
+                style={{
+                  textAlign: 'center',
+                  color: '#888',
+                  marginBottom: 30,
+                  fontSize: 12,
+                }}
+              >
                 Redirecting back to app automatically...
               </Text>
 
               <TouchableOpacity
-                style={[styles.closeModalButton, { width: '100%', backgroundColor: '#f0f0f0' }]}
+                style={[
+                  styles.closeModalButton,
+                  { width: '100%', backgroundColor: '#f0f0f0' },
+                ]}
                 onPress={() => {
                   setShowPaymentModal(false);
                   setPaymentStartTime(null);
                 }}
               >
-                <Text style={[styles.closeModalText, { color: '#333' }]}>Cancel Auto-Redirect</Text>
+                <Text style={[styles.closeModalText, { color: '#333' }]}>
+                  Cancel Auto-Redirect
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -604,7 +601,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
         <View style={{ position: 'relative' }}>
           <CustomTextInput
             label="Town"
-            placeholder={geoLoading ? "Fetching location..." : "Enter Town"}
+            placeholder={geoLoading ? 'Fetching location...' : 'Enter Town'}
             value={town}
             onChangeText={setTown}
             required
@@ -653,7 +650,10 @@ const RegisterExamScreen = ({ navigation }: any) => {
                          data: [{id: 'g1', label: "Grade-1"}, {id: 'g2', label: "Grade-2"}, ...] 
                        }
                 */}
-        <Text style={styles.sectionTitle}>{/* {apiData.title} */}{"Select the grade of study in 2025"}</Text>
+        <Text style={styles.sectionTitle}>
+          {/* {apiData.title} */}
+          {'Select the grade of study in 2025'}
+        </Text>
 
         <View>
           <ScrollView
@@ -662,25 +662,40 @@ const RegisterExamScreen = ({ navigation }: any) => {
             contentContainerStyle={styles.yearsScrollContent}
           >
             {studyYears.length > 0 ? (
-              studyYears.map((level) => {
+              studyYears.map(level => {
                 const isSelected = selectedYear === level.id;
                 // API returns { id: 11, name: "Grade-1" }
                 // Parse "Grade-1" -> mainText: "1", subText: "Grade"
-                const parts = level.name ? level.name.split('-') : ['Grade', ''];
+                const parts = level.name
+                  ? level.name.split('-')
+                  : ['Grade', ''];
                 const subText = parts[0] || 'Grade';
                 const mainText = parts[1] || '';
 
                 return (
                   <TouchableOpacity
                     key={level.id}
-                    style={[styles.yearCard, isSelected && styles.yearCardSelected]}
+                    style={[
+                      styles.yearCard,
+                      isSelected && styles.yearCardSelected,
+                    ]}
                     onPress={() => setSelectedYear(level.id)}
                   >
                     <View style={styles.levelContent}>
-                      <Text style={[styles.yearTextLarge, isSelected && styles.yearTextSelected]}>
+                      <Text
+                        style={[
+                          styles.yearTextLarge,
+                          isSelected && styles.yearTextSelected,
+                        ]}
+                      >
                         {mainText}
                       </Text>
-                      <Text style={[styles.yearTextSmall, isSelected && styles.yearTextSelected]}>
+                      <Text
+                        style={[
+                          styles.yearTextSmall,
+                          isSelected && styles.yearTextSelected,
+                        ]}
+                      >
                         {subText}
                       </Text>
                     </View>
@@ -690,10 +705,12 @@ const RegisterExamScreen = ({ navigation }: any) => {
                       </View>
                     )}
                   </TouchableOpacity>
-                )
+                );
               })
             ) : (
-              <Text style={styles.noDataText}>Please select a country to see grades</Text>
+              <Text style={styles.noDataText}>
+                Please select a country to see grades
+              </Text>
             )}
           </ScrollView>
         </View>
@@ -720,21 +737,32 @@ const RegisterExamScreen = ({ navigation }: any) => {
 
         <View style={styles.centersScroll}>
           {examCenters.length > 0 ? (
-            examCenters.map((center) => {
+            examCenters.map(center => {
               const isSelected = selectedCenterId === center.id;
               return (
                 <TouchableOpacity
                   key={center.id}
-                  style={[styles.centerCard, isSelected && styles.centerCardSelected]}
+                  style={[
+                    styles.centerCard,
+                    isSelected && styles.centerCardSelected,
+                  ]}
                   onPress={() => setSelectedCenterId(center.id)}
                 >
                   <View style={styles.centerCardIcon}>
-                    <Icon name="map-marker" size={20} color={Colors.primaryBlue} />
+                    <Icon
+                      name="map-marker"
+                      size={20}
+                      color={Colors.primaryBlue}
+                    />
                   </View>
                   <View>
                     <Text style={styles.centerName}>{center.center_name}</Text>
-                    <Text style={styles.centerSeats}>{center.seats} Seats remaining</Text>
-                    {center.city && <Text style={styles.centerCity}>{center.city}</Text>}
+                    <Text style={styles.centerSeats}>
+                      {center.seats} Seats remaining
+                    </Text>
+                    {center.city && (
+                      <Text style={styles.centerCity}>{center.city}</Text>
+                    )}
                   </View>
                   {isSelected && (
                     <View style={styles.centerCheck}>
@@ -742,25 +770,39 @@ const RegisterExamScreen = ({ navigation }: any) => {
                     </View>
                   )}
                 </TouchableOpacity>
-              )
+              );
             })
           ) : (
-            <Text style={styles.noDataText}>No exam centers available for this country.</Text>
+            <Text style={styles.noDataText}>
+              No exam centers available for this country.
+            </Text>
           )}
         </View>
 
         {/* INFO BOX */}
         <View style={styles.infoBox}>
-          {selectedCountry?.terms && selectedCountry.terms.length > 0 && selectedCountry.terms[0].name ? (
-            selectedCountry.terms[0].name.split(/\r?\n/).map((line: string, index: number) => (
-              line.trim() ? <Text key={index} style={styles.infoText}>{line.trim()}</Text> : null
-            ))
+          {selectedCountry?.terms &&
+          selectedCountry.terms.length > 0 &&
+          selectedCountry.terms[0].name ? (
+            selectedCountry.terms[0].name
+              .split(/\r?\n/)
+              .map((line: string, index: number) =>
+                line.trim() ? (
+                  <Text key={index} style={styles.infoText}>
+                    {line.trim()}
+                  </Text>
+                ) : null,
+              )
           ) : (
-            <Text style={styles.infoText}>No specific terms available for this country.</Text>
+            <Text style={styles.infoText}>
+              No specific terms available for this country.
+            </Text>
           )}
         </View>
 
-        <Text style={styles.noteText}>Note: please print and bring on the exam day</Text>
+        <Text style={styles.noteText}>
+          Note: please print and bring on the exam day
+        </Text>
 
         {/* TERMS */}
         <TouchableOpacity
@@ -771,11 +813,14 @@ const RegisterExamScreen = ({ navigation }: any) => {
             {agreed && <Icon name="check" size={16} color={Colors.white} />}
           </View>
           <Text style={styles.termsText}>
-            I agree to the <Text style={styles.linkText}>Terms and Conditions</Text> and <Text style={styles.linkText}>Exam Regulations</Text>
+            I agree to the{' '}
+            <Text style={styles.linkText}>Terms and Conditions</Text> and{' '}
+            <Text style={styles.linkText}>Exam Regulations</Text>
           </Text>
         </TouchableOpacity>
         <Text style={styles.disclaimerText}>
-          By registering, you confirm that all information provided is accurate and you understand the exam policies.
+          By registering, you confirm that all information provided is accurate
+          and you understand the exam policies.
         </Text>
 
         {/* SUMMARY CARD */}
@@ -796,8 +841,16 @@ const RegisterExamScreen = ({ navigation }: any) => {
           </View>
 
           <View style={styles.refundNote}>
-            <Icon name="information" size={14} color={Colors.primaryBlue} style={{ marginTop: 2 }} />
-            <Text style={styles.refundText}>Registration is non-refundable. Please review all details before proceeding.</Text>
+            <Icon
+              name="information"
+              size={14}
+              color={Colors.primaryBlue}
+              style={{ marginTop: 2 }}
+            />
+            <Text style={styles.refundText}>
+              Registration is non-refundable. Please review all details before
+              proceeding.
+            </Text>
           </View>
 
           <TouchableOpacity
@@ -805,13 +858,16 @@ const RegisterExamScreen = ({ navigation }: any) => {
             onPress={handleProceed}
             disabled={loading}
           >
-            <Text style={styles.proceedText}>{loading ? 'Processing...' : 'Proceed to Payment'}</Text>
-            {!loading && <Icon name="arrow-right" size={18} color={Colors.white} />}
+            <Text style={styles.proceedText}>
+              {loading ? 'Processing...' : 'Proceed to Payment'}
+            </Text>
+            {!loading && (
+              <Icon name="arrow-right" size={18} color={Colors.white} />
+            )}
           </TouchableOpacity>
         </View>
 
         <View style={{ height: 40 }} />
-
       </ScrollView>
     </SafeAreaView>
   );

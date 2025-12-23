@@ -157,7 +157,8 @@ function App() {
           <NavigationContainer ref={navigationRef}>
             <Appstack />
           </NavigationContainer>
-          <Toast topOffset={60} />
+           <Toast/>
+          {/* <Toast topOffset={60} /> */}
         </SafeAreaProvider>
       </PersistGate>
     </Provider>

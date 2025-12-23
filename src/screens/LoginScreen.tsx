@@ -13,7 +13,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
-import { Colors, Gradients } from '../constants';
+import { Colors, Gradients, showToastMessage } from '../constants';
 import UserAuthService from '../service/UserAuthService';
 // import { useAuth } from '../context/AuthContext';
 import { useDispatch, useSelector } from 'react-redux';
@@ -46,12 +46,7 @@ const LoginScreen = ({ navigation }: any) => {
 
 
   const showErrorToast = (message: string) => {
-    Toast.show({
-      type: 'info',
-      text1: 'info',
-      text2: message,
-      visibilityTime: 3000,
-    });
+    showToastMessage({message: message});
   };
 
   const validateForm = () => {
@@ -91,12 +86,7 @@ const LoginScreen = ({ navigation }: any) => {
       const resultAction = await dispatch(loginUser({ email: email.trim(), password: password }));
 
       if (loginUser.fulfilled.match(resultAction)) {
-        Toast.show({
-          type: 'success',
-          text1: 'Success',
-          text2: 'Login successful',
-          visibilityTime: 3000,
-        });
+        showToastMessage({message: 'Login successful'});
         replaceToMain("Home");
       }
     } catch (error: any) {
@@ -206,8 +196,6 @@ const LoginScreen = ({ navigation }: any) => {
             style={styles.signInBtn}
             onPress={() => {
               handleLogin();
-
-
             }}
           >
             <Text style={styles.signInText}>

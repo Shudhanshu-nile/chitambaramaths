@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import {
-    StyleSheet,
-    View,
-    Text,
-    StatusBar,
-    ScrollView,
-    Image,
-    TouchableOpacity,
-    Alert,
+  StyleSheet,
+  View,
+  Text,
+  StatusBar,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -22,119 +22,119 @@ import { logoutUser } from '../redux/Reducer/User';
 import { RootState } from '../redux/Reducer/RootReducer';
 
 const ProfileScreen = () => {
-    // const { signOut } = useAuth();
-    const dispatch = useDispatch<any>();
-    const navigation = useNavigation<any>();
-    const { user } = useSelector((state: RootState) => state.user);
+  // const { signOut } = useAuth();
+  const dispatch = useDispatch<any>();
+  const navigation = useNavigation<any>();
+  const { user } = useSelector((state: RootState) => state.user);
 
-    // Fallback to local state if Redux user is null (though validation should prevent access)
-    // Or just use Redux user data directly
-    const userProfile = {
-        name: user?.fullName || 'Guest User',
-        email: user?.email || 'guest@example.com',
-        profileImage: require('../assets/images/avatar.png'),
-    };
+  // Fallback to local state if Redux user is null (though validation should prevent access)
+  // Or just use Redux user data directly
+  const userProfile = {
+    name: user?.fullName || 'Guest User',
+    email: user?.email || 'guest@example.com',
+    profileImage: require('../assets/images/avatar.png'),
+  };
 
-    const handleSignOut = async () => {
-        Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-            { text: 'Cancel', onPress: () => { }, style: 'cancel' },
-            {
-                text: 'Sign Out',
-                onPress: async () => {
-                    await dispatch(logoutUser());
-                    navigation.navigate('Welcome');
-                },
-                style: 'destructive',
-            },
-        ]);
-    };
+  const handleSignOut = async () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', onPress: () => {}, style: 'cancel' },
+      {
+        text: 'Sign Out',
+        onPress: async () => {
+          await dispatch(logoutUser());
+          navigation.navigate('Welcome');
+        },
+        style: 'destructive',
+      },
+    ]);
+  };
 
-    const handleDeleteAccount = () => {
-        Alert.alert(
-            'Delete Account',
-            'Are you sure you want to delete your account? This action cannot be undone.',
-            [
-                { text: 'Cancel', onPress: () => { }, style: 'cancel' },
-                {
-                    text: 'Delete',
-                    onPress: () => console.log('Deleting account...'),
-                    style: 'destructive',
-                },
-            ],
-        );
-    };
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone.',
+      [
+        { text: 'Cancel', onPress: () => {}, style: 'cancel' },
+        {
+          text: 'Delete',
+          onPress: () => console.log('Deleting account...'),
+          style: 'destructive',
+        },
+      ],
+    );
+  };
 
-    return (
-        <View style={styles.container}>
-            <StatusBar
-                barStyle="light-content"
-                backgroundColor={Colors.primaryBlue}
-            />
+  return (
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={Colors.primaryBlue}
+      />
 
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                style={styles.scrollContent}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollContent}
+      >
+        {/* Header with gradient background */}
+        <LinearGradient colors={Gradients.primaryBlue} style={styles.header}>
+          <View style={styles.headerTop}>
+            <View style={styles.logoPill}>
+              <Logo height={36} width={176} />
+            </View>
+
+            <TouchableOpacity style={styles.notificationBtn}>
+              <Icon name="bell" size={22} color="#fff" />
+              <View style={styles.notificationDot} />
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+
+        {/* Profile Content */}
+
+        <View style={styles.content}>
+          <View style={styles.profileCardHeader}>
+            <Text style={styles.profileHeading}>My Profile</Text>
+          </View>
+          {/* Profile Card with BlurView */}
+          {/* Profile Card Container with Edit Icon */}
+          <View style={styles.cardContainer}>
+            <BlurView
+              style={styles.blurContainer}
+              blurType="thinMaterialLight"
+              blurAmount={4}
+              reducedTransparencyFallbackColor="white"
             >
-                {/* Header with gradient background */}
-                <LinearGradient colors={Gradients.primaryBlue} style={styles.header}>
-                    <View style={styles.headerTop}>
-                        <View style={styles.logoPill}>
-                            <Logo height={36} width={176} />
-                        </View>
+              <View style={styles.profileCard}>
+                <View style={styles.profileImageContainer}>
+                  <Image
+                    source={userProfile.profileImage}
+                    style={styles.profileImage}
+                  />
+                </View>
 
-                        <TouchableOpacity style={styles.notificationBtn}>
-                            <Icon name="bell" size={22} color="#fff" />
-                            <View style={styles.notificationDot} />
-                        </TouchableOpacity>
-                    </View>
-                </LinearGradient>
+                <View style={styles.profileInfoContainer}>
+                  <Text style={styles.userName}>{userProfile.name}</Text>
+                  <View style={styles.divider} />
+                  <Text style={styles.userEmail}>{userProfile.email}</Text>
+                </View>
+              </View>
+            </BlurView>
 
-                {/* Profile Content */}
+            {/* Edit Icon - Placed outside BlurView for better touch handling */}
+            <TouchableOpacity
+              style={styles.editIcon}
+              onPress={() => {
+                // console.log('Edit icon pressed (outside blur)');
+                navigation.navigate(ScreenNames.EditProfile);
+              }}
+              activeOpacity={0.7}
+            >
+              <Icon name="pencil" size={18} color={Colors.white} />
+            </TouchableOpacity>
+          </View>
 
-                <View style={styles.content}>
-                    <View style={styles.profileCardHeader}>
-                        <Text style={styles.profileHeading}>My Profile</Text>
-                    </View>
-                    {/* Profile Card with BlurView */}
-                    {/* Profile Card Container with Edit Icon */}
-                    <View style={styles.cardContainer}>
-                        <BlurView
-                            style={styles.blurContainer}
-                            blurType="thinMaterialLight"
-                            blurAmount={4}
-                            reducedTransparencyFallbackColor="white"
-                        >
-                            <View style={styles.profileCard}>
-                                <View style={styles.profileImageContainer}>
-                                    <Image
-                                        source={userProfile.profileImage}
-                                        style={styles.profileImage}
-                                    />
-                                </View>
-
-                                <View style={styles.profileInfoContainer}>
-                                    <Text style={styles.userName}>{userProfile.name}</Text>
-                                    <View style={styles.divider} />
-                                    <Text style={styles.userEmail}>{userProfile.email}</Text>
-                                </View>
-                            </View>
-                        </BlurView>
-
-                        {/* Edit Icon - Placed outside BlurView for better touch handling */}
-                        <TouchableOpacity
-                            style={styles.editIcon}
-                            onPress={() => {
-                                console.log('Edit icon pressed (outside blur)');
-                                navigation.navigate(ScreenNames.EditProfile);
-                            }}
-                            activeOpacity={0.7}
-                        >
-                            <Icon name="pencil" size={20} color={Colors.white} />
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Stats Row */}
-                    {/* <View style={styles.statsRow}>
+          {/* Stats Row */}
+          {/* <View style={styles.statsRow}>
                         <View style={styles.statCard}>
                             <Icon name="camera" size={24} color="#005884" />
                             <Text style={styles.statValue}>24</Text>
@@ -152,618 +152,632 @@ const ProfileScreen = () => {
                         </View>
                     </View> */}
 
-                    {/* Tab Switcher */}
-                    <View style={styles.tabContainer}>
-                        <TouchableOpacity style={[styles.tabButton, styles.activeTab]}>
-                            <Icon name="shopping" size={18} color="#005884" style={{ marginRight: 8 }} />
-                            <Text style={[styles.tabText, styles.activeTabText]}>Orders</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.tabButton}>
-                            <Icon name="download" size={18} color="#666" style={{ marginRight: 8 }} />
-                            <Text style={styles.tabText}>Downloads</Text>
-                        </TouchableOpacity>
-                    </View>
+          {/* Tab Switcher */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity style={[styles.tabButton, styles.activeTab]}>
+              <Icon
+                name="shopping"
+                size={18}
+                color="#005884"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={[styles.tabText, styles.activeTabText]}>Orders</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.tabButton}>
+              <Icon
+                name="download"
+                size={18}
+                color="#666"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.tabText}>Downloads</Text>
+            </TouchableOpacity>
+          </View>
 
-                    {/* Recent Orders Section */}
-                    <View style={styles.ordersSection}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Recent Orders</Text>
-                            <View style={styles.filterButtons}>
-                                <TouchableOpacity style={styles.filterBtn}>
-                                    <Icon name="filter-variant" size={16} color="#666" />
-                                    <Text style={styles.filterBtnText}>Filter</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.filterBtn}>
-                                    <Icon name="sort" size={16} color="#666" />
-                                    <Text style={styles.filterBtnText}>Sort</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
+          {/* Recent Orders Section */}
+          <View style={styles.ordersSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Recent Orders</Text>
+              <View style={styles.filterButtons}>
+                <TouchableOpacity style={styles.filterBtn}>
+                  <Icon name="filter-variant" size={16} color="#666" />
+                  <Text style={styles.filterBtnText}>Filter</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.filterBtn}>
+                  <Icon name="sort" size={16} color="#666" />
+                  <Text style={styles.filterBtnText}>Sort</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
-                        {/* Order List */}
-                        {MOCK_ORDERS.map((order) => (
-                            <View key={order.id} style={styles.orderCard}>
-                                <View style={styles.orderHeader}>
-                                    <View style={styles.orderIconBg}>
-                                        <Icon
-                                            name={order.type === 'pdf' ? 'file-pdf-box' : 'image'}
-                                            size={24}
-                                            color={order.type === 'pdf' ? '#4CAF50' : '#2196F3'}
-                                        />
-                                    </View>
-                                    <View style={styles.orderHeaderText}>
-                                        <Text style={styles.orderTitle}>{order.title}</Text>
-                                        <Text style={styles.orderSubtitle}>{order.subtitle}</Text>
-                                    </View>
-                                    <View style={{ alignItems: 'flex-end' }}>
-                                        <Text style={styles.orderPrice}>{order.price}</Text>
-                                        <Text style={styles.orderDate}>{order.date}</Text>
-                                    </View>
-                                </View>
-
-                                <Text style={styles.orderId}>Order #{order.id}</Text>
-                                <View style={styles.statusBadge}>
-                                    <Text style={styles.statusText}>{order.status}</Text>
-                                </View>
-
-                                <View style={styles.orderMeta}>
-                                    <View>
-                                        <Text style={styles.metaLabel}>Visa Payment</Text>
-                                        <Text style={styles.metaValue}>**** 4242</Text>
-                                    </View>
-                                    <View>
-                                        <Text style={styles.metaLabel}>Items</Text>
-                                        <Text style={styles.metaValue}>{order.items} Papers</Text>
-                                    </View>
-                                </View>
-
-                                <View style={styles.orderActions}>
-                                    <TouchableOpacity style={styles.downloadBtn}>
-                                        <Icon name="download" size={18} color="white" />
-                                        <Text style={styles.downloadBtnText}>Download</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={styles.invoiceBtn}>
-                                        <Icon name="file-document-outline" size={18} color="#005884" />
-                                        <Text style={styles.invoiceBtnText}>Invoice</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        ))}
-
-                        <TouchableOpacity style={styles.loadMoreBtn}>
-                            <Text style={styles.loadMoreText}>Load More Orders</Text>
-                            <Icon name="chevron-down" size={20} color="#333" />
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Action Buttons */}
-                    <View style={styles.buttonsContainer}>
-                        {/* Sign Out Button */}
-                        <TouchableOpacity
-                            style={styles.signOutButton}
-                            onPress={handleSignOut}
-                            activeOpacity={0.8}
-                        >
-                            <Icon
-                                name="logout"
-                                size={20}
-                                color={Colors.white}
-                                style={styles.buttonIcon}
-                            />
-                            <Text style={styles.signOutButtonText}>Sign Out</Text>
-                        </TouchableOpacity>
-
-                        {/* Delete Account Button */}
-                        <TouchableOpacity
-                            style={styles.deleteButton}
-                            onPress={handleDeleteAccount}
-                            activeOpacity={0.8}
-                        >
-                            <Text style={styles.deleteButtonText}>Delete Account</Text>
-                        </TouchableOpacity>
-                    </View>
+            {/* Order List */}
+            {MOCK_ORDERS.map(order => (
+              <View key={order.id} style={styles.orderCard}>
+                <View style={styles.orderHeader}>
+                  <View style={styles.orderIconBg}>
+                    <Icon
+                      name={order.type === 'pdf' ? 'file-pdf-box' : 'image'}
+                      size={24}
+                      color={order.type === 'pdf' ? '#4CAF50' : '#2196F3'}
+                    />
+                  </View>
+                  <View style={styles.orderHeaderText}>
+                    <Text style={styles.orderTitle}>{order.title}</Text>
+                    <Text style={styles.orderSubtitle}>{order.subtitle}</Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={styles.orderPrice}>{order.price}</Text>
+                    <Text style={styles.orderDate}>{order.date}</Text>
+                  </View>
                 </View>
-            </ScrollView>
+
+                <Text style={styles.orderId}>Order #{order.id}</Text>
+                <View style={styles.statusBadge}>
+                  <Text style={styles.statusText}>{order.status}</Text>
+                </View>
+
+                <View style={styles.orderMeta}>
+                  <View>
+                    <Text style={styles.metaLabel}>Visa Payment</Text>
+                    <Text style={styles.metaValue}>**** 4242</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.metaLabel}>Items</Text>
+                    <Text style={styles.metaValue}>{order.items} Papers</Text>
+                  </View>
+                </View>
+
+                <View style={styles.orderActions}>
+                  <TouchableOpacity style={styles.downloadBtn}>
+                    <Icon name="download" size={18} color="white" />
+                    <Text style={styles.downloadBtnText}>Download</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.invoiceBtn}>
+                    <Icon
+                      name="file-document-outline"
+                      size={18}
+                      color="#005884"
+                    />
+                    <Text style={styles.invoiceBtnText}>Invoice</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+
+            <TouchableOpacity style={styles.loadMoreBtn}>
+              <Text style={styles.loadMoreText}>Load More Orders</Text>
+              <Icon name="chevron-down" size={20} color="#333" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.buttonsContainer}>
+            {/* Sign Out Button */}
+            <TouchableOpacity
+              style={styles.signOutButton}
+              onPress={handleSignOut}
+              activeOpacity={0.8}
+            >
+              <Icon
+                name="logout"
+                size={20}
+                color={Colors.white}
+                style={styles.buttonIcon}
+              />
+              <Text style={styles.signOutButtonText}>Sign Out</Text>
+            </TouchableOpacity>
+
+            {/* Delete Account Button */}
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={handleDeleteAccount}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.deleteButtonText}>Delete Account</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-    );
+      </ScrollView>
+    </View>
+  );
 };
 
 const MOCK_ORDERS = [
-    {
-        id: 'ORD-2024-1547',
-        title: 'Past Papers',
-        subtitle: '3 GCSE Mathematics Papers',
-        price: '£14.97',
-        date: '15 Jan 2025',
-        status: 'Completed',
-        items: 3,
-        type: 'pdf',
-    },
-    {
-        id: 'ORD-2024-1792',
-        title: 'Event Photos 2023',
-        subtitle: '12 Original Photos',
-        price: '£24.00',
-        date: '08 Jan 2025',
-        status: 'Completed',
-        items: 12,
-        type: 'image',
-    },
-    {
-        id: 'ORD-2024-1842',
-        title: 'Past Papers',
-        subtitle: '3 GCSE Mathematics Papers',
-        price: '£14.97',
-        date: '15 Jan 2025',
-        status: 'Completed',
-        items: 3,
-        type: 'pdf',
-    },
+  {
+    id: 'ORD-2024-1547',
+    title: 'Past Papers',
+    subtitle: '3 GCSE Mathematics Papers',
+    price: '£14.97',
+    date: '15 Jan 2025',
+    status: 'Completed',
+    items: 3,
+    type: 'pdf',
+  },
+  {
+    id: 'ORD-2024-1792',
+    title: 'Event Photos 2023',
+    subtitle: '12 Original Photos',
+    price: '£24.00',
+    date: '08 Jan 2025',
+    status: 'Completed',
+    items: 12,
+    type: 'image',
+  },
+  {
+    id: 'ORD-2024-1842',
+    title: 'Past Papers',
+    subtitle: '3 GCSE Mathematics Papers',
+    price: '£14.97',
+    date: '15 Jan 2025',
+    status: 'Completed',
+    items: 3,
+    type: 'pdf',
+  },
 ];
 
 export default ProfileScreen;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.lightGray,
-    },
-    scrollContent: {
-        flex: 1,
-    },
-    header: {
-        height: 430,
-        paddingTop: 0,
-        zIndex: -999,
-        position: 'relative'
-    },
-    headerTop: {
-        flexDirection: 'row',
-        paddingHorizontal: 20,
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingTop: 70,
-    },
-    logoPill: {
-        backgroundColor: Colors.white,
-        height: 50,
-        paddingHorizontal: 16,
-        borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: 208,
-    },
-    notificationBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: Colors.whiteOverlay20,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.lightGray,
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  header: {
+    height: 430,
+    paddingTop: 0,
+    zIndex: -999,
+    position: 'relative',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 70,
+  },
+  logoPill: {
+    backgroundColor: Colors.white,
+    height: 50,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 208,
+  },
+  notificationBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.whiteOverlay20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-    notificationDot: {
-        position: 'absolute',
-        top: 10,
-        right: 12,
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: Colors.red,
-    },
-    headerContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    appTitleContainer: {
-        flex: 1,
-        marginRight: 15,
-    },
-    appTitle: {
-        fontSize: 16,
-        fontFamily: Fonts.InterBold,
-        color: Colors.white,
-        marginBottom: 4,
-    },
-    appSubtitle: {
-        fontSize: 12,
-        fontFamily: Fonts.InterRegular,
-        color: Colors.whiteOverlay80,
-    },
-    notificationIcon: {
-        width: 44,
-        height: 44,
-        backgroundColor: Colors.whiteOverlay20,
-        borderRadius: 22,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    content: {
-        marginTop: -310,
-        padding: 20,
-        zIndex: 999
-        // paddingBottom: 40,
-    },
-    profileCard: {
-        backgroundColor: 'rgba(0, 0, 0, 0.01)',
-        borderRadius: 16,
-        // padding: 0,
-        // marginBottom: 30,
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 12,
-        elevation: 3,
-        // zIndex:999,
-        // overflow: 'visible',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.5)',
-    },
-    cardContainer: {
-        position: 'relative',
-        borderRadius: 16,
-    },
-    editIcon: {
-        position: 'absolute',
-        top: 25,
-        right: 25,
-        zIndex: 9999, // High z-index
-        elevation: 10, // Android elevation
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        padding: 8,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-    },
-    blurContainer: {
-        borderRadius: 16,
-        //   overflow: 'visible',
-        // marginTop:20,
-        // overflow: 'hidden',
-        // marginBottom: 10,
-    },
-    profileCardHeader: {
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        // backgroundColor: Colors.lightBlue3,
-        // borderBottomWidth: 1,
-        // borderBottomColor: Colors.borderGray,
-    },
-    profileHeading: {
-        fontSize: 20,
-        fontFamily: Fonts.InterBold,
-        color: Colors.white,
-    },
-    profileImageContainer: {
-        overflow: 'visible',
-        alignItems: 'center',
-        marginTop: 10,
-        zIndex: 999
-        // paddingVertical: 24,
-        // backgroundColor: 'rgba(227, 242, 253, 0.6)',
-    },
-    profileImage: {
-        width: 100,
-        height: 100,
-        alignSelf: 'center',
-        // borderRadius: 50,
-        // borderWidth: 4,
-        // borderColor: Colors.white,
-    },
-    profileInfoContainer: {
-        paddingBottom: 20,
-        paddingHorizontal: 20,
-        alignItems: 'center',
-        marginTop: 12,
-    },
-    userName: {
-        fontSize: 18,
-        fontFamily: Fonts.InterBold,
-        color: Colors.white,
-        marginBottom: 12,
-    },
-    divider: {
-        width: '90%',
-        height: 1,
-        backgroundColor: '#E5E7EB',
-        marginVertical: 7,
-    },
-    userEmail: {
-        marginTop: 10,
-        fontSize: 14,
-        fontFamily: Fonts.InterRegular,
-        color: Colors.white,
-    },
-    buttonsContainer: {
-        gap: 12,
-        marginTop: 70,
-    },
-    signOutButton: {
-        backgroundColor: Colors.primaryBlue,
-        borderRadius: 12,
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    buttonIcon: {
-        marginRight: 10,
-    },
-    signOutButtonText: {
-        fontSize: 14,
-        fontFamily: Fonts.InterSemiBold,
-        color: Colors.white,
-        textAlign: 'center',
-    },
-    deleteButton: {
-        backgroundColor: Colors.white,
-        borderRadius: 12,
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderWidth: 1,
-        borderColor: '#005884',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    deleteButtonText: {
-        fontSize: 14,
-        fontFamily: Fonts.InterSemiBold,
-        color: '#005884',
-        textAlign: 'center',
-    },
+  notificationDot: {
+    position: 'absolute',
+    top: 10,
+    right: 12,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.red,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  appTitleContainer: {
+    flex: 1,
+    marginRight: 15,
+  },
+  appTitle: {
+    fontSize: 16,
+    fontFamily: Fonts.InterBold,
+    color: Colors.white,
+    marginBottom: 4,
+  },
+  appSubtitle: {
+    fontSize: 12,
+    fontFamily: Fonts.InterRegular,
+    color: Colors.whiteOverlay80,
+  },
+  notificationIcon: {
+    width: 44,
+    height: 44,
+    backgroundColor: Colors.whiteOverlay20,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    marginTop: -310,
+    padding: 20,
+    zIndex: 999,
+    // paddingBottom: 40,
+  },
+  profileCard: {
+    backgroundColor: 'rgba(0, 0, 0, 0.01)',
+    borderRadius: 16,
+    // padding: 0,
+    // marginBottom: 30,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 3,
+    // zIndex:999,
+    // overflow: 'visible',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  cardContainer: {
+    position: 'relative',
+    borderRadius: 16,
+  },
+  editIcon: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 9999, // High z-index
+    elevation: 10, // Android elevation
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  blurContainer: {
+    borderRadius: 16,
+    //   overflow: 'visible',
+    // marginTop:20,
+    // overflow: 'hidden',
+    // marginBottom: 10,
+  },
+  profileCardHeader: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    // backgroundColor: Colors.lightBlue3,
+    // borderBottomWidth: 1,
+    // borderBottomColor: Colors.borderGray,
+  },
+  profileHeading: {
+    fontSize: 20,
+    fontFamily: Fonts.InterBold,
+    color: Colors.white,
+  },
+  profileImageContainer: {
+    overflow: 'visible',
+    alignItems: 'center',
+    marginTop: 10,
+    zIndex: 999,
+    // paddingVertical: 24,
+    // backgroundColor: 'rgba(227, 242, 253, 0.6)',
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    alignSelf: 'center',
+    // borderRadius: 50,
+    // borderWidth: 4,
+    // borderColor: Colors.white,
+  },
+  profileInfoContainer: {
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  userName: {
+    fontSize: 18,
+    fontFamily: Fonts.InterBold,
+    color: Colors.white,
+    marginBottom: 12,
+  },
+  divider: {
+    width: '90%',
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 7,
+  },
+  userEmail: {
+    marginTop: 10,
+    fontSize: 14,
+    fontFamily: Fonts.InterRegular,
+    color: Colors.white,
+  },
+  buttonsContainer: {
+    gap: 12,
+    marginTop: 70,
+  },
+  signOutButton: {
+    backgroundColor: Colors.primaryBlue,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonIcon: {
+    marginRight: 10,
+  },
+  signOutButtonText: {
+    fontSize: 14,
+    fontFamily: Fonts.InterSemiBold,
+    color: Colors.white,
+    textAlign: 'center',
+  },
+  deleteButton: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: '#005884',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    fontSize: 14,
+    fontFamily: Fonts.InterSemiBold,
+    color: '#005884',
+    textAlign: 'center',
+  },
 
-    // Stats Row
-    statsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingBottom: 10,
-        marginTop: 16,
-    },
-    statCard: {
-        backgroundColor: 'rgba(255,255,255,0.9)',
-        borderRadius: 12,
-        width: '30%',
-        paddingVertical: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    statValue: {
-        fontSize: 18,
-        fontFamily: Fonts.InterBold,
-        color: '#005884',
-        marginTop: 4,
-    },
-    statLabel: {
-        fontSize: 11,
-        fontFamily: Fonts.InterRegular,
-        color: '#666',
-    },
+  // Stats Row
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    marginTop: 16,
+  },
+  statCard: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 12,
+    width: '30%',
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statValue: {
+    fontSize: 18,
+    fontFamily: Fonts.InterBold,
+    color: '#005884',
+    marginTop: 4,
+  },
+  statLabel: {
+    fontSize: 11,
+    fontFamily: Fonts.InterRegular,
+    color: '#666',
+  },
 
-    // Tabs
-    tabContainer: {
-        flexDirection: 'row',
-        backgroundColor: Colors.white,
-        borderRadius: 12,
-        marginTop: 20,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        overflow: 'hidden',
-    },
-    tabButton: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 16,
-        borderBottomWidth: 3,
-        borderBottomColor: 'transparent',
-    },
-    activeTab: {
-        borderBottomColor: '#005884',
-    },
-    tabText: {
-        fontSize: 14,
-        fontFamily: Fonts.InterSemiBold,
-        color: '#666',
-    },
-    activeTabText: {
-        color: '#005884',
-    },
+  // Tabs
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    marginTop: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    overflow: 'hidden',
+  },
+  tabButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomColor: '#005884',
+  },
+  tabText: {
+    fontSize: 14,
+    fontFamily: Fonts.InterSemiBold,
+    color: '#666',
+  },
+  activeTabText: {
+    color: '#005884',
+  },
 
-    // Orders Section
-    ordersSection: {
-        marginTop: 20,
-        paddingHorizontal: 0,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontFamily: Fonts.InterBold,
-        color: '#333',
-    },
-    filterButtons: {
-        flexDirection: 'row',
-        gap: 8,
-    },
-    filterBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#eee',
-    },
-    filterBtnText: {
-        fontSize: 12,
-        color: '#666',
-        marginLeft: 4,
-        fontFamily: Fonts.InterMedium,
-    },
+  // Orders Section
+  ordersSection: {
+    marginTop: 20,
+    paddingHorizontal: 0,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: Fonts.InterBold,
+    color: '#333',
+  },
+  filterButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  filterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  filterBtnText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+    fontFamily: Fonts.InterMedium,
+  },
 
-    // Order Card
-    orderCard: {
-        backgroundColor: Colors.white,
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 16,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        borderLeftWidth: 4,
-        borderLeftColor: '#4CAF50',
-    },
-    orderHeader: {
-        flexDirection: 'row',
-        marginBottom: 12,
-    },
-    orderIconBg: {
-        width: 48,
-        height: 48,
-        borderRadius: 12,
-        backgroundColor: '#F5F9FF',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 12,
-    },
-    orderHeaderText: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    orderTitle: {
-        fontSize: 15,
-        fontFamily: Fonts.InterBold,
-        color: '#333',
-    },
-    orderSubtitle: {
-        fontSize: 12,
-        fontFamily: Fonts.InterRegular,
-        color: '#666',
-        marginTop: 2,
-    },
-    orderPrice: {
-        fontSize: 16,
-        fontFamily: Fonts.InterBold,
-        color: '#005884',
-    },
-    orderDate: {
-        fontSize: 11,
-        color: '#999',
-        fontFamily: Fonts.InterRegular,
-        marginTop: 4,
-    },
-    orderId: {
-        fontSize: 12,
-        color: '#888',
-        marginBottom: 8,
-        fontFamily: Fonts.InterRegular,
-    },
-    statusBadge: {
-        position: 'absolute',
-        top: 60,
-        left: 16,
-        backgroundColor: '#E8F5E9',
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 4,
-        alignSelf: 'flex-start',
-        marginBottom: 12,
-        display: 'none'
-    },
-    statusText: {
-        fontSize: 10,
-        color: '#4CAF50',
-        fontFamily: Fonts.InterBold,
-    },
-    orderMeta: {
-        flexDirection: 'row',
-        backgroundColor: '#FAFAFA',
-        padding: 10,
-        borderRadius: 8,
-        marginBottom: 16,
-        gap: 20,
-    },
-    metaLabel: {
-        fontSize: 11,
-        color: '#888',
-        marginBottom: 2,
-        fontFamily: Fonts.InterRegular,
-    },
-    metaValue: {
-        fontSize: 12,
-        color: '#333',
-        fontFamily: Fonts.InterSemiBold,
-    },
-    orderActions: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    downloadBtn: {
-        flex: 1,
-        flexDirection: 'row',
-        backgroundColor: '#005884',
-        paddingVertical: 10,
-        borderRadius: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    downloadBtnText: {
-        color: 'white',
-        fontSize: 13,
-        fontFamily: Fonts.InterSemiBold,
-        marginLeft: 6,
-    },
-    invoiceBtn: {
-        flex: 1,
-        flexDirection: 'row',
-        backgroundColor: 'white',
-        borderWidth: 1,
-        borderColor: '#005884',
-        paddingVertical: 10,
-        borderRadius: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    invoiceBtnText: {
-        color: '#005884',
-        fontSize: 13,
-        fontFamily: Fonts.InterSemiBold,
-        marginLeft: 6,
-    },
-    loadMoreBtn: {
-        flexDirection: 'row',
-        backgroundColor: Colors.white,
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 30,
-        borderWidth: 1,
-        borderColor: '#eee',
-    },
-    loadMoreText: {
-        fontSize: 14,
-        fontFamily: Fonts.InterSemiBold,
-        color: '#333',
-        marginRight: 6,
-    },
+  // Order Card
+  orderCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
+  },
+  orderHeader: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  orderIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#F5F9FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  orderHeaderText: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  orderTitle: {
+    fontSize: 15,
+    fontFamily: Fonts.InterBold,
+    color: '#333',
+  },
+  orderSubtitle: {
+    fontSize: 12,
+    fontFamily: Fonts.InterRegular,
+    color: '#666',
+    marginTop: 2,
+  },
+  orderPrice: {
+    fontSize: 16,
+    fontFamily: Fonts.InterBold,
+    color: '#005884',
+  },
+  orderDate: {
+    fontSize: 11,
+    color: '#999',
+    fontFamily: Fonts.InterRegular,
+    marginTop: 4,
+  },
+  orderId: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 8,
+    fontFamily: Fonts.InterRegular,
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: 60,
+    left: 16,
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+    display: 'none',
+  },
+  statusText: {
+    fontSize: 10,
+    color: '#4CAF50',
+    fontFamily: Fonts.InterBold,
+  },
+  orderMeta: {
+    flexDirection: 'row',
+    backgroundColor: '#FAFAFA',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 16,
+    gap: 20,
+  },
+  metaLabel: {
+    fontSize: 11,
+    color: '#888',
+    marginBottom: 2,
+    fontFamily: Fonts.InterRegular,
+  },
+  metaValue: {
+    fontSize: 12,
+    color: '#333',
+    fontFamily: Fonts.InterSemiBold,
+  },
+  orderActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  downloadBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#005884',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  downloadBtnText: {
+    color: 'white',
+    fontSize: 13,
+    fontFamily: Fonts.InterSemiBold,
+    marginLeft: 6,
+  },
+  invoiceBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#005884',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  invoiceBtnText: {
+    color: '#005884',
+    fontSize: 13,
+    fontFamily: Fonts.InterSemiBold,
+    marginLeft: 6,
+  },
+  loadMoreBtn: {
+    flexDirection: 'row',
+    backgroundColor: Colors.white,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 30,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  loadMoreText: {
+    fontSize: 14,
+    fontFamily: Fonts.InterSemiBold,
+    color: '#333',
+    marginRight: 6,
+  },
 });

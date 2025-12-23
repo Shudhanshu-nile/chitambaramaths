@@ -9,6 +9,7 @@ import BottomTabNavigator from './BottomTabNavigator';
 import PurchaseSuccessful from '../screens/PurchaseSuccessful';
 import ForgotScreen from '../screens/ForgetScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import ResetPassword from '../screens/ResetPassword';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +24,7 @@ const Appstack = () => {
             <Stack.Screen name="Main" component={BottomTabNavigator} />
             <Stack.Screen name="PurchaseSuccessful" component={PurchaseSuccessful} />
             <Stack.Screen name="Forgot" component={ForgotScreen} />
+            <Stack.Screen name="ResetPassword" component={ResetPassword} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
 
 

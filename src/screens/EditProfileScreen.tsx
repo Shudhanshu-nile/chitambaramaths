@@ -13,7 +13,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
-import { Colors, Fonts, Gradients } from '../constants';
+import { Colors, Fonts, Gradients, showToastMessage } from '../constants';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/Reducer/RootReducer';
@@ -94,11 +94,7 @@ const EditProfileScreen = () => {
             }
         } catch (error) {
             console.error('Failed to fetch countries', error);
-            Toast.show({
-                type: 'error',
-                text1: 'Error',
-                text2: 'Failed to load countries',
-            });
+             showToastMessage({message: 'Failed to load countries'});
         }
     };
 
@@ -161,11 +157,7 @@ const EditProfileScreen = () => {
 
             if (updateUserProfile.fulfilled.match(resultAction)) {
                 setIsLoading(false);
-                Toast.show({
-                    type: 'success',
-                    text1: 'Success',
-                    text2: 'Profile updated successfully',
-                });
+                showToastMessage({message: 'Profile updated successfully'});
                 navigation.goBack();
             } else {
                 setIsLoading(false);
@@ -242,6 +234,7 @@ const EditProfileScreen = () => {
                         placeholder="+94 7X XXX XXXX"
                         icon="phone-outline"
                         keyboardType="phone-pad"
+                        maxLength={10}
                         value={formData.phone}
                         onChangeText={(v) => updateField('phone', v)}
                     />

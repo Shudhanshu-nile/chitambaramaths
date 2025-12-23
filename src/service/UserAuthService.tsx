@@ -10,34 +10,30 @@ class UserAuthService {
     return response;
   }
 
-  public static async signInVerifyOtp(otpDetails: any) {
-    const url = `${API.SIGN_IN_OTP}`;
-    const response = await Http.post(url, otpDetails);
+  public static async forgotPassword(Details: any) {
+    const url = `${API.FORGOT_PASSWORD}`;
+    const response = await Http.post(url, Details);
     return response;
   }
 
-  public static async signUpOtp(signInDetails: any) {
-    const url = `${API.SIGN_UP}`;
-    const response = await Http.post(url, signInDetails);
-    return response;
-  }
-
-  public static async signUpVerifyOtp(otpDetails: any) {
-    const url = `${API.SIGN_UP_OTP}`;
-    const response = await Http.post(url, otpDetails);
-    return response;
-  }
-
-  public static async signUpDetails(signUpDetails: any) {
-    const url = `${API.SIGN_UP_DETAIL}`;
-    const response = await Http.post(url, signUpDetails);
-    return response;
-  }
-
-  public static async signUpRegister(signUpDetails: any) {
+  public static async ForgotVerifyOtp(otpDetails: any) {
     const dataType = DataType.FORMDATA;
-    const url = `${API.SIGN_UP_DETAIL}`;
-    const response = await Http.post(url, signUpDetails, dataType);
+    const url = `${API.VERIFY_OTP}`;
+    const response = await Http.post(url, otpDetails, dataType);
+    return response;
+  }
+
+  public static async resetPassword(Details: any) {
+    const dataType = DataType.FORMDATA;
+    const url = `${API.RESET_PASSWORD}`;
+    const response = await Http.post(url, Details, dataType);
+    return response;
+  }
+
+  public static async forgotResendOtp(otpDetails: any) {
+    const dataType = DataType.FORMDATA;
+    const url = `${API.RESEND_OTP}`;
+    const response = await Http.post(url, otpDetails, dataType);
     return response;
   }
 
@@ -53,19 +49,11 @@ class UserAuthService {
     return response;
   }
 
-  public static async forgotPassword(Details: any) {
-    const url = `${API.FORGOT_PASSWORD}`;
-    const response = await Http.post(url, Details);
-    return response;
-  }
-
   public static async updateProfile(userData: any) {
     const url = `${API.UPDATE_PROFILE}`;
     const response = await Http.post(url, userData);
     return response;
   }
-
-
 }
 
 export default UserAuthService;
