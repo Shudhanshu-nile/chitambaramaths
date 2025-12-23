@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 // import { useAuth } from '../context/AuthContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../redux/Reducer/User';
+import { fetchPaymentHistory } from '../redux/Reducer/Payment';
 import { RootState } from '../redux/Reducer/RootReducer';
 
 const ProfileScreen = () => {
@@ -26,6 +27,26 @@ const ProfileScreen = () => {
   const dispatch = useDispatch<any>();
   const navigation = useNavigation<any>();
   const { user } = useSelector((state: RootState) => state.user);
+  const { history, isLoading: isOrdersLoading, pagination } = useSelector((state: RootState) => state.payment);
+  const [visibleOrdersCount, setVisibleOrdersCount] = useState(5);
+
+  React.useEffect(() => {
+    dispatch(fetchPaymentHistory(1));
+  }, [dispatch]);
+
+  const handleLoadMore = () => {
+    if (visibleOrdersCount < history.length) {
+      // Create a new limit, e.g. show 5 more, or all? "Load More" suggests incremental.
+      setVisibleOrdersCount(prev => prev + 5);
+    } else if (pagination && pagination.current_page < pagination.last_page) {
+      // Fetch next page
+      dispatch(fetchPaymentHistory(pagination.current_page + 1));
+      setVisibleOrdersCount(prev => prev + 5);
+    }
+  };
+
+  const displayedOrders = history.slice(0, visibleOrdersCount);
+  const showLoadMore = history.length > visibleOrdersCount || (pagination && pagination.current_page < pagination.last_page);
 
   // Fallback to local state if Redux user is null (though validation should prevent access)
   // Or just use Redux user data directly
@@ -37,7 +58,7 @@ const ProfileScreen = () => {
 
   const handleSignOut = async () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', onPress: () => {}, style: 'cancel' },
+      { text: 'Cancel', onPress: () => { }, style: 'cancel' },
       {
         text: 'Sign Out',
         onPress: async () => {
@@ -54,7 +75,7 @@ const ProfileScreen = () => {
       'Delete Account',
       'Are you sure you want to delete your account? This action cannot be undone.',
       [
-        { text: 'Cancel', onPress: () => {}, style: 'cancel' },
+        { text: 'Cancel', onPress: () => { }, style: 'cancel' },
         {
           text: 'Delete',
           onPress: () => console.log('Deleting account...'),
@@ -191,48 +212,51 @@ const ProfileScreen = () => {
             </View>
 
             {/* Order List */}
-            {MOCK_ORDERS.map(order => (
+            {displayedOrders.map((order: any) => (
               <View key={order.id} style={styles.orderCard}>
                 <View style={styles.orderHeader}>
                   <View style={styles.orderIconBg}>
                     <Icon
-                      name={order.type === 'pdf' ? 'file-pdf-box' : 'image'}
+                      name={'file-document-outline'}
                       size={24}
-                      color={order.type === 'pdf' ? '#4CAF50' : '#2196F3'}
+                      color={'#2196F3'}
                     />
                   </View>
                   <View style={styles.orderHeaderText}>
-                    <Text style={styles.orderTitle}>{order.title}</Text>
-                    <Text style={styles.orderSubtitle}>{order.subtitle}</Text>
+                    <Text style={styles.orderTitle}>{order.order_type}</Text>
+                    <Text style={styles.orderSubtitle}>{order.country_name}</Text>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={styles.orderPrice}>{order.price}</Text>
-                    <Text style={styles.orderDate}>{order.date}</Text>
+                    <Text style={styles.orderPrice}>
+                      {order.currency === 'GBP' ? '£' : order.currency}
+                      {order.amount}
+                    </Text>
+                    <Text style={styles.orderDate}>{order.created_at}</Text>
                   </View>
                 </View>
 
-                <Text style={styles.orderId}>Order #{order.id}</Text>
+                <Text style={styles.orderId}>Order #{order.stripe_payment_intent_id}</Text>
                 <View style={styles.statusBadge}>
                   <Text style={styles.statusText}>{order.status}</Text>
                 </View>
 
                 <View style={styles.orderMeta}>
                   <View>
-                    <Text style={styles.metaLabel}>Visa Payment</Text>
-                    <Text style={styles.metaValue}>**** 4242</Text>
+                    <Text style={styles.metaLabel}>Payment Method</Text>
+                    <Text style={[styles.metaValue, { textTransform: 'capitalize' }]}>{order.payment_method}</Text>
                   </View>
                   <View>
-                    <Text style={styles.metaLabel}>Items</Text>
-                    <Text style={styles.metaValue}>{order.items} Papers</Text>
+                    <Text style={styles.metaLabel}>Currency</Text>
+                    <Text style={styles.metaValue}>{order.currency}</Text>
                   </View>
                 </View>
 
                 <View style={styles.orderActions}>
-                  <TouchableOpacity style={styles.downloadBtn}>
+                  {/* <TouchableOpacity style={styles.downloadBtn}>
                     <Icon name="download" size={18} color="white" />
                     <Text style={styles.downloadBtnText}>Download</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.invoiceBtn}>
+                  </TouchableOpacity> */}
+                  <TouchableOpacity style={[styles.invoiceBtn, { flex: 1 }]}>
                     <Icon
                       name="file-document-outline"
                       size={18}
@@ -244,10 +268,12 @@ const ProfileScreen = () => {
               </View>
             ))}
 
-            <TouchableOpacity style={styles.loadMoreBtn}>
-              <Text style={styles.loadMoreText}>Load More Orders</Text>
-              <Icon name="chevron-down" size={20} color="#333" />
-            </TouchableOpacity>
+            {showLoadMore && (
+              <TouchableOpacity style={styles.loadMoreBtn} onPress={handleLoadMore}>
+                <Text style={styles.loadMoreText}>Load More Orders</Text>
+                <Icon name="chevron-down" size={20} color="#333" />
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Action Buttons */}
@@ -282,38 +308,7 @@ const ProfileScreen = () => {
   );
 };
 
-const MOCK_ORDERS = [
-  {
-    id: 'ORD-2024-1547',
-    title: 'Past Papers',
-    subtitle: '3 GCSE Mathematics Papers',
-    price: '£14.97',
-    date: '15 Jan 2025',
-    status: 'Completed',
-    items: 3,
-    type: 'pdf',
-  },
-  {
-    id: 'ORD-2024-1792',
-    title: 'Event Photos 2023',
-    subtitle: '12 Original Photos',
-    price: '£24.00',
-    date: '08 Jan 2025',
-    status: 'Completed',
-    items: 12,
-    type: 'image',
-  },
-  {
-    id: 'ORD-2024-1842',
-    title: 'Past Papers',
-    subtitle: '3 GCSE Mathematics Papers',
-    price: '£14.97',
-    date: '15 Jan 2025',
-    status: 'Completed',
-    items: 3,
-    type: 'pdf',
-  },
-];
+
 
 export default ProfileScreen;
 

@@ -12,6 +12,7 @@ export const API = {
   FORGOT_PASSWORD: DOMAIN + 'forgot-password',
   VERIFY_OTP: DOMAIN + 'verify-otp',
   RESET_PASSWORD: DOMAIN + 'reset-password',
-  RESEND_OTP :DOMAIN + 'resend-otp',
+  RESEND_OTP: DOMAIN + 'resend-otp',
   UPDATE_PROFILE: DOMAIN + 'update-profile',
+  PAYMENT_HISTORY: DOMAIN + 'payments-history',
 };

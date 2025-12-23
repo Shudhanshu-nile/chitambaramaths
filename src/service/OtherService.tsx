@@ -27,5 +27,11 @@ class OtherService {
     const response = await Http.get(url);
     return response;
   }
+
+  public static async getPaymentHistory(page: number = 1) {
+    const url = `${API.PAYMENT_HISTORY}?page=${page}`;
+    const response = await Http.get(url);
+    return response;
+  }
 }
 export default OtherService;

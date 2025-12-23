@@ -11,8 +11,10 @@ import {
     Image,
     Platform,
     Linking,
-    Alert
+    Alert,
+    PermissionsAndroid
 } from 'react-native';
+import Geolocation from 'react-native-geolocation-service';
 import LinearGradient from 'react-native-linear-gradient';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -50,6 +52,120 @@ const SAMPLE_CENTER_DATA = [
 
 const CentersScreen = () => {
     const [searchText, setSearchText] = useState('');
+    const [sortedCenters, setSortedCenters] = useState(SAMPLE_CENTER_DATA);
+    const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+    // Haversine formula to calculate distance
+    const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371; // Radius of the earth in km
+        const dLat = deg2rad(lat2 - lat1);
+        const dLon = deg2rad(lon2 - lon1);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const d = R * c; // Distance in km
+        return d;
+    };
+
+    const deg2rad = (deg: number) => {
+        return deg * (Math.PI / 180);
+    };
+
+    const requestLocationPermission = async () => {
+        if (Platform.OS === 'ios') {
+            const auth = await Geolocation.requestAuthorization('whenInUse');
+            if (auth === 'granted') {
+                getLocation();
+            } else {
+                Alert.alert('Permission Denied', 'Location permission is required to find nearest centers.');
+            }
+        } else {
+            try {
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+                    {
+                        title: "Location Permission",
+                        message: "Chitambaramaths needs access to your location so you can find nearest centers.",
+                        buttonNeutral: "Ask Me Later",
+                        buttonNegative: "Cancel",
+                        buttonPositive: "OK"
+                    }
+                );
+                if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                    getLocation();
+                } else {
+                    Alert.alert('Permission Denied', 'Location permission is required to find nearest centers.');
+                }
+            } catch (err) {
+                console.warn(err);
+            }
+        }
+    };
+
+    const getLocation = () => {
+        Geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                setUserLocation({ latitude, longitude });
+                calculateDistancesAndSort(latitude, longitude);
+                getAddressFromCoordinates(latitude, longitude);
+            },
+            (error) => {
+                console.log(error.code, error.message);
+                Alert.alert('Error', 'Failed to get current location.');
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+        );
+    };
+
+    const getAddressFromCoordinates = async (lat: number, lng: number) => {
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+                {
+                    headers: {
+                        'User-Agent': 'ChitambaramathsApp/1.0',
+                    },
+                }
+            );
+            const data = await response.json();
+
+            if (data && data.address) {
+                const addr = data.address;
+                const fetchedTown =
+                    addr.town ||
+                    addr.city ||
+                    addr.village ||
+                    addr.suburb ||
+                    addr.hamlet ||
+                    '';
+
+                // You can append other parts if needed, e.g. fetchedTown + ", " + addr.country
+                if (fetchedTown) {
+                    setSearchText(fetchedTown);
+                }
+            }
+        } catch (error) {
+            console.warn('Reverse geocoding failed:', error);
+        }
+    };
+
+    const calculateDistancesAndSort = (userLat: number, userLon: number) => {
+        const updatedData = SAMPLE_CENTER_DATA.map(center => {
+            const distance = getDistanceFromLatLonInKm(
+                userLat,
+                userLon,
+                center.coordinate.latitude,
+                center.coordinate.longitude
+            );
+            return { ...center, distanceNum: distance, distance: `${distance.toFixed(1)} km` };
+        });
+
+        updatedData.sort((a, b) => a.distanceNum - b.distanceNum);
+        setSortedCenters(updatedData);
+    };
 
     const handleGetDirections = (lat: number, lng: number, label: string) => {
         const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
@@ -161,7 +277,7 @@ const CentersScreen = () => {
                     )}
                 </View>
 
-                <TouchableOpacity style={styles.locationButton}>
+                <TouchableOpacity style={styles.locationButton} onPress={requestLocationPermission}>
                     <Ionicons name="locate" size={20} color={Colors.white} style={{ marginRight: 8 }} />
                     <Text style={styles.locationButtonText}>Use My Current Location</Text>
                 </TouchableOpacity>
@@ -186,7 +302,7 @@ const CentersScreen = () => {
                 </View>
 
                 <FlatList
-                    data={SAMPLE_CENTER_DATA}
+                    data={sortedCenters}
                     keyExtractor={(item) => item.id}
                     renderItem={renderCenterItem}
                     contentContainerStyle={styles.listContent}

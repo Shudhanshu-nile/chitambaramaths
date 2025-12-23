@@ -1,14 +1,14 @@
-import {View,Text} from 'react-native';
+import { View, Text } from 'react-native';
 import { BaseToast, ErrorToast } from 'react-native-toast-message';
 
-import { Colors } from '../assests/style';
+import { Colors, Fonts } from '../constants/index';
 
 
 
 
 export const toastConfig = {
-  
-  successToast: ({text1, props}) => (
+
+  success: ({ text1, props }) => (
     <View
       style={{
         borderRadius: 10,
@@ -16,15 +16,15 @@ export const toastConfig = {
         justifyContent: 'center',
         alignItems: 'center',
         width: '90%',
-        backgroundColor: Colors.primaryTheme,
-        flexDirection:'row'
-        
+        backgroundColor: Colors.primaryBlue,
+        flexDirection: 'row'
+
       }}>
-        
-      <Text style={{color:Colors.white,fontSize:14,fontFamily:'Poppins-Regular'}}>{text1}</Text>
+
+      <Text style={{ color: Colors.white, fontSize: 14, fontFamily: Fonts.InterRegular }}>{text1}</Text>
     </View>
   ),
-  errorToast: ({text1, props}) => (
+  error: ({ text1, props }) => (
     <View
       style={{
         borderRadius: 20,
@@ -41,7 +41,7 @@ export const toastConfig = {
   // success: (props) => (
   //       <BaseToast
   //         {...props}
-          
+
   //         style={{
   //           borderLeftColor: '#ADC430',
   //           borderColor: '#ADC430',
@@ -60,10 +60,10 @@ export const toastConfig = {
   //           fontWeight: '400',
   //           color: 'black',
   //         }}
-          
+
   //       />
   //     ),
-      
+
   //     error: (props) => (
   //       <ErrorToast
   //         {...props}
@@ -71,7 +71,7 @@ export const toastConfig = {
   //           fontSize: 14,
   //           fontWeight: '400',
   //           color: 'black',
-          
+
   //         }}
   //        style={{zIndex:1}}
   //         text2Style={{
@@ -79,7 +79,7 @@ export const toastConfig = {
   //           fontWeight: '400',
   //           color: 'black',
   //         }}
-         
+
   //       />
   //     ),
 };

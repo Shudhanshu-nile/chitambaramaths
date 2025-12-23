@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Colors } from '../constants';
+import { Colors, Fonts, showToastMessage } from '../constants';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
   CodeField,
@@ -45,7 +45,7 @@ const ForgotScreen = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [resendTimer, setResendTimer] = useState(RESEND_OTP_TIME_LIMIT);
   const [canResend, setCanResend] = useState(false);
-  
+
   const otpRef = useRef<TextInput>(null);
   const [props, getCellOnLayoutHandler] = useClearByFocusCell({
     value: otp,
@@ -77,19 +77,23 @@ const ForgotScreen = () => {
       return;
     }
 
+    const formData = new FormData()
+    formData.append('email', email)
     try {
       setIsSubmitting(true);
-      const response = await UserAuthService.forgotPassword({ email });
-      
+      console.log("formData", formData)
+      const response = await UserAuthService.forgotPassword(formData);
+      console.log("response", response)
       if (response && response.status) {
+
         setShowOtpModal(true);
         startResendTimer();
       } else {
-        Alert.alert('Error', response.message || 'Failed to send OTP. Please try again.');
+        showToastMessage({ message: "Failed to send OTP. Please try again." })
       }
     } catch (error) {
       console.error('Forgot password error:', error);
-      Alert.alert('Error', 'An error occurred. Please try again.');
+      showToastMessage({ message: "An error occurred. Please try again." })
     } finally {
       setIsSubmitting(false);
     }
@@ -109,6 +113,7 @@ const ForgotScreen = () => {
       });
 
       if (response && response.status) {
+        setShowOtpModal(false);
         navigation.navigate('ResetPassword', { email, otp });
       } else {
         setOtpError(response?.message || 'Invalid OTP. Please try again.');
@@ -148,7 +153,7 @@ const ForgotScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.lightGray} />
-      
+
       {/* Header with back button */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -160,7 +165,7 @@ const ForgotScreen = () => {
         <Text style={styles.headerTitle}>Reset Password</Text>
         <View style={styles.headerPlaceholder} />
       </View>
-      
+
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContainer}
         enableOnAndroid={true}
@@ -251,18 +256,18 @@ const ForgotScreen = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setShowOtpModal(false)}
             >
               <Icon name="close" size={24} color={Colors.black} />
             </TouchableOpacity>
-            
+
             <Text style={styles.modalTitle}>Enter Verification Code</Text>
             <Text style={styles.modalSubtitle}>
               We've sent a verification code to {email}
             </Text>
-            
+
             <View style={styles.otpContainer}>
               <CodeField
                 ref={otpRef}
@@ -273,7 +278,7 @@ const ForgotScreen = () => {
                 rootStyle={styles.codeFieldRoot}
                 keyboardType="number-pad"
                 textContentType="oneTimeCode"
-                renderCell={({index, symbol, isFocused}) => (
+                renderCell={({ index, symbol, isFocused }) => (
                   <View
                     key={index}
                     style={[
@@ -291,19 +296,19 @@ const ForgotScreen = () => {
               {otpError ? (
                 <Text style={styles.errorText}>{otpError}</Text>
               ) : null}
-              
+
               <View style={styles.resendContainer}>
                 <Text style={styles.resendText}>
-                  {!canResend 
-                    ? `Resend code in ${resendTimer}s` 
+                  {!canResend
+                    ? `Resend code in ${resendTimer}s`
                     : "Didn't receive the code?"
                   }
                 </Text>
-                <TouchableOpacity 
-                  onPress={handleResendOtp} 
+                <TouchableOpacity
+                  onPress={handleResendOtp}
                   disabled={!canResend}
                 >
-                  <Text 
+                  <Text
                     style={[
                       styles.resendButton,
                       !canResend && styles.resendButtonDisabled
@@ -313,12 +318,12 @@ const ForgotScreen = () => {
                   </Text>
                 </TouchableOpacity>
               </View>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={[
                   styles.submitButton,
                   (otp.length !== CELL_COUNT || isVerifying) && styles.submitButtonDisabled
-                ]} 
+                ]}
                 onPress={handleVerifyOtp}
                 disabled={otp.length !== CELL_COUNT || isVerifying}
               >
@@ -439,7 +444,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 12,
     color: 'red',
-    marginTop: -12,
+    marginTop: 8,
     marginBottom: 12,
   },
   submitButton: {
@@ -450,6 +455,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
     flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
   },
   submitButtonText: {
     color: Colors.white,
@@ -578,185 +585,14 @@ const styles = StyleSheet.create({
   },
   submitButtonDisabled: {
     backgroundColor: Colors.borderGray,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 8,
-    marginLeft: -8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: Fonts.InterSemiBold,
-    color: Colors.black,
-    textAlign: 'center',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: Sizes.fixPadding * 1.4,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  topCard: {
-    backgroundColor: Colors.primaryBlue,
-    borderRadius: Spacing.borderRadius.large,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 24,
-    elevation: 2,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    opacity: 0.7,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  topCardTitle: {
-    fontSize: 24,
-    fontFamily: Fonts.InterBold,
-    color: Colors.white,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  topCardSubtitle: {
-    fontSize: 14,
-    fontFamily: Fonts.InterRegular,
-    color: Colors.white,
-    opacity: 0.9,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  formContainer: {
-    backgroundColor: Colors.white,
-    borderRadius: Spacing.borderRadius.large,
-    padding: 20,
-    elevation: 2,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    marginBottom: 10,
-  },
-  instructionText: {
-    fontSize: 14,
-    fontFamily: Fonts.InterRegular,
-    color: '#4B5563',
-    lineHeight: 22,
-    marginBottom: 14,
-    textAlign: 'center',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.borderGray,
-    borderRadius: Spacing.borderRadius.medium,
-    marginBottom: 8,
-    backgroundColor: Colors.lightGray,
-  },
-  label: {
-    fontSize: 14,
-    marginBottom: 6,
-    marginTop: 14,
-    fontFamily: Fonts.InterSemiBold,
-  },
-  inputIcon: {
-    padding: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    height: 50,
-    fontFamily: Fonts.InterRegular,
-    fontSize: 14,
-    color: Colors.black,
-    paddingRight: 15,
-  },
-  inputError: {
-    borderColor: Colors.alertRed,
-  },
-  errorText: {
-    color: Colors.alertRed,
-    fontSize: 12,
-    fontFamily: Fonts.InterRegular,
-    marginBottom: 16,
-    marginLeft: 5,
-  },
-  submitButton: {
     marginTop: 8,
-    marginBottom: 4,
-    borderRadius: Spacing.borderRadius.large,
-    overflow: 'hidden',
-    height: 56,
-    backgroundColor: Colors.blueDark,
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  gradientButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 56,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: Spacing.borderRadius.large,
-  },
-  submitButtonText: {
-    color: Colors.white,
-    fontFamily: Fonts.InterSemiBold,
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  buttonIcon: {
-    marginLeft: 10,
-  },
-  infoContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: Colors.lightGray,
-    borderRadius: Spacing.borderRadius.medium,
-    padding: 16,
-    // marginBottom: 24,
-  },
-  infoContainer2: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: Colors.lightGray,
-    borderRadius: Spacing.borderRadius.medium,
-    paddingHorizontal: 30,
-    marginBottom: 24,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    fontFamily: Fonts.InterRegular,
-    color: Colors.textGray,
-    marginLeft: 10,
-    lineHeight: 18,
-  },
-  backToLoginButton: {
-    alignSelf: 'center',
-    paddingVertical: 8,
-  },
-  backToLoginText: {
-    color: Colors.blueDark,
-    fontFamily: Fonts.InterSemiBold,
-    fontSize: 14,
   },
 });
 

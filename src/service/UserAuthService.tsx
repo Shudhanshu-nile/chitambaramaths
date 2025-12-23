@@ -11,8 +11,9 @@ class UserAuthService {
   }
 
   public static async forgotPassword(Details: any) {
+    const dataType = DataType.FORMDATA;
     const url = `${API.FORGOT_PASSWORD}`;
-    const response = await Http.post(url, Details);
+    const response = await Http.post(url, Details, dataType);
     return response;
   }
 

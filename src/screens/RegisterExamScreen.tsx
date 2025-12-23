@@ -23,6 +23,7 @@ import { Colors, Fonts, showToastMessage } from '../constants';
 import OtherService from '../service/OtherService';
 import CustomTextInput from '../components/CustomTextInput';
 import Logo from '../assets/images/logo.svg';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const RegisterExamScreen = ({ navigation }: any) => {
   // Form State
@@ -388,6 +389,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.container}>
+
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
       <Logo height={40} width={150} style={{ marginLeft: 120 }} />
       {/* HEADER */}
@@ -403,11 +405,13 @@ const RegisterExamScreen = ({ navigation }: any) => {
           <Icon name="help-circle" size={24} color={Colors.textGray} />
         </TouchableOpacity>
       </View>
-
-      <ScrollView
+      <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        enableOnAndroid={true}
+        extraScrollHeight={10}
+        keyboardShouldPersistTaps="handled"
       >
+
         {/* TOP BRANDING (OPTIONAL based on image) */}
         <View style={styles.brandingContainer}>
           {/* Branding logic if any */}
@@ -451,7 +455,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
                     style={[
                       styles.countryOption,
                       selectedCountry?.id === item.id &&
-                        styles.countryOptionSelected,
+                      styles.countryOptionSelected,
                     ]}
                     onPress={() => {
                       setSelectedCountry(item);
@@ -462,7 +466,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
                       style={[
                         styles.countryOptionText,
                         selectedCountry?.id === item.id &&
-                          styles.countryOptionTextSelected,
+                        styles.countryOptionTextSelected,
                       ]}
                     >
                       {item.name}
@@ -782,8 +786,8 @@ const RegisterExamScreen = ({ navigation }: any) => {
         {/* INFO BOX */}
         <View style={styles.infoBox}>
           {selectedCountry?.terms &&
-          selectedCountry.terms.length > 0 &&
-          selectedCountry.terms[0].name ? (
+            selectedCountry.terms.length > 0 &&
+            selectedCountry.terms[0].name ? (
             selectedCountry.terms[0].name
               .split(/\r?\n/)
               .map((line: string, index: number) =>
@@ -868,7 +872,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
         </View>
 
         <View style={{ height: 40 }} />
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 };

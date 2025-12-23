@@ -18,6 +18,7 @@ import NotificationService from './src/utils/NotificationServices';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './src/redux/Store/Store';
+import { toastConfig } from './src/utils/ToastConfig';
 
 function App() {
   const [notification, setNotification] = useState<NotificationPayload | null>(null);
@@ -154,10 +155,11 @@ function App() {
       <PersistGate loading={null} persistor={persistor}>
         <SafeAreaProvider>
           <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+
           <NavigationContainer ref={navigationRef}>
             <Appstack />
           </NavigationContainer>
-           <Toast/>
+          <Toast config={toastConfig} topOffset={60} />
           {/* <Toast topOffset={60} /> */}
         </SafeAreaProvider>
       </PersistGate>

@@ -26,6 +26,7 @@ const { width } = Dimensions.get('window');
 
 import OtherService from '../service/OtherService';
 import { replaceToMain } from '../navigation/GlobalNavigation';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const RegisterScreen = ({ navigation }: any) => {
   // const { signUp } = useAuth();
@@ -205,7 +206,12 @@ const RegisterScreen = ({ navigation }: any) => {
         backgroundColor={Colors.primaryBlue}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <KeyboardAwareScrollView
+        // contentContainerStyle={styles.formCard}
+        enableOnAndroid={true}
+        extraScrollHeight={10}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* HEADER */}
         {/* HEADER */}
         <View style={styles.headerWrapper}>
@@ -307,7 +313,7 @@ const RegisterScreen = ({ navigation }: any) => {
                     style={[
                       styles.dropdownItemText,
                       formData.country === item.name &&
-                        styles.selectedDropdownItemText,
+                      styles.selectedDropdownItemText,
                     ]}
                   >
                     {item.name}
@@ -394,7 +400,7 @@ const RegisterScreen = ({ navigation }: any) => {
                       style={[
                         styles.dropdownItemText,
                         formData.academicYear === item.name &&
-                          styles.selectedDropdownItemText,
+                        styles.selectedDropdownItemText,
                       ]}
                     >
                       {item.name}
@@ -480,7 +486,7 @@ const RegisterScreen = ({ navigation }: any) => {
             </Text>
           </Text>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
       <DatePicker
         modal
         open={open}
