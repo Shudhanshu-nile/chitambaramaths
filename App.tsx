@@ -158,9 +158,17 @@ function App() {
 
           <NavigationContainer ref={navigationRef}>
             <Appstack />
+            <Toast
+              config={toastConfig}
+              position='top'
+              topOffset={50}
+              visibilityTime={4000}
+              autoHide={true}
+              onShow={() => { }}
+              onHide={() => { }}
+              onPress={() => { }}
+            />
           </NavigationContainer>
-          <Toast config={toastConfig} topOffset={60} />
-          {/* <Toast topOffset={60} /> */}
         </SafeAreaProvider>
       </PersistGate>
     </Provider>

@@ -46,7 +46,7 @@ const LoginScreen = ({ navigation }: any) => {
 
 
   const showErrorToast = (message: string) => {
-    showToastMessage({message: message});
+    showToastMessage({ message: message });
   };
 
   const validateForm = () => {
@@ -86,7 +86,7 @@ const LoginScreen = ({ navigation }: any) => {
       const resultAction = await dispatch(loginUser({ email: email.trim(), password: password }));
 
       if (loginUser.fulfilled.match(resultAction)) {
-        showToastMessage({message: 'Login successful'});
+        showToastMessage({ message: 'Login successful' });
         replaceToMain("Home");
       }
     } catch (error: any) {
@@ -220,7 +220,6 @@ const LoginScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      <Toast />
     </View>
   );
 };

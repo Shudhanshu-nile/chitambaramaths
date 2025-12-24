@@ -206,206 +206,120 @@ const RegisterScreen = ({ navigation }: any) => {
         backgroundColor={Colors.primaryBlue}
       />
 
-      <KeyboardAwareScrollView
-        // contentContainerStyle={styles.formCard}
-        enableOnAndroid={true}
-        extraScrollHeight={10}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* HEADER */}
-        {/* HEADER */}
-        <View style={styles.headerWrapper}>
-          <LinearGradient colors={Gradients.primaryBlue} style={styles.header}>
-            <View style={styles.headerCircleLarge} />
-            <View style={styles.headerCircleSmall} />
+      {/* FIXED HEADER */}
+      <View style={styles.headerWrapper}>
+        <LinearGradient colors={Gradients.primaryBlue} style={styles.header}>
+          <View style={styles.headerCircleLarge} />
+          <View style={styles.headerCircleSmall} />
 
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Icon name="arrow-left" size={22} color={Colors.white} />
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-left" size={22} color={Colors.white} />
+          </TouchableOpacity>
 
-            {/* HEADER CONTENT */}
-            <View style={styles.headerContent}>
-              <View style={styles.logoContainer} pointerEvents="none">
-                <Logo width={width * 0.62} height={44} />
-              </View>
-
-              <Text style={styles.headerTitle}>Create Account</Text>
-              <Text style={styles.headerSubtitle}>
-                Join thousands of students learning math
-              </Text>
+          {/* HEADER CONTENT */}
+          <View style={styles.headerContent}>
+            <View style={styles.logoContainer} pointerEvents="none">
+              <Logo width={width * 0.62} height={44} />
             </View>
-          </LinearGradient>
-        </View>
 
-        {/* FORM CARD */}
-        <View style={styles.formCard}>
-          <CustomTextInput
-            label="Full Name"
-            placeholder="Enter your full name"
-            icon="account-outline"
-            value={formData.fullName}
-            onChangeText={v => updateField('fullName', v)}
-          />
-
-          <CustomTextInput
-            label="Email Address"
-            placeholder="student@example.com"
-            icon="email-outline"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={formData.email}
-            onChangeText={v => updateField('email', v)}
-          />
-
-          <CustomTextInput
-            label="Phone Number"
-            placeholder="+94 7X XXX XXXX"
-            icon="phone-outline"
-            keyboardType="phone-pad"
-            value={formData.phone}
-            maxLength={10}
-            onChangeText={v => updateField('phone', v)}
-          />
-
-          <CustomDropdown
-            label="Date of Birth"
-            placeholder="mm/dd/yyyy"
-            rightIcon="calendar-outline"
-            value={formData.dob}
-            onPress={() => setOpen(true)}
-          />
-
-          <CustomPasswordInput
-            label="Password"
-            placeholder="Create a strong password"
-            value={formData.password}
-            onChangeText={v => updateField('password', v)}
-          />
-
-          <CustomPasswordInput
-            label="Confirm Password"
-            placeholder="Confirm your password"
-            value={formData.confirmPassword}
-            onChangeText={v => updateField('confirmPassword', v)}
-          />
-
-          <CustomDropdown
-            label="Country"
-            placeholder={formData.country || 'Select Country'}
-            value={formData.country}
-            icon="earth"
-            rightIcon={isCountryOpen ? 'chevron-up' : 'chevron-down'}
-            onPress={() => setIsCountryOpen(!isCountryOpen)}
-          />
-
-          {isCountryOpen && (
-            <View style={styles.dropdownList}>
-              {countries.map(item => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.dropdownItem}
-                  onPress={() => handleCountrySelect(item)}
-                >
-                  <Text
-                    style={[
-                      styles.dropdownItemText,
-                      formData.country === item.name &&
-                      styles.selectedDropdownItemText,
-                    ]}
-                  >
-                    {item.name}
-                  </Text>
-                  {formData.country === item.name && (
-                    <Icon
-                      name="check"
-                      size={18}
-                      color={Colors.primaryDarkBlue}
-                    />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          {/* RADIO BUTTONS */}
-          <View style={{ marginBottom: 16 }}>
-            {/* <TouchableOpacity
-                            style={styles.radioRow}
-                            onPress={() =>
-                                setFormData({ ...formData, isExamCenter: true })
-                            }
-                        >
-                            <View
-                                style={[
-                                    styles.radioOuter,
-                                    formData.isExamCenter && styles.radioOuterActive,
-                                ]}
-                            >
-                                {formData.isExamCenter && (
-                                    <View style={styles.radioInner} />
-                                )}
-                            </View>
-                            <Text style={styles.radioText}>
-                                My school is an examination center.
-                            </Text>
-                        </TouchableOpacity> */}
-
-            {/* <TouchableOpacity
-                            style={styles.radioRow}
-                            onPress={() =>
-                                setFormData({ ...formData, isExamCenter: false })
-                            }
-                        >
-                            <View
-                                style={[
-                                    styles.radioOuter,
-                                    !formData.isExamCenter && styles.radioOuterActive,
-                                ]}
-                            >
-                                {!formData.isExamCenter && (
-                                    <View style={styles.radioInner} />
-                                )}
-                            </View>
-                            <Text style={styles.radioText}>
-                                My school is not an examination center.
-                            </Text>
-                        </TouchableOpacity> */}
+            <Text style={styles.headerTitle}>Create Account</Text>
+            <Text style={styles.headerSubtitle}>
+              Join thousands of students learning math
+            </Text>
           </View>
+        </LinearGradient>
+      </View>
 
-          <CustomDropdown
-            label="Academic Year"
-            placeholder={formData.academicYear || 'Select your year'}
-            value={formData.academicYear}
-            icon="school-outline"
-            rightIcon={isYearOpen ? 'chevron-up' : 'chevron-down'}
-            onPress={() => setIsYearOpen(!isYearOpen)}
-          />
+      {/* SCROLLABLE FORM CONTAINER */}
+      <View style={{ flex: 1, marginTop: -80 }}>
+        <KeyboardAwareScrollView
+          enableOnAndroid={true}
+          extraScrollHeight={10}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 40 }}
+        >
+          {/* FORM CARD */}
+          <View style={styles.formCard}>
+            <CustomTextInput
+              label="Full Name"
+              placeholder="Enter your full name"
+              icon="account-outline"
+              value={formData.fullName}
+              onChangeText={v => updateField('fullName', v)}
+            />
 
-          {isYearOpen && (
-            <View style={styles.dropdownList}>
-              {studyYears.length > 0 ? (
-                studyYears.map(item => (
+            <CustomTextInput
+              label="Email Address"
+              placeholder="student@example.com"
+              icon="email-outline"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={formData.email}
+              onChangeText={v => updateField('email', v)}
+            />
+
+            <CustomTextInput
+              label="Phone Number"
+              placeholder="+94 7X XXX XXXX"
+              icon="phone-outline"
+              keyboardType="phone-pad"
+              value={formData.phone}
+              maxLength={10}
+              onChangeText={v => updateField('phone', v)}
+            />
+
+            <CustomDropdown
+              label="Date of Birth"
+              placeholder="mm/dd/yyyy"
+              rightIcon="calendar-outline"
+              value={formData.dob}
+              onPress={() => setOpen(true)}
+            />
+
+            <CustomPasswordInput
+              label="Password"
+              placeholder="Enter your password"
+              value={formData.password}
+              onChangeText={v => updateField('password', v)}
+            />
+
+            <CustomPasswordInput
+              label="Confirm Password"
+              placeholder="Confirm your password"
+              value={formData.confirmPassword}
+              onChangeText={v => updateField('confirmPassword', v)}
+            />
+
+            <CustomDropdown
+              label="Country"
+              placeholder={formData.country || 'Select Country'}
+              value={formData.country}
+              icon="earth"
+              rightIcon={isCountryOpen ? 'chevron-up' : 'chevron-down'}
+              onPress={() => setIsCountryOpen(!isCountryOpen)}
+            />
+
+            {isCountryOpen && (
+              <View style={styles.dropdownList}>
+                {countries.map(item => (
                   <TouchableOpacity
                     key={item.id}
                     style={styles.dropdownItem}
-                    onPress={() => {
-                      updateField('academicYear', item.name);
-                      setIsYearOpen(false);
-                    }}
+                    onPress={() => handleCountrySelect(item)}
                   >
                     <Text
                       style={[
                         styles.dropdownItemText,
-                        formData.academicYear === item.name &&
+                        formData.country === item.name &&
                         styles.selectedDropdownItemText,
                       ]}
                     >
                       {item.name}
                     </Text>
-                    {formData.academicYear === item.name && (
+                    {formData.country === item.name && (
                       <Icon
                         name="check"
                         size={18}
@@ -413,80 +327,168 @@ const RegisterScreen = ({ navigation }: any) => {
                       />
                     )}
                   </TouchableOpacity>
-                ))
-              ) : (
-                <View style={styles.dropdownItem}>
-                  <Text style={styles.dropdownItemText}>
-                    {selectedCountryId
-                      ? 'No study years available'
-                      : 'Select a country first'}
-                  </Text>
-                </View>
-              )}
+                ))}
+              </View>
+            )}
+
+            {/* RADIO BUTTONS */}
+            <View style={{ marginBottom: 16 }}>
+              {/* <TouchableOpacity
+                              style={styles.radioRow}
+                              onPress={() =>
+                                  setFormData({ ...formData, isExamCenter: true })
+                              }
+                          >
+                              <View
+                                  style={[
+                                      styles.radioOuter,
+                                      formData.isExamCenter && styles.radioOuterActive,
+                                  ]}
+                              >
+                                  {formData.isExamCenter && (
+                                      <View style={styles.radioInner} />
+                                  )}
+                              </View>
+                              <Text style={styles.radioText}>
+                                  My school is an examination center.
+                              </Text>
+                          </TouchableOpacity> */}
+
+              {/* <TouchableOpacity
+                              style={styles.radioRow}
+                              onPress={() =>
+                                  setFormData({ ...formData, isExamCenter: false })
+                              }
+                          >
+                              <View
+                                  style={[
+                                      styles.radioOuter,
+                                      !formData.isExamCenter && styles.radioOuterActive,
+                                  ]}
+                              >
+                                  {!formData.isExamCenter && (
+                                      <View style={styles.radioInner} />
+                                  )}
+                              </View>
+                              <Text style={styles.radioText}>
+                                  My school is not an examination center.
+                              </Text>
+                          </TouchableOpacity> */}
             </View>
-          )}
 
-          {/* TERMS */}
-          <TouchableOpacity
-            style={styles.checkboxRow}
-            onPress={() => updateField('agreeToTerms', !formData.agreeToTerms)}
-          >
-            <View
-              style={[
-                styles.checkbox,
-                formData.agreeToTerms && styles.checkboxChecked,
-              ]}
+            <CustomDropdown
+              label="Academic Year"
+              placeholder={formData.academicYear || 'Select your year'}
+              value={formData.academicYear}
+              icon="school-outline"
+              rightIcon={isYearOpen ? 'chevron-up' : 'chevron-down'}
+              onPress={() => setIsYearOpen(!isYearOpen)}
+            />
+
+            {isYearOpen && (
+              <View style={styles.dropdownList}>
+                {studyYears.length > 0 ? (
+                  studyYears.map(item => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        updateField('academicYear', item.name);
+                        setIsYearOpen(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.dropdownItemText,
+                          formData.academicYear === item.name &&
+                          styles.selectedDropdownItemText,
+                        ]}
+                      >
+                        {item.name}
+                      </Text>
+                      {formData.academicYear === item.name && (
+                        <Icon
+                          name="check"
+                          size={18}
+                          color={Colors.primaryDarkBlue}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <View style={styles.dropdownItem}>
+                    <Text style={styles.dropdownItemText}>
+                      {selectedCountryId
+                        ? 'No study years available'
+                        : 'Select a country first'}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* TERMS */}
+            <TouchableOpacity
+              style={styles.checkboxRow}
+              onPress={() => updateField('agreeToTerms', !formData.agreeToTerms)}
             >
-              {formData.agreeToTerms && (
-                <Icon name="check" size={14} color={Colors.white} />
-              )}
-            </View>
-            <Text style={styles.checkboxText}>
-              I agree to the <Text style={styles.link}>Terms of Service</Text> &{' '}
-              <Text style={styles.link}>Privacy Policy</Text>
-            </Text>
-          </TouchableOpacity>
+              <View
+                style={[
+                  styles.checkbox,
+                  formData.agreeToTerms && styles.checkboxChecked,
+                ]}
+              >
+                {formData.agreeToTerms && (
+                  <Icon name="check" size={14} color={Colors.white} />
+                )}
+              </View>
+              <Text style={styles.checkboxText}>
+                I agree to the <Text style={styles.link}>Terms of Service</Text> &{' '}
+                <Text style={styles.link}>Privacy Policy</Text>
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.checkboxRow}
-            onPress={() => updateField('sendUpdates', !formData.sendUpdates)}
-          >
-            <View
-              style={[
-                styles.checkbox,
-                formData.sendUpdates && styles.checkboxChecked,
-              ]}
+            <TouchableOpacity
+              style={styles.checkboxRow}
+              onPress={() => updateField('sendUpdates', !formData.sendUpdates)}
             >
-              {formData.sendUpdates && (
-                <Icon name="check" size={14} color={Colors.white} />
-              )}
-            </View>
-            <Text style={styles.checkboxText}>
-              Send me updates about new past papers, events, and special offers
-            </Text>
-          </TouchableOpacity>
+              <View
+              // style={[
+              //   styles.checkbox,
+              //   formData.sendUpdates && styles.checkboxChecked,
+              // ]}
+              >
+                {/* {formData.sendUpdates && (
+                  <Icon name="check" size={14} color={Colors.white} />
+                )} */}
+              </View>
+              {/* <Text style={styles.checkboxText}>
+                Send me updates about new past papers, events, and special offers
+              </Text> */}
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.registerButton}
-            onPress={handleRegister}
-          >
-            <Text style={styles.registerButtonText}>Create Account</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* SIGN IN CARD */}
-        <View style={styles.signInCard}>
-          <Text style={styles.signInText}>
-            Already have an account?{' '}
-            <Text
-              style={styles.signInLink}
-              onPress={() => navigation.navigate('Login')}
+            <TouchableOpacity
+              style={styles.registerButton}
+              onPress={handleRegister}
             >
-              Sign In
+              <Text style={styles.registerButtonText}>Create Account</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* SIGN IN CARD */}
+          <View style={styles.signInCard}>
+            <Text style={styles.signInText}>
+              Already have an account?{' '}
+              <Text
+                style={styles.signInLink}
+                onPress={() => navigation.navigate('Login')}
+              >
+                Sign In
+              </Text>
             </Text>
-          </Text>
-        </View>
-      </KeyboardAwareScrollView>
+          </View>
+        </KeyboardAwareScrollView>
+      </View>
       <DatePicker
         modal
         open={open}
@@ -597,7 +599,7 @@ const styles = StyleSheet.create({
 
   formCard: {
     backgroundColor: Colors.white,
-    marginTop: -80,
+    // marginTop: -80, // Removed negative margin as it is handled by container
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     padding: 24,

@@ -39,7 +39,7 @@ const CustomPasswordInput: React.FC<CustomPasswordInputProps> = ({
                     style={styles.toggleButton}
                 >
                     <Icon
-                        name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+                        name={isPasswordVisible ? 'eye-outline' : 'eye-off-outline'}
                         size={20}
                         color="#999"
                     />

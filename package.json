@@ -7,7 +7,16 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "androidRelease": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
+    "removeAndroidDrwable": "rm -rf ./android/app/src/main/res/drawable-*",
+    "removeAndroidRaw": "rm -rf ./android/app/src/main/res/raw",
+    "AndroidBuild": "cd android && ./gradlew clean && ./gradlew assembleRelease",
+    "AndroidBundleRelease": "cd android && ./gradlew clean && ./gradlew bundleRelease",
+    "gradleClean": "cd android && ./gradlew clean && cd ..",
+    "exeAllAndroid": "cd android && ./gradlew clean && cd .. && npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res && cd android && ./gradlew assembleDebug && cd ..",
+    "exeAllAndroidProd": "npm run androidRelease && npm run removeAndroidDrwable && npm run removeAndroidRaw && npm run AndroidBundleRelease",
+    "set-icon": "npx react-native-make set-icon --path ./src/assets/images/icon.png"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.24.0",

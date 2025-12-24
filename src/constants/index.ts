@@ -7,7 +7,7 @@ const SCREEN_WIDTH = Math.min(width, height);
 
 export const Sizes = {
     fixPadding: SCREEN_HEIGHT * 0.02,
-    fixHorizontalPadding: SCREEN_WIDTH*0.02
+    fixHorizontalPadding: SCREEN_WIDTH * 0.02
 }
 
 // Screen dimension helpers
@@ -20,14 +20,14 @@ export const responsiveScreenWidth = (value: number) => {
 };
 
 export const showToastMessage = ({ message = '' }) => {
-    console.log('taost check ',message)
+    console.log('taost check ', message)
     Toast.show({
         type: 'success',
         text1: message,
         position: 'top',
-        visibilityTime:2000,
+        visibilityTime: 2000,
         autoHide: true,
-        
+
     });
 
 };
@@ -102,6 +102,7 @@ export const ScreenNames = {
     Profile: 'Profile',
     RegisterExam: 'RegisterExam',
     PurchaseSuccessful: 'PurchaseSuccessful',
+    PaymentSuccess: 'PaymentSuccess',
     EditProfile: 'EditProfile',
     Forgot: 'Forgot',
     ResetPassword: 'ResetPassword',

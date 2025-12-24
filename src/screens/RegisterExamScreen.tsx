@@ -19,9 +19,10 @@ import {
 import Geolocation from 'react-native-geolocation-service';
 import Toast from 'react-native-toast-message';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Colors, Fonts, showToastMessage } from '../constants';
+import { Colors, Fonts, showToastMessage, ScreenNames } from '../constants';
 import OtherService from '../service/OtherService';
 import CustomTextInput from '../components/CustomTextInput';
+import CustomLoader from '../components/CustomLoader';
 import Logo from '../assets/images/logo.svg';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
@@ -111,7 +112,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     setShowPaymentModal(false);
     setPaymentStartTime(null);
-    navigation.navigate('PurchaseSuccessful');
+    navigation.navigate(ScreenNames.PaymentSuccess);
   };
 
   const fetchExamCenters = async (countryId: number) => {
@@ -834,14 +835,14 @@ const RegisterExamScreen = ({ navigation }: any) => {
             <Text style={styles.summaryLabel}>UK Exam</Text>
             <Text style={styles.summaryValue}>£90.00</Text>
           </View>
-          <View style={styles.summaryRow}>
+          {/* <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Processing Fee</Text>
             <Text style={styles.summaryValue}>£5.00</Text>
-          </View>
+          </View> */}
 
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalValue}>£95.00</Text>
+            <Text style={styles.totalValue}>£90.00</Text>
           </View>
 
           <View style={styles.refundNote}>
@@ -873,6 +874,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
 
         <View style={{ height: 40 }} />
       </KeyboardAwareScrollView>
+      <CustomLoader visible={loading} message="Processing Payment..." />
     </SafeAreaView>
   );
 };

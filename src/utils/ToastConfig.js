@@ -1,42 +1,64 @@
-import { View, Text } from 'react-native';
-import { BaseToast, ErrorToast } from 'react-native-toast-message';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { BaseToast, ErrorToast, BaseToastProps } from 'react-native-toast-message';
+import { Colors, Fonts } from '../constants';
 
-import { Colors, Fonts } from '../constants/index';
-
-
-
+const styles = StyleSheet.create({
+  successContainer: {
+    width: '90%',
+    backgroundColor: '#2980B9',
+    borderRadius: 10,
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  errorContainer: {
+    width: '90%',
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  text: {
+    color: Colors.white,
+    fontSize: 14,
+    fontFamily: Fonts.InterRegular,
+    lineHeight: 20,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+});
 
 export const toastConfig = {
-
-  success: ({ text1, props }) => (
-    <View
-      style={{
-        borderRadius: 10,
-        padding: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '90%',
-        backgroundColor: Colors.primaryBlue,
-        flexDirection: 'row'
-
-      }}>
-
-      <Text style={{ color: Colors.white, fontSize: 14, fontFamily: Fonts.InterRegular }}>{text1}</Text>
+  success: ({ text1 = '', text2, props }: BaseToastProps) => (
+    <View style={styles.successContainer}>
+      <Text style={[styles.text, text2 ? styles.title : null]}>
+        {text1}
+      </Text>
+      {text2 && <Text style={styles.text}>{text2}</Text>}
     </View>
   ),
-  error: ({ text1, props }) => (
-    <View
-      style={{
-        borderRadius: 20,
-        padding: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '90%',
-        backgroundColor: 'tomato',
-      }}>
-      <Text>{text1}</Text>
+  error: ({ text1 = 'An error occurred', text2, props }: BaseToastProps) => (
+    <View style={styles.errorContainer}>
+      <Text style={[styles.text, text2 ? styles.title : null]}>
+        {text1}
+      </Text>
+      {text2 && <Text style={styles.text}>{text2}</Text>}
     </View>
-
   ),
   // success: (props) => (
   //       <BaseToast
