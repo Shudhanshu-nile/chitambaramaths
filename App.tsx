@@ -9,7 +9,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AppState, StatusBar, useColorScheme, Linking } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, getStateFromPath } from '@react-navigation/native';
 import { navigationRef } from './src/navigation/GlobalNavigation';
 // import { AuthProvider } from './src/context/AuthContext';
 import Appstack from './src/navigation/Appstack';
@@ -25,6 +25,32 @@ function App() {
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
   const isDarkMode = useColorScheme() === 'dark';
   const appState = useRef(AppState.currentState);
+
+  // Define Linking Configuration
+  const linking = {
+    prefixes: [
+      'chitambaramaths://',
+      'https://app.chithambaramaths.com',
+    ],
+    config: {
+      screens: {
+        PaymentSuccess: 'payment/success',
+        RegisterExam: 'payment/failure',
+      },
+    },
+    getStateFromPath: (path: string, options: any) => {
+      // Handle the custom Stripe webhook path
+      if (path.includes('stripe/webhook')) {
+        if (path.includes('status=success')) {
+          return { routes: [{ name: 'PaymentSuccess' }] };
+        }
+        // Redirect to RegisterExam for failure/cancel or uncertain status
+        return { routes: [{ name: 'RegisterExam' }] };
+      }
+      return getStateFromPath(path, options);
+    },
+  };
+
   // Get device token with error handling
   const getDeviceToken = async (): Promise<string | null> => {
     try {
@@ -51,39 +77,6 @@ function App() {
   };
 
   useEffect(() => {
-
-    // Handle Deep Linking
-    const handleDeepLink = (event: { url: string }) => {
-      console.log('🔗 Deep Link received:', event.url);
-      const url = event.url;
-
-      // Check for Stripe success URL (Custom Scheme OR HTTPS)
-      const isStripeSuccess =
-        (url.includes('stripe/webhook') || url.includes('niletechinnovations.com')) &&
-        url.includes('status=success');
-
-      if (isStripeSuccess) {
-        console.log('✅ Payment success detected from deep link');
-        if (navigationRef.isReady()) {
-          // Small delay to ensure navigation is ready if app just moved to foreground
-          setTimeout(() => {
-            navigationRef.navigate('PurchaseSuccessful' as never);
-          }, 500);
-        } else {
-          console.warn('Navigation not ready for deep link');
-        }
-      }
-    };
-
-    // Check for initial URL (if app opened from closed state)
-    Linking.getInitialURL().then((url) => {
-      if (url) {
-        handleDeepLink({ url });
-      }
-    });
-
-    // Add listener
-    const linkingSubscription = Linking.addEventListener('url', handleDeepLink);
 
     // Initialize app with notifications - wrap in try-catch to prevent crashes
     const initializeApp = async () => {
@@ -146,7 +139,6 @@ function App() {
       if (unsubscribeForeground) unsubscribeForeground();
       if (unsubscribeTokenRefresh) unsubscribeTokenRefresh();
       appStateSubscription.remove();
-      linkingSubscription.remove();
     };
   }, []);
 
@@ -156,7 +148,7 @@ function App() {
         <SafeAreaProvider>
           <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
 
-          <NavigationContainer ref={navigationRef}>
+          <NavigationContainer ref={navigationRef} linking={linking}>
             <Appstack />
             <Toast
               config={toastConfig}

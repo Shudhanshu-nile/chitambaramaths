@@ -21,6 +21,7 @@ import { registerUser } from '../redux/Reducer/User';
 import CustomTextInput from '../components/CustomTextInput';
 import CustomPasswordInput from '../components/CustomPasswordInput';
 import CustomDropdown from '../components/CustomDropdown';
+import TermsModal from '../components/TermsModal';
 
 const { width } = Dimensions.get('window');
 
@@ -35,6 +36,7 @@ const RegisterScreen = ({ navigation }: any) => {
     fullName: '',
     email: '',
     phone: '',
+    address: '',
     dob: '',
     password: '',
     confirmPassword: '',
@@ -51,6 +53,11 @@ const RegisterScreen = ({ navigation }: any) => {
   const [selectedCountryId, setSelectedCountryId] = useState<number | null>(
     null,
   );
+
+  // Terms Modal State
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsContent, setTermsContent] = useState('');
+  const [termsLoading, setTermsLoading] = useState(false);
 
   useEffect(() => {
     fetchCountries();
@@ -98,6 +105,83 @@ const RegisterScreen = ({ navigation }: any) => {
     setIsCountryOpen(false);
   };
 
+  const handleTermsPress = async () => {
+    setShowTermsModal(true);
+    // Always fetch to ensure we get the latest parsing logic (bypass hot-reload stale state)
+    setTermsLoading(true);
+    try {
+      const response = await OtherService.getTermsAndConditions();
+      // Check if response is HTML string or JSON
+      let data = response.data;
+
+      if (typeof data === 'string' && (data.includes('<!DOCTYPE html>') || data.includes('<html'))) {
+        // Basic HTML stripping
+        // Extract content from specific divs if possible
+        let extractedContent = '';
+
+        // Try to extract exam-info-box content
+        const infoBoxMatch = data.match(/<div class="exam-info-box">([\s\S]*?)<\/div>/);
+        if (infoBoxMatch && infoBoxMatch[1]) {
+          extractedContent += infoBoxMatch[1];
+        }
+
+        // Try to extract terms-box content
+        const termsBoxMatch = data.match(/<div class="terms-box mt-4">([\s\S]*?)<\/div>/);
+        if (termsBoxMatch && termsBoxMatch[1]) {
+          extractedContent += '\n\n' + termsBoxMatch[1];
+        }
+
+        if (!extractedContent) {
+          // Fallback to body content if specific classes not found
+          const bodyMatch = data.match(/<body[^>]*>([\s\S]*?)<\/body>/);
+          extractedContent = bodyMatch ? bodyMatch[1] : data;
+        }
+
+        // Marker strategy for cleaner parsing
+        const plainText = extractedContent
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          // Replace semantic breaks with unique markers
+          .replace(/<br\s*\/?>/gi, '[[BREAK]]')
+          .replace(/<\/p>/gi, '[[PARAGRAPH]]')
+          .replace(/<\/div>/gi, '[[BREAK]]')
+          .replace(/<li[^>]*>/gi, '[[BULLET]]')
+          .replace(/<\/li>/gi, '[[BREAK]]')
+          .replace(/<\/h[1-6]>/gi, '[[PARAGRAPH]]') // Ensure headers break like paragraphs
+          // Strip all other tags
+          .replace(/<[^>]+>/g, '')
+          // Decode entities
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          // Collapse all whitespace (including source newlines) to single space
+          .replace(/\s+/g, ' ')
+          // Restore markers
+          .replace(/\[\[PARAGRAPH\]\]/g, '\n\n')
+          .replace(/\[\[BREAK\]\]/g, '\n')
+          .replace(/\[\[BULLET\]\]/g, '• ')
+          // Clean up excessive newlines
+          .replace(/\n\s+/g, '\n')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+
+        setTermsContent(plainText || 'No terms content available.');
+
+      } else if (response.data && response.data.status) {
+        const content = response.data.data?.description || response.data.data?.content || response.data.data || "No terms content available.";
+        setTermsContent(content);
+      } else {
+        setTermsContent('Failed to load Terms of Service.');
+      }
+    } catch (error) {
+      console.error('Failed to fetch terms', error);
+      setTermsContent('An error occurred while loading Terms of Service.');
+    } finally {
+      setTermsLoading(false);
+    }
+  };
+
   const updateField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -113,6 +197,7 @@ const RegisterScreen = ({ navigation }: any) => {
         { key: 'fullName', label: 'Full Name' },
         { key: 'email', label: 'Email Address' },
         { key: 'phone', label: 'Phone Number' },
+        { key: 'address', label: 'Address' },
         { key: 'dob', label: 'Date of Birth' },
         { key: 'password', label: 'Password' },
         { key: 'confirmPassword', label: 'Confirm Password' },
@@ -162,6 +247,7 @@ const RegisterScreen = ({ navigation }: any) => {
         password_confirmation: formData.confirmPassword,
         date_of_birth: formattedDob,
         phone: formData.phone,
+        address: formData.address,
         country: formData.country,
         year: formData.academicYear,
         grade: '10', // Default grade
@@ -227,7 +313,7 @@ const RegisterScreen = ({ navigation }: any) => {
 
             <Text style={styles.headerTitle}>Create Account</Text>
             <Text style={styles.headerSubtitle}>
-              Join thousands of students learning math
+              Mathematics can change the life and world
             </Text>
           </View>
         </LinearGradient>
@@ -291,6 +377,14 @@ const RegisterScreen = ({ navigation }: any) => {
               placeholder="Confirm your password"
               value={formData.confirmPassword}
               onChangeText={v => updateField('confirmPassword', v)}
+            />
+
+            <CustomTextInput
+              label="Address"
+              placeholder="Enter your address"
+              icon="map-marker-outline"
+              value={formData.address}
+              onChangeText={v => updateField('address', v)}
             />
 
             <CustomDropdown
@@ -443,8 +537,11 @@ const RegisterScreen = ({ navigation }: any) => {
                 )}
               </View>
               <Text style={styles.checkboxText}>
-                I agree to the <Text style={styles.link}>Terms of Service</Text> &{' '}
-                <Text style={styles.link}>Privacy Policy</Text>
+                I agree to the{' '}
+                <Text style={styles.link} onPress={handleTermsPress}>
+                  Terms of Service
+                </Text>{' '}
+                & <Text style={styles.link}>Privacy Policy</Text>
               </Text>
             </TouchableOpacity>
 
@@ -473,10 +570,22 @@ const RegisterScreen = ({ navigation }: any) => {
             >
               <Text style={styles.registerButtonText}>Create Account</Text>
             </TouchableOpacity>
+
+            <View style={styles.signInCard}>
+              <Text style={styles.signInText}>
+                Already have an account?{' '}
+                <Text
+                  style={styles.signInLink}
+                  onPress={() => navigation.navigate('Login')}
+                >
+                  Sign In
+                </Text>
+              </Text>
+            </View>
           </View>
 
           {/* SIGN IN CARD */}
-          <View style={styles.signInCard}>
+          {/* <View style={styles.signInCard}>
             <Text style={styles.signInText}>
               Already have an account?{' '}
               <Text
@@ -486,7 +595,7 @@ const RegisterScreen = ({ navigation }: any) => {
                 Sign In
               </Text>
             </Text>
-          </View>
+          </View> */}
         </KeyboardAwareScrollView>
       </View>
       <DatePicker
@@ -507,6 +616,12 @@ const RegisterScreen = ({ navigation }: any) => {
           setOpen(false);
         }}
       />
+      <TermsModal
+        visible={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        content={termsContent}
+        loading={termsLoading}
+      />
     </View>
   );
 };
@@ -526,8 +641,9 @@ const styles = StyleSheet.create({
     height: 310,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-    // alignItems: 'center',
-    justifyContent: 'center',
+    // justifyContent: 'center',
+    paddingTop: 45,
+    alignItems: 'center',
   },
 
   headerCircleLarge: {
@@ -697,7 +813,7 @@ const styles = StyleSheet.create({
     padding: 18,
     borderRadius: 14,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: Colors.primaryDarkBlue,
   },
 

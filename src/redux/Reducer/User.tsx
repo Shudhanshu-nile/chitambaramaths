@@ -9,6 +9,7 @@ export interface UserProfile {
   email: string;
   profileImage?: string;
   phone?: string;
+  address?: string;
   dateOfBirth?: string;
   country?: string;
   academicYear?: string;
@@ -25,6 +26,7 @@ interface UserState {
     fullName: string;
     email: string;
     phone: string;
+    address: string;
     dob: string;
     password: string;
     confirmPassword: string;
@@ -45,6 +47,7 @@ const initialState: UserState = {
     fullName: '',
     email: '',
     phone: '',
+    address: '',
     dob: '',
     password: '',
     confirmPassword: '',
@@ -112,6 +115,7 @@ export const registerUser = createAsyncThunk(
           fullName: apiData.name || payload.name,
           email: apiData.email || payload.email,
           phone: payload.phone,
+          address: payload.address,
           dateOfBirth: payload.date_of_birth,
           country: payload.country,
           academicYear: apiData.year || payload.year,
@@ -129,9 +133,16 @@ export const registerUser = createAsyncThunk(
         return rejectWithValue('Registration failed');
       }
     } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || 'Registration failed',
-      );
+      let errorMessage = 'Registration failed';
+      if (error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        errorMessage = Object.values(errors).flat().join('\n');
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      return rejectWithValue(errorMessage);
     }
   },
 );

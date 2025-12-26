@@ -104,32 +104,22 @@ const LoginScreen = ({ navigation }: any) => {
       >
         {/* HEADER (SCROLLS WITH CONTENT) */}
         <LinearGradient colors={['#1b77a8', '#0b5f8f']} style={styles.header}>
-          <View
-            style={{
-              paddingTop: 100,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <View
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                // flexDirection: 'row',
-              }}
+          <View style={styles.headerTopRow}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
             >
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => navigation.goBack()}
-              >
-                <Icon name="arrow-left" size={22} color={Colors.white} />
-              </TouchableOpacity>
+              <Icon name="arrow-left" size={24} color={Colors.white} />
+            </TouchableOpacity>
 
-              <View style={styles.logoCard}>
-                <Logo width={width * 0.6} height={50} />
-              </View>
+            <View style={styles.logoCard} pointerEvents="none">
+              <Logo width={width * 0.55} height={40} />
             </View>
 
+            <View style={{ width: 40 }} />
+          </View>
+
+          <View style={{ alignItems: 'center', marginTop: 10 }}>
             <Text style={styles.welcomeTitle}>Welcome Back!</Text>
             <Text style={styles.welcomeSubtitle}>
               Sign in to continue your learning journey
@@ -208,16 +198,14 @@ const LoginScreen = ({ navigation }: any) => {
           }}>
             <Text style={styles.forgot}>Forgot Password?</Text>
           </TouchableOpacity>
-        </View>
 
-        {/* SIGN UP CARD */}
-        <View style={styles.signUpCard}>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          {/* SIGN UP LINK - Moved inside login card */}
+          <View style={styles.signUpContainer}>
             <Text style={styles.signUpText}>
               Don't have an account?{' '}
-              <Text style={styles.signUpLink}>Sign Up</Text>
+              <Text style={styles.signUpLink} onPress={() => navigation.navigate('Register')}>Sign Up</Text>
             </Text>
-          </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -237,29 +225,35 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 310,
+    height: 330,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     alignItems: 'center',
+    paddingTop: 60,
+  },
+
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
 
   backButton: {
-    position: 'absolute',
-    top: -35,
-    left: -10,
-    width: 38,
-    height: 38,
-    // borderRadius: 19,
-    // backgroundColor: 'rgba(255,255,255,0.25)',
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   logoCard: {
     backgroundColor: Colors.white,
-    paddingVertical: 10,
-    paddingHorizontal: 50,
-    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 13,
+    alignItems: 'center',
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
@@ -353,19 +347,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  signUpCard: {
-    marginTop: 24,
-    marginHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#005c88',
+  signUpContainer: {
+    marginTop: 20,
     alignItems: 'center',
-    backgroundColor: Colors.white,
   },
 
   signUpText: {
-    color: '#333',
+    color: '#666', // Adjusted color to match RegisterScreen
     fontSize: 14,
   },
 

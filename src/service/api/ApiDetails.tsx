@@ -15,4 +15,5 @@ export const API = {
   RESEND_OTP: DOMAIN + 'resend-otp',
   UPDATE_PROFILE: DOMAIN + 'update-profile',
   PAYMENT_HISTORY: DOMAIN + 'payments-history',
+  TERMS_AND_CONDITIONS: 'https://app.chithambaramaths.com/terms-condition',
 };

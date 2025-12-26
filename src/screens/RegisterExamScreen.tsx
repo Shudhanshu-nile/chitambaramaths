@@ -19,6 +19,8 @@ import {
 import Geolocation from 'react-native-geolocation-service';
 import Toast from 'react-native-toast-message';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Reducer/RootReducer';
 import { Colors, Fonts, showToastMessage, ScreenNames } from '../constants';
 import OtherService from '../service/OtherService';
 import CustomTextInput from '../components/CustomTextInput';
@@ -26,7 +28,29 @@ import CustomLoader from '../components/CustomLoader';
 import Logo from '../assets/images/logo.svg';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
+const getCurrencySymbol = (currencyCode: string) => {
+  switch (currencyCode) {
+    case 'GBP':
+      return '£';
+    case 'AUD':
+      return '$'; // or A$
+    case 'CAD':
+      return '$'; // or C$
+    case 'EUR':
+      return '€';
+    case 'NZD':
+      return '$'; // or NZ$
+    case 'USD':
+      return '$';
+    default:
+      return currencyCode + ' ';
+  }
+};
+
 const RegisterExamScreen = ({ navigation }: any) => {
+  // Redux User State
+  const user = useSelector((state: RootState) => state.user.user);
+
   // Form State
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -58,6 +82,23 @@ const RegisterExamScreen = ({ navigation }: any) => {
   useEffect(() => {
     fetchCountries();
   }, []);
+
+  // Autofill User Details
+  useEffect(() => {
+    if (user) {
+      if (user.fullName) {
+        const parts = user.fullName.trim().split(/\s+/);
+        if (parts.length > 0) {
+          setFirstName(parts[0]);
+          if (parts.length > 1) {
+            setLastName(parts.slice(1).join(' '));
+          }
+        }
+      }
+      if (user.email) setEmail(user.email);
+      if (user.phone) setMobile(user.phone);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (selectedCountry?.id) {
@@ -392,7 +433,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
     <SafeAreaView style={styles.container}>
 
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-      <Logo height={40} width={150} style={{ marginLeft: 120 }} />
+      {/* <Logo height={40} width={150} style={{ marginLeft: 120 }} /> */}
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -829,11 +870,18 @@ const RegisterExamScreen = ({ navigation }: any) => {
         </Text>
 
         {/* SUMMARY CARD */}
-        <Text style={styles.sectionTitle}>Registration Summary</Text>
+        <Text style={styles.sectionTitle}>Payment Details</Text>
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>UK Exam</Text>
-            <Text style={styles.summaryValue}>£90.00</Text>
+            <Text style={styles.summaryLabel}>
+              {selectedCountry ? selectedCountry.name : 'Exam'} Exam
+            </Text>
+            <Text style={styles.summaryValue}>
+              {selectedCountry && selectedCountry.registration_fee
+                ? `${getCurrencySymbol(selectedCountry.currency)}${selectedCountry.registration_fee
+                }`
+                : '-'}
+            </Text>
           </View>
           {/* <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Processing Fee</Text>
@@ -842,7 +890,12 @@ const RegisterExamScreen = ({ navigation }: any) => {
 
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalValue}>£90.00</Text>
+            <Text style={styles.totalValue}>
+              {selectedCountry && selectedCountry.registration_fee
+                ? `${getCurrencySymbol(selectedCountry.currency)}${selectedCountry.registration_fee
+                }`
+                : '-'}
+            </Text>
           </View>
 
           <View style={styles.refundNote}>
@@ -896,7 +949,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontFamily: Fonts.InterBold,
-    color: '#333',
+    color: Colors.primaryBlue,
   },
   scrollContent: {
     padding: 20,

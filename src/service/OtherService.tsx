@@ -33,5 +33,11 @@ class OtherService {
     const response = await Http.get(url);
     return response;
   }
+
+  public static async getTermsAndConditions() {
+    const url = `${API.TERMS_AND_CONDITIONS}`;
+    const response = await Http.get(url);
+    return response;
+  }
 }
 export default OtherService;

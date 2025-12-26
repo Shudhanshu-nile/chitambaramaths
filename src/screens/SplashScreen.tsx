@@ -9,7 +9,7 @@ const { width } = Dimensions.get('window');
 const SplashScreen = ({ navigation }: { navigation: any }) => {
     useEffect(() => {
         const timer = setTimeout(() => {
-            navigation.replace(ScreenNames.Welcome);
+            navigation.replace(ScreenNames.Main);
         }, 3000);
         return () => clearTimeout(timer);
     }, [navigation]);

@@ -63,7 +63,7 @@ const ProfileScreen = () => {
         text: 'Sign Out',
         onPress: async () => {
           await dispatch(logoutUser());
-          navigation.navigate('Welcome');
+          navigation.navigate(ScreenNames.Login);
         },
         style: 'destructive',
       },
@@ -184,7 +184,7 @@ const ProfileScreen = () => {
               />
               <Text style={[styles.tabText, styles.activeTabText]}>Orders</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.tabButton}>
+            {/* <TouchableOpacity style={styles.tabButton}>
               <Icon
                 name="download"
                 size={18}
@@ -192,7 +192,7 @@ const ProfileScreen = () => {
                 style={{ marginRight: 8 }}
               />
               <Text style={styles.tabText}>Downloads</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           {/* Recent Orders Section */}

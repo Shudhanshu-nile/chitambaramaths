@@ -72,7 +72,7 @@ const BottomTabNavigator = () => {
                 name={ScreenNames.Tickets}
                 component={TicketsScreen}
                 options={{
-                    tabBarLabel: 'Tickets',
+                    tabBarLabel: 'My Order',
                     tabBarIcon: ({ color, focused }) => (
                         <Icon
                             name="ticket-confirmation"
@@ -82,7 +82,7 @@ const BottomTabNavigator = () => {
                     ),
                 }}
             />
-            <Tab.Screen
+            {/* <Tab.Screen
                 name={ScreenNames.Store}
                 component={StoreScreen}
                 options={{
@@ -95,7 +95,7 @@ const BottomTabNavigator = () => {
                         />
                     ),
                 }}
-            />
+            /> */}
             {isLoggedIn && (
                 <Tab.Screen
                     name={ScreenNames.Profile}
