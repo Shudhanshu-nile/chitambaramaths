@@ -176,7 +176,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
     } catch (error) {
       console.error('Failed to fetch exam centers', error);
       setExamCenters([]);
-      showToastMessage({ message: 'Failed to load exam centers' });
+      showToastMessage({ message: 'No exam centers available for this country' });
     }
   };
 
@@ -263,6 +263,10 @@ const RegisterExamScreen = ({ navigation }: any) => {
         const coarseLocationGranted =
           result[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
           PermissionsAndroid.RESULTS.GRANTED;
+
+        console.log('Permission Result:', result);
+        console.log('Fine Granted:', fineLocationGranted);
+        console.log('Coarse Granted:', coarseLocationGranted);
 
         return fineLocationGranted || coarseLocationGranted;
       } catch (err) {

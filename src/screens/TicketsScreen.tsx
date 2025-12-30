@@ -74,10 +74,10 @@ const TicketsScreen = () => {
                         <Logo height={36} width={176} />
                     </View>
 
-                    <TouchableOpacity style={styles.notificationBtn}>
+                    {/* <TouchableOpacity style={styles.notificationBtn}>
                         <Icon name="bell" size={22} color="#fff" />
                         <View style={styles.notificationDot} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
                 <View style={styles.headerTitleContainer}>
                     <Text style={styles.headerTitle}>My Orders</Text>

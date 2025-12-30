@@ -108,6 +108,7 @@ const LoginScreen = ({ navigation }: any) => {
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => navigation.goBack()}
+              disabled={isLoading}
             >
               <Icon name="arrow-left" size={24} color={Colors.white} />
             </TouchableOpacity>
@@ -173,7 +174,7 @@ const LoginScreen = ({ navigation }: any) => {
               onSubmitEditing={handleLogin}
             />
 
-            <TouchableOpacity onPress={() => setSecure(!secure)}>
+            <TouchableOpacity onPress={() => setSecure(!secure)} disabled={isLoading}>
               <Icon
                 name={secure ? 'eye-off-outline' : 'eye-outline'}
                 size={20}
@@ -183,10 +184,11 @@ const LoginScreen = ({ navigation }: any) => {
           </View>
 
           <TouchableOpacity
-            style={styles.signInBtn}
+            style={[styles.signInBtn, isLoading && { opacity: 0.7 }]}
             onPress={() => {
               handleLogin();
             }}
+            disabled={isLoading}
           >
             <Text style={styles.signInText}>
               {isLoading ? 'Signing In...' : 'Sign In'}
@@ -195,7 +197,7 @@ const LoginScreen = ({ navigation }: any) => {
 
           <TouchableOpacity onPress={() => {
             navigate('Forgot');
-          }}>
+          }} disabled={isLoading}>
             <Text style={styles.forgot}>Forgot Password?</Text>
           </TouchableOpacity>
 
@@ -203,7 +205,7 @@ const LoginScreen = ({ navigation }: any) => {
           <View style={styles.signUpContainer}>
             <Text style={styles.signUpText}>
               Don't have an account?{' '}
-              <Text style={styles.signUpLink} onPress={() => navigation.navigate('Register')}>Sign Up</Text>
+              <Text style={[styles.signUpLink, isLoading && { opacity: 0.5 }]} onPress={() => !isLoading && navigation.navigate('Register')}>Sign Up</Text>
             </Text>
           </View>
         </View>

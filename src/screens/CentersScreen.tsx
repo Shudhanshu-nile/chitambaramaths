@@ -34,6 +34,7 @@ const CentersScreen = () => {
     const [sortedCenters, setSortedCenters] = useState<any[]>([]);
     const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const [loading, setLoading] = useState(false);
+    const [visibleCount, setVisibleCount] = useState(5);
 
     useEffect(() => {
         fetchCentersForDefaultCountry();
@@ -203,6 +204,12 @@ const CentersScreen = () => {
         setSortedCenters(updatedData);
     };
 
+    const handleLoadMore = () => {
+        if (visibleCount < sortedCenters.length) {
+            setVisibleCount(prev => prev + 5);
+        }
+    };
+
     const handleGetDirections = (lat: number, lng: number, label: string) => {
         const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
         const latLng = `${lat},${lng}`;
@@ -343,17 +350,16 @@ const CentersScreen = () => {
 
                 <View style={styles.nearestHeaderRow}>
                     <Text style={styles.sectionTitle}>Nearest Centers</Text>
-                    <TouchableOpacity>
-                        <Text style={styles.viewAllText}>View All</Text>
-                    </TouchableOpacity>
                 </View>
 
                 <FlatList
-                    data={sortedCenters}
+                    data={sortedCenters.slice(0, visibleCount)}
                     keyExtractor={(item) => item.id}
                     renderItem={renderCenterItem}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={0.5}
                 />
             </View>
         </View>
