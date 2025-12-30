@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "521031481948",
+    "project_id": "chitambaramaths-8136e",
+    "storage_bucket": "chitambaramaths-8136e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:521031481948:android:17672392e3320b64394499",
+        "android_client_info": {
+          "package_name": "com.chitambaramaths"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOjcLTlBOrUY9txwIZJK9uUHwuFTSdZEs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

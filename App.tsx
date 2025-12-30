@@ -19,6 +19,7 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './src/redux/Store/Store';
 import { toastConfig } from './src/utils/ToastConfig';
+import NoInternetModal from './src/components/NoInternetModal';
 
 function App() {
   const [notification, setNotification] = useState<NotificationPayload | null>(null);
@@ -160,6 +161,7 @@ function App() {
               onHide={() => { }}
               onPress={() => { }}
             />
+            <NoInternetModal />
           </NavigationContainer>
         </SafeAreaProvider>
       </PersistGate>

@@ -235,6 +235,14 @@ const RegisterExamScreen = ({ navigation }: any) => {
 
   const [loading, setLoading] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [addressSelection, setAddressSelection] = useState<{ start: number; end: number } | undefined>(undefined);
+
+  useEffect(() => {
+    Geolocation.setRNConfiguration({
+      skipPermissionRequests: true,
+      authorizationLevel: 'whenInUse',
+    });
+  }, []);
 
   const requestLocationPermission = async () => {
     if (Platform.OS === 'ios') {
@@ -243,18 +251,24 @@ const RegisterExamScreen = ({ navigation }: any) => {
     }
 
     if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Location Permission',
-          message:
-            'Chitambaramaths needs access to your location to autofill address details.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        },
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
+      try {
+        const result = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+        ]);
+
+        const fineLocationGranted =
+          result[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] ===
+          PermissionsAndroid.RESULTS.GRANTED;
+        const coarseLocationGranted =
+          result[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
+          PermissionsAndroid.RESULTS.GRANTED;
+
+        return fineLocationGranted || coarseLocationGranted;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
     }
     return false;
   };
@@ -265,62 +279,81 @@ const RegisterExamScreen = ({ navigation }: any) => {
       showToastMessage({
         message: 'Location permission is required to use this feature.',
       });
-
       return;
     }
 
     setGeoLoading(true);
-    Geolocation.getCurrentPosition(
-      async position => {
-        const { latitude, longitude } = position.coords;
-        console.log('Current Position:', latitude, longitude);
 
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-            {
-              headers: {
-                'User-Agent': 'ChitambaramathsApp/1.0',
+    // Add delay to ensure permission dialog is dismissed and context is stable
+    setTimeout(() => {
+      Geolocation.getCurrentPosition(
+        async position => {
+          const { latitude, longitude } = position.coords;
+          console.log('Current Position:', latitude, longitude);
+
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+              {
+                headers: {
+                  'User-Agent': 'ChitambaramathsApp/1.0',
+                },
               },
-            },
-          );
-          const data = await response.json();
-          console.log('Address Data:', data);
+            );
+            const data = await response.json();
+            console.log('Address Data:', data);
 
-          if (data && data.address) {
-            const addr = data.address;
-            const fetchedTown =
-              addr.town ||
-              addr.city ||
-              addr.village ||
-              addr.suburb ||
-              addr.hamlet ||
-              '';
-            const fetchedStreet =
-              addr.road || addr.pedestrian || addr.street || '';
+            if (data && data.address) {
+              const addr = data.address;
+              const fetchedTown =
+                addr.town ||
+                addr.city ||
+                addr.village ||
+                addr.suburb ||
+                addr.hamlet ||
+                '';
+              const fetchedStreet = data.display_name || '';
 
-            setTown(fetchedTown);
-            setStreet(fetchedStreet);
-            showToastMessage({ message: 'Address details autofilled.' });
-          } else {
-            showToastMessage({ message: 'Could not fetch address details.' });
+              setTown(fetchedTown);
+              setStreet(fetchedStreet);
+              setAddressSelection({ start: 0, end: 0 }); // Scroll to start
+              showToastMessage({ message: 'Address details autofilled.' });
+            } else {
+              showToastMessage({ message: 'Could not fetch address details.' });
+            }
+          } catch (error) {
+            console.error('Reverse Geocoding Error:', error);
+            showToastMessage({
+              message: 'Failed to fetch address from location.',
+            });
+          } finally {
+            setGeoLoading(false);
           }
-        } catch (error) {
-          console.error('Reverse Geocoding Error:', error);
-          showToastMessage({
-            message: 'Failed to fetch address from location.',
-          });
-        } finally {
+        },
+        async error => {
+          console.error('Location Error:', error);
           setGeoLoading(false);
-        }
-      },
-      error => {
-        console.error('Location Error:', error);
-        setGeoLoading(false);
-        showToastMessage({ message: 'Failed to get current location.' });
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-    );
+
+          let msg = 'Failed to get current location.';
+          if (error.code === 3) {
+            msg = 'Location request timed out. If you are on an emulator, please ensure a location is set in "Extended Controls > Location" and click "Send".';
+          } else if (error.code === 1) {
+            msg = 'Location permission denied.';
+          } else if (error.code === 2) {
+            msg = 'Location provider unavailable. Please turn on GPS.';
+          }
+
+          showToastMessage({ message: msg });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 60000,
+          maximumAge: 86400000, // 24 hours cache
+          forceLocationManager: true,
+          showLocationDialog: true
+        },
+      );
+    }, 500);
   };
 
   const handleProceed = async () => {
@@ -329,7 +362,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
       { value: lastName, name: 'Last Name' },
       { value: parentName, name: 'Parent/Guardian Name' },
       { value: doorNo, name: 'Door Number' },
-      { value: street, name: 'Street Name' },
+      { value: street, name: 'Address' },
       { value: town, name: 'Town' },
       { value: email, name: 'Email Address' },
       { value: postalCode, name: 'Postal Code' },
@@ -637,19 +670,17 @@ const RegisterExamScreen = ({ navigation }: any) => {
           onChangeText={setDoorNo}
           required
         />
-        <CustomTextInput
-          label="Street Name"
-          placeholder="Enter"
-          value={street}
-          onChangeText={setStreet}
-          required
-        />
         <View style={{ position: 'relative' }}>
           <CustomTextInput
-            label="Town"
-            placeholder={geoLoading ? 'Fetching location...' : 'Enter Town'}
-            value={town}
-            onChangeText={setTown}
+            label="Address"
+            placeholder={geoLoading ? 'Fetching location...' : 'Enter Address'}
+            value={street}
+            onChangeText={(text) => {
+              setStreet(text);
+              setAddressSelection(undefined);
+            }}
+            selection={addressSelection}
+            onFocus={() => setAddressSelection(undefined)}
             required
           />
           <TouchableOpacity
@@ -659,6 +690,13 @@ const RegisterExamScreen = ({ navigation }: any) => {
             <Icon name="crosshairs-gps" size={20} color={Colors.primaryBlue} />
           </TouchableOpacity>
         </View>
+        <CustomTextInput
+          label="Town"
+          placeholder="Enter Town"
+          value={town}
+          onChangeText={setTown}
+          required
+        />
         <CustomTextInput
           label="Email Address"
           placeholder="Enter Email Address"

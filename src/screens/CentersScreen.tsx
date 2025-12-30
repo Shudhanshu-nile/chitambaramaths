@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     StyleSheet,
     View,
@@ -20,40 +20,64 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Colors, Gradients, Fonts, responsiveScreenHeight } from '../constants';
+import OtherService from '../service/OtherService';
 
 const { width } = Dimensions.get('window');
 
 const SAMPLE_CENTER_DATA = [
-    {
-        id: '1',
-        title: 'Alperton Centre',
-        address: 'Alperton Community School, Ealing Road, Wembley, HA0 4PW',
-        distance: '2.3 km',
-        contactName: 'Mrs Hema Suganthan',
-        coordinate: { latitude: 51.5422, longitude: -0.2985 },
-    },
-    {
-        id: '2',
-        title: 'Birmingham',
-        address: 'Shard End Wellbeing Centre, 170 Packington Avenue, Shard End, Birmingham, B34 7RD',
-        distance: '2.3 km',
-        contactName: 'Mrs: Maha',
-        coordinate: { latitude: 52.4927, longitude: -1.7820 },
-    },
-    {
-        id: '3',
-        title: 'Cambridge centre',
-        address: 'Chesterton Community College, Gilbert Road, Cambridge, CB4 3NY',
-        distance: '2.3 km',
-        contactName: 'Mrs Gowry',
-        coordinate: { latitude: 52.2155, longitude: 0.1260 },
-    },
+    // Kept for reference if needed, or can be removed, but I'll leave empty or minimal
 ];
 
 const CentersScreen = () => {
     const [searchText, setSearchText] = useState('');
-    const [sortedCenters, setSortedCenters] = useState(SAMPLE_CENTER_DATA);
+    const [examCenters, setExamCenters] = useState<any[]>([]);
+    const [sortedCenters, setSortedCenters] = useState<any[]>([]);
     const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        fetchCentersForDefaultCountry();
+    }, []);
+
+    const fetchCentersForDefaultCountry = async () => {
+        try {
+            setLoading(true);
+            const countriesRes = await OtherService.getCountries();
+            if (countriesRes.data && countriesRes.data.status && countriesRes.data.data) {
+                const countries = countriesRes.data.data;
+                const defaultCountry = countries.find((c: any) => c.name === 'United Kingdom') || countries[0];
+
+                if (defaultCountry) {
+                    const centersRes = await OtherService.getExamCenters(defaultCountry.id);
+                    if (centersRes.data && centersRes.data.status && centersRes.data.data) {
+                        const mappedCenters = centersRes.data.data.map((item: any) => ({
+                            id: item.id.toString(),
+                            title: item.center_name || item.name || 'Unknown Center',
+                            address: item.address || item.city || 'Address not available',
+                            distance: 'N/A',
+                            distanceNum: Infinity,
+                            contactName: item.contact_person || 'N/A',
+                            coordinate: {
+                                latitude: parseFloat(item.latitude) || 0,
+                                longitude: parseFloat(item.longitude) || 0,
+                            }
+                        }));
+                        setExamCenters(mappedCenters);
+                        setSortedCenters(mappedCenters);
+
+                        // If we have user location, sort immediately
+                        if (userLocation) {
+                            calculateDistancesAndSort(userLocation.latitude, userLocation.longitude, mappedCenters);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching centers:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Haversine formula to calculate distance
     const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -104,19 +128,30 @@ const CentersScreen = () => {
         }
     };
 
-    const getLocation = () => {
+    const getLocation = (highAccuracy: boolean) => {
+        console.log("Getting location...");
         Geolocation.getCurrentPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
                 setUserLocation({ latitude, longitude });
-                calculateDistancesAndSort(latitude, longitude);
+                calculateDistancesAndSort(latitude, longitude, examCenters);
                 getAddressFromCoordinates(latitude, longitude);
             },
             (error) => {
-                console.log(error.code, error.message);
-                Alert.alert('Error', 'Failed to get current location.');
+                console.log("Location error:", error.code, error.message);
+                let msg = 'Unable to retrieve location. Please check your GPS settings.';
+                if (error.code === 3) {
+                    msg = 'Location request timed out.';
+                }
+                Alert.alert('Error', msg);
             },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+            {
+                enableHighAccuracy: true,
+                timeout: 60000,
+                maximumAge: 86400000, // 24h cache
+                forceLocationManager: true,
+                showLocationDialog: true
+            }
         );
     };
 
@@ -152,8 +187,9 @@ const CentersScreen = () => {
         }
     };
 
-    const calculateDistancesAndSort = (userLat: number, userLon: number) => {
-        const updatedData = SAMPLE_CENTER_DATA.map(center => {
+    const calculateDistancesAndSort = (userLat: number, userLon: number, currentCenters: any[]) => {
+        const centersToProcess = currentCenters.length > 0 ? currentCenters : examCenters;
+        const updatedData = centersToProcess.map(center => {
             const distance = getDistanceFromLatLonInKm(
                 userLat,
                 userLon,
@@ -193,7 +229,20 @@ const CentersScreen = () => {
         }
     };
 
-    const renderCenterItem = ({ item }: { item: typeof SAMPLE_CENTER_DATA[0] }) => (
+    interface Center {
+        id: string;
+        title: string;
+        address: string;
+        distance: string;
+        distanceNum: number;
+        contactName: string;
+        coordinate: {
+            latitude: number;
+            longitude: number;
+        };
+    }
+
+    const renderCenterItem = ({ item }: { item: Center }) => (
         <View style={styles.cardContainer}>
             <View style={styles.cardHeaderRow}>
                 <Text style={styles.centerTitle}>{item.title}</Text>
@@ -249,9 +298,7 @@ const CentersScreen = () => {
             <StatusBar barStyle="light-content" backgroundColor={Colors.primaryBlue} />
 
             <LinearGradient
-                colors={['#00609B', '#007ec1']} // Customized gradient to match Figma darker blue
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
+                colors={Gradients.primaryBlue}
                 style={styles.headerContainer}
             >
                 <View style={styles.headerTopRow}>
@@ -290,7 +337,7 @@ const CentersScreen = () => {
                         <Text style={styles.resultsSubtitle}>United Kingdom • London Area</Text>
                     </View>
                     <View style={styles.countBadge}>
-                        <Text style={styles.countText}>5 Centers</Text>
+                        <Text style={styles.countText}> Centers</Text>
                     </View>
                 </View>
 

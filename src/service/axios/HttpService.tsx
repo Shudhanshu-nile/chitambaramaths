@@ -11,22 +11,26 @@ class Http extends Axios {
     console.log('====================================');
     console.log('token', token);
     console.log('====================================');
-    let headers = {
+    let headers: any = {
       headers: {
-        Authorization: `Bearer ${token}`,
         'content-type': 'application/json',
       },
     };
+    if (token) {
+      headers.headers.Authorization = `Bearer ${token}`;
+    }
     return headers;
   }
   public static async headerBuilderFormData() {
     let token = await AsyncStorage.getItem('authToken');
-    let headers = {
+    let headers: any = {
       headers: {
-        Authorization: `Bearer ${token}`,
         'content-type': 'multipart/form-data',
       },
     };
+    if (token) {
+      headers.headers.Authorization = `Bearer ${token}`;
+    }
     return headers;
   }
 

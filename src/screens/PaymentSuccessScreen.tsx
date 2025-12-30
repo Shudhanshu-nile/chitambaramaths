@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     StatusBar,
     Dimensions,
+    Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { BlurView } from '@react-native-community/blur';
@@ -24,6 +25,7 @@ import {
 } from '../constants';
 import { fetchPaymentHistory } from '../redux/Reducer/Payment';
 import { replaceToMain } from '../navigation/GlobalNavigation';
+import OtherService from '../service/OtherService';
 
 const { width } = Dimensions.get('window');
 
@@ -44,8 +46,17 @@ const PaymentSuccessScreen = ({ navigation }: any) => {
         replaceToMain(ScreenNames.Home);
     };
 
-    const handleDownloadExam = () => {
-        console.log('Download Exam PDF');
+    const handleDownloadExam = async () => {
+        if (recentOrder?.id) {
+            try {
+                // console.log('Download Exam PDF', recentOrder.id);
+                const fileName = `Invoice_${recentOrder.stripe_payment_intent_id || recentOrder.id}`;
+                await OtherService.downloadInvoice(recentOrder.id, fileName);
+            } catch (error) {
+                console.error('Download failed:', error);
+                Alert.alert('Error', 'Failed to download invoice. Please try again.');
+            }
+        }
     };
 
     const handleEmailExam = () => {
@@ -195,10 +206,10 @@ const PaymentSuccessScreen = ({ navigation }: any) => {
                         <Text style={styles.breakdownLabel}>Subtotal</Text>
                         <Text style={styles.breakdownValue}>£90.00</Text>
                     </View>
-                    <View style={styles.breakdownRow}>
+                    {/* <View style={styles.breakdownRow}>
                         <Text style={styles.breakdownLabel}>Processing Fee</Text>
-                        <Text style={styles.breakdownValue}>£5.00</Text>
-                    </View>
+                        <Text style={styles.breakdownValue}>£0.00</Text>
+                    </View> */}
                     <View style={styles.breakdownRow}>
                         <Text style={styles.breakdownLabel}>Tax (VAT 0%)</Text>
                         <Text style={styles.breakdownValue}>£0.00</Text>

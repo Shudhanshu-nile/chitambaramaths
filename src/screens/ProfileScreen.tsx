@@ -8,6 +8,7 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -21,6 +22,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../redux/Reducer/User';
 import { fetchPaymentHistory } from '../redux/Reducer/Payment';
 import { RootState } from '../redux/Reducer/RootReducer';
+import OtherService from '../service/OtherService';
 
 const ProfileScreen = () => {
   // const { signOut } = useAuth();
@@ -68,6 +70,18 @@ const ProfileScreen = () => {
         style: 'destructive',
       },
     ]);
+  };
+
+  const handleDownloadInvoice = async (order: any) => {
+    if (order?.id) {
+      try {
+        const fileName = `Invoice_${order.stripe_payment_intent_id || order.id}`;
+        await OtherService.downloadInvoice(order.id, fileName);
+      } catch (error) {
+        console.error('Download failed:', error);
+        Alert.alert('Error', 'Failed to download invoice. Please try again.');
+      }
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -119,27 +133,46 @@ const ProfileScreen = () => {
           {/* Profile Card with BlurView */}
           {/* Profile Card Container with Edit Icon */}
           <View style={styles.cardContainer}>
-            <BlurView
-              style={styles.blurContainer}
-              blurType="thinMaterialLight"
-              blurAmount={4}
-              reducedTransparencyFallbackColor="white"
-            >
-              <View style={styles.profileCard}>
-                <View style={styles.profileImageContainer}>
-                  <Image
-                    source={userProfile.profileImage}
-                    style={styles.profileImage}
-                  />
-                </View>
+            {Platform.OS === 'ios' ? (
+              <BlurView
+                style={[styles.blurContainer, { overflow: 'hidden' }]}
+                blurType="thinMaterialLight"
+                blurAmount={4}
+                reducedTransparencyFallbackColor="white"
+              >
+                <View style={styles.profileCard}>
+                  <View style={styles.profileImageContainer}>
+                    <Image
+                      source={userProfile.profileImage}
+                      style={styles.profileImage}
+                    />
+                  </View>
 
-                <View style={styles.profileInfoContainer}>
-                  <Text style={styles.userName}>{userProfile.name}</Text>
-                  <View style={styles.divider} />
-                  <Text style={styles.userEmail}>{userProfile.email}</Text>
+                  <View style={styles.profileInfoContainer}>
+                    <Text style={styles.userName}>{userProfile.name}</Text>
+                    <View style={styles.divider} />
+                    <Text style={styles.userEmail}>{userProfile.email}</Text>
+                  </View>
+                </View>
+              </BlurView>
+            ) : (
+              <View style={[styles.blurContainer, { backgroundColor: 'rgba(255, 255, 255, 0.15)', borderColor: 'rgba(255, 255, 255, 0.3)', overflow: 'hidden' }]}>
+                <View style={styles.profileCard}>
+                  <View style={styles.profileImageContainer}>
+                    <Image
+                      source={userProfile.profileImage}
+                      style={styles.profileImage}
+                    />
+                  </View>
+
+                  <View style={styles.profileInfoContainer}>
+                    <Text style={styles.userName}>{userProfile.name}</Text>
+                    <View style={styles.divider} />
+                    <Text style={styles.userEmail}>{userProfile.email}</Text>
+                  </View>
                 </View>
               </View>
-            </BlurView>
+            )}
 
             {/* Edit Icon - Placed outside BlurView for better touch handling */}
             <TouchableOpacity
@@ -251,18 +284,22 @@ const ProfileScreen = () => {
                   </View>
                 </View>
 
-                <View style={styles.orderActions}>
-                  {/* <TouchableOpacity style={styles.downloadBtn}>
-                    <Icon name="download" size={18} color="white" />
-                    <Text style={styles.downloadBtnText}>Download</Text>
-                  </TouchableOpacity> */}
-                  <TouchableOpacity style={[styles.invoiceBtn, { flex: 1 }]}>
+                <View style={[styles.orderActions, { flexDirection: 'column' }]}>
+                  <TouchableOpacity style={[styles.invoiceBtn, { width: '100%' }]}>
                     <Icon
                       name="file-document-outline"
                       size={18}
                       color="#005884"
                     />
-                    <Text style={styles.invoiceBtnText}>Invoice</Text>
+                    <Text style={styles.invoiceBtnText}>Email Invoice</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.downloadBtn, { width: '100%' }]}
+                    onPress={() => handleDownloadInvoice(order)}
+                  >
+                    <Icon name="download" size={18} color="white" />
+                    <Text style={styles.downloadBtnText}>Download Invoice</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -395,19 +432,19 @@ const styles = StyleSheet.create({
     // paddingBottom: 40,
   },
   profileCard: {
-    backgroundColor: 'rgba(0, 0, 0, 0.01)',
-    borderRadius: 16,
+    // backgroundColor: 'rgba(0, 0, 0, 0.01)',
+    // borderRadius: 16,
     // padding: 0,
     // marginBottom: 30,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 3,
+    // shadowColor: '#000000',
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.4,
+    // shadowRadius: 12,
+    // elevation: 3,
     // zIndex:999,
     // overflow: 'visible',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    // borderWidth: 1,
+    // borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   cardContainer: {
     position: 'relative',
@@ -427,6 +464,8 @@ const styles = StyleSheet.create({
   },
   blurContainer: {
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
     //   overflow: 'visible',
     // marginTop:20,
     // overflow: 'hidden',
