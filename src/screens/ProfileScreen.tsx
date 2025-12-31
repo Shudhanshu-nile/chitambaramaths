@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Modal,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -30,25 +31,19 @@ const ProfileScreen = () => {
   const navigation = useNavigation<any>();
   const { user } = useSelector((state: RootState) => state.user);
   const { history, isLoading: isOrdersLoading, pagination } = useSelector((state: RootState) => state.payment);
-  const [visibleOrdersCount, setVisibleOrdersCount] = useState(5);
-
   React.useEffect(() => {
     dispatch(fetchPaymentHistory(1));
   }, [dispatch]);
 
-  const handleLoadMore = () => {
-    if (visibleOrdersCount < history.length) {
-      // Create a new limit, e.g. show 5 more, or all? "Load More" suggests incremental.
-      setVisibleOrdersCount(prev => prev + 5);
-    } else if (pagination && pagination.current_page < pagination.last_page) {
-      // Fetch next page
-      dispatch(fetchPaymentHistory(pagination.current_page + 1));
-      setVisibleOrdersCount(prev => prev + 5);
-    }
-  };
+  // Get only the latest order (assuming history is new-to-old or we just take the first one)
+  // If we need to sort by ID descending to be safe:
+  const latestOrder = React.useMemo(() => {
+    if (!history || history.length === 0) return null;
+    // Sort just to be safe, or just take index 0 if API guarantees it.
+    // Assuming API returns newest first, or we sort descending by ID.
+    return [...history].sort((a: any, b: any) => (b.id || 0) - (a.id || 0))[0];
+  }, [history]);
 
-  const displayedOrders = history.slice(0, visibleOrdersCount);
-  const showLoadMore = history.length > visibleOrdersCount || (pagination && pagination.current_page < pagination.last_page);
 
   // Fallback to local state if Redux user is null (though validation should prevent access)
   // Or just use Redux user data directly
@@ -72,10 +67,26 @@ const ProfileScreen = () => {
     ]);
   };
 
+  const handleEmailInvoice = async (order: any) => {
+    if (order?.id) {
+      try {
+        const response = await OtherService.emailInvoice(order.id);
+        if (response?.status) {
+          Alert.alert('Success', response.message || 'Invoice emailed successfully.');
+        } else {
+          Alert.alert('Error', response?.message || 'Failed to email invoice.');
+        }
+      } catch (error) {
+        console.error('Email invoice failed:', error);
+        Alert.alert('Error', 'Failed to email invoice. Please try again.');
+      }
+    }
+  };
+
   const handleDownloadInvoice = async (order: any) => {
     if (order?.id) {
       try {
-        const fileName = `Invoice_${order.stripe_payment_intent_id || order.id}`;
+        const fileName = `invoice-${order.student_registration_id}`;
         await OtherService.downloadInvoice(order.id, fileName);
       } catch (error) {
         console.error('Download failed:', error);
@@ -206,47 +217,17 @@ const ProfileScreen = () => {
                         </View>
                     </View> */}
 
-          {/* Tab Switcher */}
-          <View style={styles.tabContainer}>
-            <TouchableOpacity style={[styles.tabButton, styles.activeTab]}>
-              <Icon
-                name="shopping"
-                size={18}
-                color="#005884"
-                style={{ marginRight: 8 }}
-              />
-              <Text style={[styles.tabText, styles.activeTabText]}>Orders</Text>
-            </TouchableOpacity>
-            {/* <TouchableOpacity style={styles.tabButton}>
-              <Icon
-                name="download"
-                size={18}
-                color="#666"
-                style={{ marginRight: 8 }}
-              />
-              <Text style={styles.tabText}>Downloads</Text>
-            </TouchableOpacity> */}
-          </View>
+
 
           {/* Recent Orders Section */}
           <View style={styles.ordersSection}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recent Orders</Text>
-              <View style={styles.filterButtons}>
-                <TouchableOpacity style={styles.filterBtn}>
-                  <Icon name="filter-variant" size={16} color="#666" />
-                  <Text style={styles.filterBtnText}>Filter</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.filterBtn}>
-                  <Icon name="sort" size={16} color="#666" />
-                  <Text style={styles.filterBtnText}>Sort</Text>
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.sectionTitle}>Recent Order</Text>
             </View>
 
-            {/* Order List */}
-            {displayedOrders.map((order: any) => (
-              <View key={order.id} style={styles.orderCard}>
+            {/* Active Order Card */}
+            {latestOrder && (
+              <View key={latestOrder.id} style={styles.orderCard}>
                 <View style={styles.orderHeader}>
                   <View style={styles.orderIconBg}>
                     <Icon
@@ -256,36 +237,39 @@ const ProfileScreen = () => {
                     />
                   </View>
                   <View style={styles.orderHeaderText}>
-                    <Text style={styles.orderTitle}>{order.order_type}</Text>
-                    <Text style={styles.orderSubtitle}>{order.country_name}</Text>
+                    <Text style={styles.orderTitle}>{latestOrder.order_type}</Text>
+                    <Text style={styles.orderSubtitle}>{latestOrder.country_name}</Text>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
                     <Text style={styles.orderPrice}>
-                      {order.currency === 'GBP' ? '£' : order.currency}
-                      {order.amount}
+                      {latestOrder.currency === 'GBP' ? '£' : latestOrder.currency}
+                      {latestOrder.amount}
                     </Text>
-                    <Text style={styles.orderDate}>{order.created_at}</Text>
+                    <Text style={styles.orderDate}>{latestOrder.created_at}</Text>
                   </View>
                 </View>
 
-                <Text style={styles.orderId}>Order #{order.stripe_payment_intent_id}</Text>
+                <Text style={styles.orderId}>Order #{latestOrder.stripe_payment_intent_id}</Text>
                 <View style={styles.statusBadge}>
-                  <Text style={styles.statusText}>{order.status}</Text>
+                  <Text style={styles.statusText}>{latestOrder.status}</Text>
                 </View>
 
                 <View style={styles.orderMeta}>
                   <View>
                     <Text style={styles.metaLabel}>Payment Method</Text>
-                    <Text style={[styles.metaValue, { textTransform: 'capitalize' }]}>{order.payment_method}</Text>
+                    <Text style={[styles.metaValue, { textTransform: 'capitalize' }]}>{latestOrder.payment_method}</Text>
                   </View>
                   <View>
                     <Text style={styles.metaLabel}>Currency</Text>
-                    <Text style={styles.metaValue}>{order.currency}</Text>
+                    <Text style={styles.metaValue}>{latestOrder.currency}</Text>
                   </View>
                 </View>
 
                 <View style={[styles.orderActions, { flexDirection: 'column' }]}>
-                  <TouchableOpacity style={[styles.invoiceBtn, { width: '100%' }]}>
+                  <TouchableOpacity
+                    style={[styles.invoiceBtn, { width: '100%' }]}
+                    onPress={() => handleEmailInvoice(latestOrder)}
+                  >
                     <Icon
                       name="file-document-outline"
                       size={18}
@@ -296,20 +280,13 @@ const ProfileScreen = () => {
 
                   <TouchableOpacity
                     style={[styles.downloadBtn, { width: '100%' }]}
-                    onPress={() => handleDownloadInvoice(order)}
+                    onPress={() => handleDownloadInvoice(latestOrder)}
                   >
                     <Icon name="download" size={18} color="white" />
                     <Text style={styles.downloadBtnText}>Download Invoice</Text>
                   </TouchableOpacity>
                 </View>
               </View>
-            ))}
-
-            {showLoadMore && (
-              <TouchableOpacity style={styles.loadMoreBtn} onPress={handleLoadMore}>
-                <Text style={styles.loadMoreText}>Load More Orders</Text>
-                <Icon name="chevron-down" size={20} color="#333" />
-              </TouchableOpacity>
             )}
           </View>
 
@@ -340,8 +317,10 @@ const ProfileScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
-    </View>
+      </ScrollView >
+
+
+    </View >
   );
 };
 
@@ -358,7 +337,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    height: 430,
+    height: 380,
     paddingTop: 0,
     zIndex: -999,
     position: 'relative',
@@ -368,7 +347,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 70,
+    paddingTop: 40,
   },
   logoPill: {
     backgroundColor: Colors.white,
@@ -525,7 +504,7 @@ const styles = StyleSheet.create({
   },
   buttonsContainer: {
     gap: 12,
-    marginTop: 70,
+    marginTop: 20,
   },
   signOutButton: {
     backgroundColor: Colors.primaryBlue,
@@ -595,39 +574,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 
-  // Tabs
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    marginTop: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    overflow: 'hidden',
-  },
-  tabButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 3,
-    borderBottomColor: 'transparent',
-  },
-  activeTab: {
-    borderBottomColor: '#005884',
-  },
-  tabText: {
-    fontSize: 14,
-    fontFamily: Fonts.InterSemiBold,
-    color: '#666',
-  },
-  activeTabText: {
-    color: '#005884',
-  },
+
 
   // Orders Section
   ordersSection: {
@@ -645,26 +592,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.InterBold,
     color: '#333',
   },
-  filterButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  filterBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  filterBtnText: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 4,
-    fontFamily: Fonts.InterMedium,
-  },
+
 
   // Order Card
   orderCard: {
@@ -797,21 +725,5 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.InterSemiBold,
     marginLeft: 6,
   },
-  loadMoreBtn: {
-    flexDirection: 'row',
-    backgroundColor: Colors.white,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 30,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  loadMoreText: {
-    fontSize: 14,
-    fontFamily: Fonts.InterSemiBold,
-    color: '#333',
-    marginRight: 6,
-  },
+
 });

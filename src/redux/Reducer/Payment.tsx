@@ -12,6 +12,7 @@ export interface PaymentItem {
     created_at: string;
     exam_registration_id: number;
     stripe_payment_intent_id: string;
+    student_registration_id: string;
 }
 
 export interface PaginationData {

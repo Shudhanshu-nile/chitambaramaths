@@ -29,15 +29,25 @@ import OtherService from '../service/OtherService';
 
 const { width } = Dimensions.get('window');
 
-const PaymentSuccessScreen = ({ navigation }: any) => {
+const PaymentSuccessScreen = ({ navigation, route }: any) => {
     const dispatch = useDispatch();
     const { history, isLoading } = useSelector((state: any) => state.payment);
     const { user } = useSelector((state: any) => state.user);
 
     // Fetch only the latest payment history
+    // Fetch only the latest payment history
     useEffect(() => {
         dispatch(fetchPaymentHistory(1) as any);
-    }, [dispatch]);
+
+        // Polling if coming from registration
+        if (route.params?.fromRegistration) {
+            const timer = setTimeout(() => {
+                dispatch(fetchPaymentHistory(1) as any);
+            }, 10000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [dispatch, route.params]);
 
     // Get the most recent order effectively
     const recentOrder = history && history.length > 0 ? history[0] : null;
@@ -50,7 +60,7 @@ const PaymentSuccessScreen = ({ navigation }: any) => {
         if (recentOrder?.id) {
             try {
                 // console.log('Download Exam PDF', recentOrder.id);
-                const fileName = `Invoice_${recentOrder.stripe_payment_intent_id || recentOrder.id}`;
+                const fileName = `invoice-${recentOrder.student_registration_id}`;
                 await OtherService.downloadInvoice(recentOrder.id, fileName);
             } catch (error) {
                 console.error('Download failed:', error);
@@ -59,8 +69,20 @@ const PaymentSuccessScreen = ({ navigation }: any) => {
         }
     };
 
-    const handleEmailExam = () => {
-        console.log('Email Exam PDF');
+    const handleEmailExam = async () => {
+        if (recentOrder?.id) {
+            try {
+                const response = await OtherService.emailInvoice(recentOrder.id);
+                if (response?.status) {
+                    Alert.alert('Success', response.message || 'Invoice emailed successfully.');
+                } else {
+                    Alert.alert('Error', response?.message || 'Failed to email invoice.');
+                }
+            } catch (error) {
+                console.error('Email invoice failed:', error);
+                Alert.alert('Error', 'Failed to email invoice. Please try again.');
+            }
+        }
     };
 
     // Format Date safely
@@ -86,13 +108,33 @@ const PaymentSuccessScreen = ({ navigation }: any) => {
     };
 
     // Helper to safely get display values
-    const amount = recentOrder?.amount ? `£${recentOrder.amount}` : '£0.00';
+    // Helper to get currency symbol using Intl
+    const getCurrencySymbol = (currency: string) => {
+        if (!currency) return '£';
+        try {
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+            });
+            const parts = formatter.formatToParts(0);
+            const currencyPart = parts.find(part => part.type === 'currency');
+            return currencyPart ? currencyPart.value : currency;
+        } catch (error) {
+            return currency; // Fallback to code if Intl fails
+        }
+    };
+
+    const currencyCode = recentOrder?.currency?.toUpperCase();
+    const currencySymbol = currencyCode ? getCurrencySymbol(currencyCode) : '£';
+    const amount = recentOrder?.amount ? `${currencySymbol}${recentOrder.amount}` : `${currencySymbol}0.00`;
     const orderId = recentOrder?.stripe_payment_intent_id;
     // ? `TXN-${recentOrder.stripe_payment_intent_id.slice(-8).toUpperCase()}`
     // : 'TXN-PENDING';
     const paymentDate = recentOrder?.created_at ? formatDate(recentOrder.created_at) : 'Just now';
     const paymentMethod = recentOrder?.payment_method === 'card' ? 'Visa' : recentOrder?.payment_method || 'Card';
-    const last4 = '3456';
+    // const last4 = '3456';
 
     return (
         <View style={styles.container}>
@@ -149,7 +191,7 @@ const PaymentSuccessScreen = ({ navigation }: any) => {
                         <Text style={styles.label}>Payment Method</Text>
                         <View style={styles.rowValueContainer}>
                             <Icon name="credit-card" size={20} color={Colors.primaryDarkBlue} style={{ marginRight: 8 }} />
-                            <Text style={styles.valueText}>•••• {last4}</Text>
+                            <Text style={styles.valueText}>{paymentMethod}</Text>
                         </View>
                     </View>
                     <View style={styles.row}>
@@ -174,15 +216,14 @@ const PaymentSuccessScreen = ({ navigation }: any) => {
                         </View>
                     </View>
 
-                    {/* Exam Session */}
+                    {/* Student Registration ID */}
                     <View style={styles.summaryItem}>
                         <View style={styles.summaryIconBox}>
-                            <Icon name="calendar-month" size={24} color={Colors.primaryDarkBlue} />
+                            <Icon name="clipboard-account" size={24} color={Colors.primaryDarkBlue} />
                         </View>
                         <View style={styles.summaryDetails}>
-                            <Text style={styles.summaryLabel}>Exam Session</Text>
-                            <Text style={styles.summaryValue}>May/June 2025</Text>
-                            <Text style={styles.summarySubtext}>UK Exam 2025</Text>
+                            <Text style={styles.summaryLabel}>Student Registration ID</Text>
+                            <Text style={styles.summaryValue}>{recentOrder?.student_registration_id || 'N/A'}</Text>
                         </View>
                     </View>
 
@@ -193,9 +234,8 @@ const PaymentSuccessScreen = ({ navigation }: any) => {
                         </View>
                         <View style={styles.summaryDetails}>
                             <Text style={styles.summaryLabel}>Exam Center</Text>
-                            <Text style={styles.summaryValue}>Westminster Learning Center</Text>
-                            <Text style={styles.summarySubtext}>125 Oxford Street, London W1D 2HX</Text>
-                            <Text style={styles.summarySubtext}>Distance: 2.3 km</Text>
+                            <Text style={styles.summaryValue}>{recentOrder?.exam_center_name || 'N/A'}</Text>
+                            <Text style={styles.summarySubtext}>{recentOrder?.exam_center_address || 'Address not available'}</Text>
                         </View>
                     </View>
 
@@ -203,17 +243,17 @@ const PaymentSuccessScreen = ({ navigation }: any) => {
                     <Text style={styles.sectionTitle}>Payment Breakdown</Text>
 
                     <View style={styles.breakdownRow}>
-                        <Text style={styles.breakdownLabel}>Subtotal</Text>
-                        <Text style={styles.breakdownValue}>£90.00</Text>
+                        <Text style={styles.breakdownLabel}>Total</Text>
+                        <Text style={styles.breakdownValue}>{recentOrder?.amount}</Text>
                     </View>
                     {/* <View style={styles.breakdownRow}>
                         <Text style={styles.breakdownLabel}>Processing Fee</Text>
                         <Text style={styles.breakdownValue}>£0.00</Text>
                     </View> */}
-                    <View style={styles.breakdownRow}>
+                    {/* <View style={styles.breakdownRow}>
                         <Text style={styles.breakdownLabel}>Tax (VAT 0%)</Text>
                         <Text style={styles.breakdownValue}>£0.00</Text>
-                    </View>
+                    </View> */}
 
                     <View style={styles.dashedDivider} />
 
@@ -221,18 +261,18 @@ const PaymentSuccessScreen = ({ navigation }: any) => {
                         <Text style={styles.totalLabel}>Total Paid</Text>
                         <Text style={styles.totalValue}>{amount}</Text>
                     </View>
-                    <Text style={styles.paidVia}>Paid via {paymentMethod} ending in {last4}</Text>
+                    {/* <Text style={styles.paidVia}>Paid via {paymentMethod} ending in {last4}</Text> */}
 
                     {/* Action Buttons */}
                     <View style={styles.actionButtonsContainer}>
                         <TouchableOpacity style={styles.primaryButton} onPress={handleDownloadExam}>
                             <Icon name="download" size={20} color={Colors.white} />
-                            <Text style={styles.primaryButtonText}>Download Exam (PDF)</Text>
+                            <Text style={styles.primaryButtonText}>Download Invoice</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.outlineButton} onPress={handleEmailExam}>
                             <Icon name="email-outline" size={20} color={Colors.primaryDarkBlue} />
-                            <Text style={styles.outlineButtonText}>Email Exam (PDF)</Text>
+                            <Text style={styles.outlineButtonText}>Email Invoice</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.outlineButton} onPress={handleGoHome}>

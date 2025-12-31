@@ -19,6 +19,12 @@ class OtherService {
     return response;
   }
 
+  public static async getBanners() {
+    const url = `${API.GET_BANNERS}`;
+    const response = await Http.get(url);
+    return response;
+  }
+
   public static async getExamCenters(countryId: any) {
     const url = `${API.GET_EXAM_CENTERS}/${countryId}`;
     const response = await Http.get(url);
@@ -39,6 +45,18 @@ class OtherService {
 
   public static async getTermsAndConditions() {
     const url = `${API.TERMS_AND_CONDITIONS}`;
+    const response = await Http.get(url);
+    return response;
+  }
+
+  public static async getPrivacyPolicy() {
+    const url = `${API.PRIVACY_POLICY}`;
+    const response = await Http.get(url);
+    return response;
+  }
+
+  public static async emailInvoice(id: any) {
+    const url = `${API.PAYMENTS}/${id}/email-invoice`;
     const response = await Http.get(url);
     return response;
   }

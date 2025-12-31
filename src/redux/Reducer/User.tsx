@@ -262,11 +262,12 @@ export const UserSlice = createSlice({
         const payload = action.payload;
         state.user = {
           ...state.user,
-          fullName: payload.stuname || state.user.fullName,
-          academicYear: payload.grade || state.user.academicYear,
+          fullName: payload.name || state.user.fullName,
+          academicYear: payload.year || state.user.academicYear,
           // Map other fields if necessary
-          dateOfBirth: payload.dob || state.user.dateOfBirth,
+          dateOfBirth: payload.date_of_birth || state.user.dateOfBirth,
           country: payload.country || state.user.country,
+          phone: payload.phone || state.user.phone,
         };
       }
     });

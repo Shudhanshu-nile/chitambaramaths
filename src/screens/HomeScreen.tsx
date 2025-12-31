@@ -20,6 +20,8 @@ import NotificationService from '../utils/NotificationServices';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/Reducer/RootReducer';
 import { navigate } from '../navigation/GlobalNavigation';
+import OtherService from '../service/OtherService';
+import { FlatList } from 'react-native';
 
 const QUICK_ACTIONS = [
     { id: 1, title: 'Register\nExam', icon: 'calendar-check', bg: Colors.lightBlue1, color: Colors.iconBlue1, route: ScreenNames.RegisterExam },
@@ -29,21 +31,65 @@ const QUICK_ACTIONS = [
     // { id: 5, title: 'Event\nPhotos', icon: 'image-multiple', bg: Colors.lightGreen1, color: Colors.iconGreen },
 ];
 
-const EXAMS = [
-    { id: 1, title: 'UK Exam 2026', tag: 'Registration Open' },
-    { id: 2, title: 'Canada Exam 2026' },
-    { id: 3, title: 'Australia Exam 2026' },
-    { id: 4, title: 'New Zealand Exam 2026' },
-    { id: 5, title: 'France Exam 2026' },
-    { id: 6, title: 'Practise Exams', tag: 'New' },
-    { id: 7, title: 'SriLanka Award Ceremony Photos' },
-    { id: 8, title: 'SriLanka Exam 2026' },
-];
+
 
 const HomeScreen = ({ navigation }: any) => {
     // const { user, isLoggedIn } = useAuth();
     const { isLoggedIn, user } = useSelector((state: RootState) => state.user);
     const { width } = Dimensions.get('window');
+
+    const [banners, setBanners] = React.useState<any[]>([]);
+    const [countries, setCountries] = React.useState<any[]>([]);
+    const [activeBannerIndex, setActiveBannerIndex] = React.useState(0);
+    const flatListRef = React.useRef<FlatList>(null);
+
+    React.useEffect(() => {
+        const fetchBanners = async () => {
+            try {
+                const response = await OtherService.getBanners();
+                if (response?.data?.status) {
+                    setBanners(response.data.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch banners:", error);
+            }
+        };
+
+        const fetchCountries = async () => {
+            try {
+                const response = await OtherService.getCountries();
+                if (response?.data?.status) {
+                    setCountries(response.data.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch countries:", error);
+            }
+        };
+
+        fetchBanners();
+        fetchCountries();
+    }, []);
+
+    React.useEffect(() => {
+        if (banners.length > 1) {
+            const interval = setInterval(() => {
+                let nextIndex = activeBannerIndex + 1;
+                if (nextIndex >= banners.length) {
+                    nextIndex = 0;
+                }
+                flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+            }, 3000);
+
+            return () => clearInterval(interval);
+        }
+    }, [activeBannerIndex, banners.length]);
+
+    const onViewableItemsChanged = React.useRef(({ viewableItems }: any) => {
+        if (viewableItems.length > 0) {
+            setActiveBannerIndex(viewableItems[0].index || 0);
+        }
+    }).current;
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={Colors.primaryBlue} />
@@ -95,10 +141,10 @@ const HomeScreen = ({ navigation }: any) => {
                                     <Logo height={36} width={176} />
                                 </View>
 
-                                <TouchableOpacity style={styles.notificationBtn}>
+                                {/* <TouchableOpacity style={styles.notificationBtn}>
                                     <Icon name="bell" size={22} color="#fff" />
                                     <View style={styles.notificationDot} />
-                                </TouchableOpacity>
+                                </TouchableOpacity> */}
                             </View>
 
                             {/* LOGIN CARD */}
@@ -165,26 +211,72 @@ const HomeScreen = ({ navigation }: any) => {
 
                 {/* ================= HERO BANNER ================= */}
                 <View style={styles.heroBannerContainer}>
-                    <ImageBackground
-                        source={HomeBackground}
-                        style={styles.heroBanner}
-                        imageStyle={{ borderRadius: 20 }}
-                    >
-                        <View style={styles.heroOverlay}>
-                            <Text style={styles.heroTitle}>
-                                Empowering the Next Generation of Mathematicians
-                            </Text>
-                            <Text style={styles.heroSubtitle}>
-                                Join the prestigious Chithambara Maths Challenge and unlock your child's true potential in mathematics.
-                            </Text>
-
-                            <View style={styles.paginationDots}>
-                                <View style={[styles.dot, styles.activeDot]} />
-                                <View style={styles.dot} />
-                                <View style={styles.dot} />
+                    {banners.length > 0 ? (
+                        <View>
+                            <FlatList
+                                ref={flatListRef}
+                                data={banners}
+                                horizontal
+                                pagingEnabled
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={{ width: width * banners.length }} // Ensure content width is correct
+                                keyExtractor={(item, index) => index.toString()}
+                                onViewableItemsChanged={onViewableItemsChanged}
+                                viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+                                renderItem={({ item }) => (
+                                    <View style={{ width: width - 40, height: 200, marginRight: 0 }}>
+                                        <ImageBackground
+                                            source={{ uri: item.image }}
+                                            style={styles.heroBanner}
+                                            imageStyle={{ borderRadius: 20 }}
+                                        >
+                                            <View style={styles.heroOverlay}>
+                                                <Text style={styles.heroTitle}>
+                                                    {item.title}
+                                                </Text>
+                                                <Text style={styles.heroSubtitle}>
+                                                    {item.description}
+                                                </Text>
+                                            </View>
+                                        </ImageBackground>
+                                    </View>
+                                )}
+                            />
+                            {/* Pagination Dots */}
+                            <View style={[styles.paginationDots, { position: 'absolute', bottom: 15, left: 0, right: 0 }]}>
+                                {banners.map((_, index) => (
+                                    <View
+                                        key={index}
+                                        style={[
+                                            styles.dot,
+                                            index === activeBannerIndex && styles.activeDot
+                                        ]}
+                                    />
+                                ))}
                             </View>
                         </View>
-                    </ImageBackground>
+                    ) : (
+                        // Fallback to static banner if no banners fetched
+                        <ImageBackground
+                            source={HomeBackground}
+                            style={styles.heroBanner}
+                            imageStyle={{ borderRadius: 20 }}
+                        >
+                            <View style={styles.heroOverlay}>
+                                <Text style={styles.heroTitle}>
+                                    Empowering the Next Generation of Mathematicians
+                                </Text>
+                                <Text style={styles.heroSubtitle}>
+                                    Join the prestigious Chithambara Maths Challenge and unlock your child's true potential in mathematics.
+                                </Text>
+                                <View style={styles.paginationDots}>
+                                    <View style={[styles.dot, styles.activeDot]} />
+                                    <View style={styles.dot} />
+                                    <View style={styles.dot} />
+                                </View>
+                            </View>
+                        </ImageBackground>
+                    )}
                 </View>
 
                 {/* ================= KANITHA VIZHA (FIXED - Commented as requested) ================= */}
@@ -237,7 +329,7 @@ const HomeScreen = ({ navigation }: any) => {
                                 }
                             }}
                         >
-                            <Text style={styles.regBtnText}>Register</Text>
+                            <Text style={styles.regBtnText}>Exam Registration</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -265,13 +357,23 @@ const HomeScreen = ({ navigation }: any) => {
 
                 {/* ================= EXAM LIST ================= */}
                 <View style={styles.examList}>
-                    {EXAMS.map(item => (
-                        <TouchableOpacity key={item.id} style={styles.examItem}>
-                            <Text style={styles.examText}>{item.title}</Text>
+                    {countries.map((item, index) => (
+                        <TouchableOpacity
+                            key={item.id || index}
+                            style={styles.examItem}
+                            onPress={() => {
+                                if (!isLoggedIn) {
+                                    navigation.navigate(ScreenNames.Login);
+                                } else {
+                                    navigation.navigate(ScreenNames.RegisterExam, { country: item });
+                                }
+                            }}
+                        >
+                            <Text style={styles.examText}>{item.name} Exam 2026</Text>
 
-                            {item.tag && (
+                            {item.is_registartion_open === 'open' && (
                                 <View style={styles.examTag}>
-                                    <Text style={styles.examTagText}>{item.tag}</Text>
+                                    <Text style={styles.examTagText}>Registration Open</Text>
                                 </View>
                             )}
                         </TouchableOpacity>
@@ -292,13 +394,13 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.lightGray },
 
     header: {
-        height: 340,
+        height: 300,
         // alignItems: 'center',
         justifyContent: 'center',
     },
 
     headerLoggedIn: {
-        height: 300,
+        height: 250,
         // alignItems: 'center',
         justifyContent: 'center',
     },
@@ -388,7 +490,7 @@ const styles = StyleSheet.create({
 
     welcomeTextContainer: {
         flex: 1,
-        marginHorizontal: 16,
+        marginHorizontal: -7,
     },
 
     welcomeGreeting: {

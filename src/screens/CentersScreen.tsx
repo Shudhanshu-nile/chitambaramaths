@@ -35,21 +35,74 @@ const CentersScreen = () => {
     const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const [loading, setLoading] = useState(false);
     const [visibleCount, setVisibleCount] = useState(5);
+    const [currentCountry, setCurrentCountry] = useState<string>('');
 
     useEffect(() => {
-        fetchCentersForDefaultCountry();
+        // Try to identify location and load centers based on that
+        initLocationAndCenters();
     }, []);
 
-    const fetchCentersForDefaultCountry = async () => {
+    const initLocationAndCenters = async () => {
+        setLoading(true);
+        // We will try to get location. 
+        // If we have permission or can get it, we use the country from there.
+        // If not, we fallback to United Kingdom.
+        if (Platform.OS === 'ios') {
+            const auth = await Geolocation.requestAuthorization('whenInUse');
+            if (auth === 'granted') {
+                getLocation(true);
+            } else {
+                loadCenters('United Kingdom');
+            }
+        } else {
+            const result = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+            if (result) {
+                getLocation(true);
+            } else {
+                // Request it now? Or just load default? 
+                // User wants dynamic, so let's request once.
+                requestLocationPermission(true);
+            }
+        }
+    };
+
+    const loadCenters = async (countryName: string) => {
         try {
             setLoading(true);
             const countriesRes = await OtherService.getCountries();
             if (countriesRes.data && countriesRes.data.status && countriesRes.data.data) {
                 const countries = countriesRes.data.data;
-                const defaultCountry = countries.find((c: any) => c.name === 'United Kingdom') || countries[0];
+                // Try to find the country
+                const matchedCountry = countries.find((c: any) => c.name?.toLowerCase() === countryName?.toLowerCase())
+                    || countries.find((c: any) => c.name === 'United Kingdom'); // Absolute fallback if needed, but we prefer the explicit one
 
-                if (defaultCountry) {
-                    const centersRes = await OtherService.getExamCenters(defaultCountry.id);
+                // If we specifically looked for a country (e.g. India) and found a match, use it.
+                // If we didn't find a match for "India", do we fallback to UK? 
+                // The user said: "if no exam center available for India then show no exam center".
+                // So if we have a countryName but it's not in our list, we should probably show empty results for THAT country, not UK.
+
+                let targetCountry = null;
+
+                if (countryName) {
+                    targetCountry = countries.find((c: any) => c.name?.toLowerCase() === countryName?.toLowerCase());
+                    if (!targetCountry && countryName !== 'United Kingdom') {
+                        // Country detected but not supported by API
+                        setCurrentCountry(countryName);
+                        setExamCenters([]);
+                        setSortedCenters([]);
+                        setLoading(false);
+                        return;
+                    }
+                }
+
+                // Fallback to UK if no country detected or country not found (and we want a default)
+                if (!targetCountry) {
+                    targetCountry = countries.find((c: any) => c.name === 'United Kingdom') || countries[0];
+                }
+
+                if (targetCountry) {
+                    setCurrentCountry(targetCountry.name);
+                    const centersRes = await OtherService.getExamCenters(targetCountry.id);
                     if (centersRes.data && centersRes.data.status && centersRes.data.data) {
                         const mappedCenters = centersRes.data.data.map((item: any) => ({
                             id: item.id.toString(),
@@ -69,7 +122,14 @@ const CentersScreen = () => {
                         // If we have user location, sort immediately
                         if (userLocation) {
                             calculateDistancesAndSort(userLocation.latitude, userLocation.longitude, mappedCenters);
+                        } else {
+                            // Reset distance info if no location
+                            setSortedCenters(mappedCenters);
                         }
+                    } else {
+                        // Country found (e.g. India) but API returned no centers or empty data
+                        setExamCenters([]);
+                        setSortedCenters([]);
                     }
                 }
             }
@@ -98,11 +158,13 @@ const CentersScreen = () => {
         return deg * (Math.PI / 180);
     };
 
-    const requestLocationPermission = async () => {
+    const requestLocationPermission = async (isInit = false) => {
         if (Platform.OS === 'ios') {
             const auth = await Geolocation.requestAuthorization('whenInUse');
             if (auth === 'granted') {
-                getLocation();
+                getLocation(isInit);
+            } else if (isInit) {
+                loadCenters('United Kingdom');
             } else {
                 Alert.alert('Permission Denied', 'Location permission is required to find nearest centers.');
             }
@@ -119,44 +181,52 @@ const CentersScreen = () => {
                     }
                 );
                 if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                    getLocation();
+                    getLocation(isInit);
+                } else if (isInit) {
+                    loadCenters('United Kingdom');
                 } else {
                     Alert.alert('Permission Denied', 'Location permission is required to find nearest centers.');
                 }
             } catch (err) {
                 console.warn(err);
+                if (isInit) loadCenters('United Kingdom');
             }
         }
     };
 
-    const getLocation = (highAccuracy: boolean) => {
+    const getLocation = (isInit = false) => {
         console.log("Getting location...");
         Geolocation.getCurrentPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
                 setUserLocation({ latitude, longitude });
-                calculateDistancesAndSort(latitude, longitude, examCenters);
-                getAddressFromCoordinates(latitude, longitude);
+                getAddressFromCoordinates(latitude, longitude, isInit);
             },
             (error) => {
                 console.log("Location error:", error.code, error.message);
-                let msg = 'Unable to retrieve location. Please check your GPS settings.';
-                if (error.code === 3) {
-                    msg = 'Location request timed out.';
+
+                if (isInit) {
+                    // Fallback if location fails on init
+                    loadCenters('United Kingdom');
+                } else {
+                    let msg = 'Unable to retrieve location. Please check your GPS settings.';
+                    if (error.code === 3) {
+                        msg = 'Location request timed out.';
+                    }
+                    Alert.alert('Error', msg);
                 }
-                Alert.alert('Error', msg);
             },
             {
                 enableHighAccuracy: true,
-                timeout: 60000,
-                maximumAge: 86400000, // 24h cache
+                timeout: 15000,
+                maximumAge: 10000,
                 forceLocationManager: true,
                 showLocationDialog: true
             }
         );
     };
 
-    const getAddressFromCoordinates = async (lat: number, lng: number) => {
+    const getAddressFromCoordinates = async (lat: number, lng: number, isInit = false) => {
         try {
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
@@ -168,6 +238,8 @@ const CentersScreen = () => {
             );
             const data = await response.json();
 
+            // Extract country
+            let detectedCountry = 'United Kingdom'; // Default
             if (data && data.address) {
                 const addr = data.address;
                 const fetchedTown =
@@ -178,13 +250,28 @@ const CentersScreen = () => {
                     addr.hamlet ||
                     '';
 
-                // You can append other parts if needed, e.g. fetchedTown + ", " + addr.country
                 if (fetchedTown) {
                     setSearchText(fetchedTown);
                 }
+
+                if (addr.country) {
+                    detectedCountry = addr.country;
+                }
             }
+
+            // If we are initializing, load centers for this country
+            if (isInit) {
+                loadCenters(detectedCountry);
+            } else {
+                // If this was a manual refresh or location button press, we should also probably reload centers for this new location?
+                // The user expects "Use current location" to find centers relevant to them. 
+                // So yes, we should reload.
+                loadCenters(detectedCountry);
+            }
+
         } catch (error) {
             console.warn('Reverse geocoding failed:', error);
+            if (isInit) loadCenters('United Kingdom');
         }
     };
 
@@ -251,13 +338,13 @@ const CentersScreen = () => {
 
     const renderCenterItem = ({ item }: { item: Center }) => (
         <View style={styles.cardContainer}>
-            <View style={styles.cardHeaderRow}>
+            {/* <View style={styles.cardHeaderRow}>
                 <Text style={styles.centerTitle}>{item.title}</Text>
                 <View style={styles.distanceBadge}>
                     <Ionicons name="location-sharp" size={14} color={Colors.primaryBlue} />
                     <Text style={styles.distanceText}>{item.distance} away</Text>
                 </View>
-            </View>
+            </View> */}
 
             <View style={styles.addressRow}>
                 <Ionicons name="location-outline" size={16} color={Colors.primaryDarkBlue} style={{ marginTop: 2 }} />
@@ -310,9 +397,9 @@ const CentersScreen = () => {
             >
                 <View style={styles.headerTopRow}>
                     <Text style={styles.headerTitle}>Find Exam Center</Text>
-                    <TouchableOpacity style={styles.filterbutton}>
+                    {/* <TouchableOpacity style={styles.filterbutton}>
                         <Ionicons name="options-outline" size={24} color={Colors.white} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
 
                 <View style={styles.searchContainer}>
@@ -331,7 +418,7 @@ const CentersScreen = () => {
                     )}
                 </View>
 
-                <TouchableOpacity style={styles.locationButton} onPress={requestLocationPermission}>
+                <TouchableOpacity style={styles.locationButton} onPress={() => requestLocationPermission(false)}>
                     <Ionicons name="locate" size={20} color={Colors.white} style={{ marginRight: 8 }} />
                     <Text style={styles.locationButtonText}>Use My Current Location</Text>
                 </TouchableOpacity>
@@ -341,10 +428,10 @@ const CentersScreen = () => {
                 <View style={styles.resultsHeader}>
                     <View>
                         <Text style={styles.resultsTitle}>Showing Results For</Text>
-                        <Text style={styles.resultsSubtitle}>United Kingdom • London Area</Text>
+                        <Text style={styles.resultsSubtitle}>{currentCountry ? `${currentCountry}` : 'Loading...'}</Text>
                     </View>
                     <View style={styles.countBadge}>
-                        <Text style={styles.countText}> Centers</Text>
+                        <Text style={styles.countText}>{sortedCenters.length} Centers</Text>
                     </View>
                 </View>
 
@@ -360,6 +447,15 @@ const CentersScreen = () => {
                     showsVerticalScrollIndicator={false}
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={0.5}
+                    ListEmptyComponent={
+                        !loading ? (
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>
+                                    No exam centers available for {currentCountry || 'this location'}.
+                                </Text>
+                            </View>
+                        ) : null
+                    }
                 />
             </View>
         </View>
@@ -379,7 +475,7 @@ const styles = StyleSheet.create({
         // paddingHorizontal: 16,
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
-        height: 300,
+        height: 260,
         justifyContent: 'center',
 
     },
@@ -574,6 +670,17 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         borderWidth: 1,
         borderColor: '#EAECF0',
+    },
+    emptyContainer: {
+        padding: 20,
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    emptyText: {
+        fontFamily: Fonts.InterMedium,
+        fontSize: 14,
+        color: '#667085',
+        textAlign: 'center',
     },
 });
 

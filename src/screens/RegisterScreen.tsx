@@ -7,7 +7,13 @@ import {
   ScrollView,
   StatusBar,
   Dimensions,
+  Platform,
+  PermissionsAndroid,
+  ActivityIndicator,
+  Linking,
+  AppState,
 } from 'react-native';
+import Geolocation from 'react-native-geolocation-service';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
@@ -56,6 +62,7 @@ const RegisterScreen = ({ navigation }: any) => {
 
   // Terms Modal State
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsTitle, setTermsTitle] = useState('Terms of Service');
   const [termsContent, setTermsContent] = useState('');
   const [termsLoading, setTermsLoading] = useState(false);
 
@@ -106,6 +113,7 @@ const RegisterScreen = ({ navigation }: any) => {
   };
 
   const handleTermsPress = async () => {
+    setTermsTitle('Terms of Service');
     setShowTermsModal(true);
     // Always fetch to ensure we get the latest parsing logic (bypass hot-reload stale state)
     setTermsLoading(true);
@@ -182,6 +190,78 @@ const RegisterScreen = ({ navigation }: any) => {
     }
   };
 
+  const handlePrivacyPress = async () => {
+    setTermsTitle('Privacy Policy');
+    setShowTermsModal(true);
+    setTermsLoading(true);
+    try {
+      const response = await OtherService.getPrivacyPolicy();
+      // Check if response is HTML string or JSON
+      let data = response.data;
+
+      if (typeof data === 'string' && (data.includes('<!DOCTYPE html>') || data.includes('<html'))) {
+        // Basic HTML stripping
+        // Extract content from specific divs if possible
+        let extractedContent = '';
+
+        // Try to extract privacy-box content (guessing class name similar to terms)
+        // Since I don't know exact class, I will try generic content extraction first similar to terms
+        // Try to extract policies-box or generic content container
+        const infoBoxMatch = data.match(/<div class="exam-info-box">([\s\S]*?)<\/div>/);
+        if (infoBoxMatch && infoBoxMatch[1]) {
+          extractedContent += infoBoxMatch[1];
+        }
+
+        if (!extractedContent) {
+          const bodyMatch = data.match(/<body[^>]*>([\s\S]*?)<\/body>/);
+          extractedContent = bodyMatch ? bodyMatch[1] : data;
+        }
+
+        // Marker strategy for cleaner parsing - REUSED LOGIC
+        const plainText = extractedContent
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          // Replace semantic breaks with unique markers
+          .replace(/<br\s*\/?>/gi, '[[BREAK]]')
+          .replace(/<\/p>/gi, '[[PARAGRAPH]]')
+          .replace(/<\/div>/gi, '[[BREAK]]')
+          .replace(/<li[^>]*>/gi, '[[BULLET]]')
+          .replace(/<\/li>/gi, '[[BREAK]]')
+          .replace(/<\/h[1-6]>/gi, '[[PARAGRAPH]]') // Ensure headers break like paragraphs
+          // Strip all other tags
+          .replace(/<[^>]+>/g, '')
+          // Decode entities
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          // Collapse all whitespace (including source newlines) to single space
+          .replace(/\s+/g, ' ')
+          // Restore markers
+          .replace(/\[\[PARAGRAPH\]\]/g, '\n\n')
+          .replace(/\[\[BREAK\]\]/g, '\n')
+          .replace(/\[\[BULLET\]\]/g, '• ')
+          // Clean up excessive newlines
+          .replace(/\n\s+/g, '\n')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+
+        setTermsContent(plainText || 'No privacy policy content available.');
+
+      } else if (response.data && response.data.status) {
+        const content = response.data.data?.description || response.data.data?.content || response.data.data || "No privacy policy content available.";
+        setTermsContent(content);
+      } else {
+        setTermsContent('Failed to load Privacy Policy.');
+      }
+    } catch (error) {
+      console.error('Failed to fetch privacy policy', error);
+      setTermsContent('An error occurred while loading Privacy Policy.');
+    } finally {
+      setTermsLoading(false);
+    }
+  };
+
   const updateField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -189,6 +269,113 @@ const RegisterScreen = ({ navigation }: any) => {
   const [open, setOpen] = useState(false);
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const [isYearOpen, setIsYearOpen] = useState(false);
+
+  // Geolocation Logic
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [addressSelection, setAddressSelection] = useState<{ start: number; end: number } | undefined>(undefined);
+
+  useEffect(() => {
+    (Geolocation as any).setRNConfiguration({
+      skipPermissionRequests: true,
+      authorizationLevel: 'whenInUse',
+    });
+  }, []);
+
+  const requestLocationPermission = async () => {
+    if (Platform.OS === 'ios') {
+      const auth = await Geolocation.requestAuthorization('whenInUse');
+      return auth === 'granted';
+    }
+
+    if (Platform.OS === 'android') {
+      try {
+        const result = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+        ]);
+
+        const fineLocationGranted =
+          result[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] ===
+          PermissionsAndroid.RESULTS.GRANTED;
+        const coarseLocationGranted =
+          result[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
+          PermissionsAndroid.RESULTS.GRANTED;
+
+        return fineLocationGranted || coarseLocationGranted;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return false;
+  };
+
+  const handleGeolocation = async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) {
+      showToastMessage({
+        message: 'Location permission is required to use this feature.',
+      });
+      return;
+    }
+
+    setGeoLoading(true);
+
+    setTimeout(() => {
+      Geolocation.getCurrentPosition(
+        async position => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+              {
+                headers: {
+                  'User-Agent': 'ChitambaramathsApp/1.0',
+                },
+              },
+            );
+            const data = await response.json();
+            if (data && data.address) {
+              const addr = data.address;
+              const fetchedStreet = data.display_name || '';
+              updateField('address', fetchedStreet);
+              setAddressSelection({ start: 0, end: 0 });
+              showToastMessage({ message: 'Address details autofilled.' });
+            } else {
+              showToastMessage({ message: 'Could not fetch address details.' });
+            }
+          } catch (error) {
+            console.error('Reverse Geocoding Error:', error);
+            showToastMessage({
+              message: 'Failed to fetch address from location.',
+            });
+          } finally {
+            setGeoLoading(false);
+          }
+        },
+        async error => {
+          console.error('Location Error:', error);
+          setGeoLoading(false);
+          let msg = 'Failed to get current location.';
+          if (error.code === 3) {
+            msg = 'Location request timed out.';
+          } else if (error.code === 1) {
+            msg = 'Location permission denied.';
+          } else if (error.code === 2) {
+            msg = 'Location provider unavailable.';
+          }
+          showToastMessage({ message: msg });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 60000,
+          maximumAge: 86400000,
+          forceLocationManager: true,
+          showLocationDialog: true
+        },
+      );
+    }, 500);
+  };
 
   const handleRegister = async () => {
     try {
@@ -233,6 +420,23 @@ const RegisterScreen = ({ navigation }: any) => {
         const parts = formData.dob.split('/');
         if (parts.length === 3) {
           const [month, day, year] = parts;
+
+          // AGE VALIDATION: Must be at least 5 years old
+          const birthDate = new Date(Number(year), Number(month) - 1, Number(day));
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const m = today.getMonth() - birthDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+
+          if (age < 5) {
+            showToastMessage({
+              message: 'You must be at least 5 years old to register.',
+            });
+            return;
+          }
+
           formattedDob = `${year}-${month}-${day}`;
         } else {
           console.warn('Invalid DOB format, using raw value:', formData.dob);
@@ -353,7 +557,7 @@ const RegisterScreen = ({ navigation }: any) => {
               icon="phone-outline"
               keyboardType="phone-pad"
               value={formData.phone}
-              maxLength={10}
+              maxLength={15}
               onChangeText={v => updateField('phone', v)}
             />
 
@@ -379,13 +583,26 @@ const RegisterScreen = ({ navigation }: any) => {
               onChangeText={v => updateField('confirmPassword', v)}
             />
 
-            <CustomTextInput
-              label="Address"
-              placeholder="Enter your address"
-              icon="map-marker-outline"
-              value={formData.address}
-              onChangeText={v => updateField('address', v)}
-            />
+            <View style={{ position: 'relative' }}>
+              <CustomTextInput
+                label="Address"
+                placeholder="Enter your address"
+                icon="map-marker-outline"
+                value={formData.address}
+                onChangeText={v => updateField('address', v)}
+              />
+              <TouchableOpacity
+                style={styles.geoButton}
+                onPress={handleGeolocation}
+                disabled={geoLoading}
+              >
+                {geoLoading ? (
+                  <ActivityIndicator size="small" color={Colors.primaryBlue} />
+                ) : (
+                  <Icon name="crosshairs-gps" size={20} color={Colors.primaryBlue} />
+                )}
+              </TouchableOpacity>
+            </View>
 
             <CustomDropdown
               label="Country"
@@ -522,11 +739,10 @@ const RegisterScreen = ({ navigation }: any) => {
             )}
 
             {/* TERMS */}
-            <TouchableOpacity
-              style={styles.checkboxRow}
-              onPress={() => updateField('agreeToTerms', !formData.agreeToTerms)}
-            >
-              <View
+            {/* TERMS */}
+            <View style={styles.checkboxRow}>
+              <TouchableOpacity
+                onPress={() => updateField('agreeToTerms', !formData.agreeToTerms)}
                 style={[
                   styles.checkbox,
                   formData.agreeToTerms && styles.checkboxChecked,
@@ -535,15 +751,23 @@ const RegisterScreen = ({ navigation }: any) => {
                 {formData.agreeToTerms && (
                   <Icon name="check" size={14} color={Colors.white} />
                 )}
-              </View>
+              </TouchableOpacity>
+
               <Text style={styles.checkboxText}>
-                I agree to the{' '}
+                <Text onPress={() => updateField('agreeToTerms', !formData.agreeToTerms)}>
+                  I agree to the{' '}
+                </Text>
                 <Text style={styles.link} onPress={handleTermsPress}>
                   Terms of Service
-                </Text>{' '}
-                & <Text style={styles.link}>Privacy Policy</Text>
+                </Text>
+                <Text onPress={() => updateField('agreeToTerms', !formData.agreeToTerms)}>
+                  {' '}&{' '}
+                </Text>
+                <Text style={styles.link} onPress={handlePrivacyPress}>
+                  Privacy Policy
+                </Text>
               </Text>
-            </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               style={styles.checkboxRow}
@@ -603,6 +827,7 @@ const RegisterScreen = ({ navigation }: any) => {
         open={open}
         date={dobDate}
         mode="date"
+        maximumDate={new Date(new Date().setFullYear(new Date().getFullYear() - 5))}
         onConfirm={date => {
           setOpen(false);
           setDobDate(date);
@@ -617,6 +842,7 @@ const RegisterScreen = ({ navigation }: any) => {
         }}
       />
       <TermsModal
+        title={termsTitle}
         visible={showTermsModal}
         onClose={() => setShowTermsModal(false)}
         content={termsContent}
@@ -726,6 +952,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     marginHorizontal: 24,
+  },
+
+  geoButton: {
+    position: 'absolute',
+    right: 15,
+    top: 38, // Align with input field, adjusting for label
+    zIndex: 1,
   },
 
   radioRow: {

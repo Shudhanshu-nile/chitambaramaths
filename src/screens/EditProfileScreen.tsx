@@ -94,7 +94,7 @@ const EditProfileScreen = () => {
             }
         } catch (error) {
             console.error('Failed to fetch countries', error);
-             showToastMessage({message: 'Failed to load countries'});
+            showToastMessage({ message: 'Failed to load countries' });
         }
     };
 
@@ -140,24 +140,35 @@ const EditProfileScreen = () => {
 
         setIsLoading(true);
         try {
-            // Construct payload according to API requirements (from Postman)
-            // { "stuname": "Name", "grade": "B" }
-            // We also send other fields to be safe or if the API accepts them
+            // Convert MM/DD/YYYY to YYYY-MM-DD
+            let formattedDob = formData.dob;
+            if (formData.dob && formData.dob.includes('/')) {
+                const parts = formData.dob.split('/');
+                if (parts.length === 3) {
+                    const [month, day, year] = parts;
+                    formattedDob = `${year}-${month}-${day}`;
+                }
+            }
+
             const payload = {
-                stuname: formData.fullName,
-                email: formData.email, // API might not allow updating email, but sending for reference
+                name: formData.fullName,
+                first_name: formData.fullName,
+                last_name: '',
+                parent_name: '',
+                grade: formData.academicYear,
                 phone: formData.phone,
-                dob: formData.dob,
+                mobile: formData.phone,
                 country: formData.country,
-                grade: formData.academicYear, // Mapping academicYear to 'grade'
-                year: formData.academicYear, // Sending as year too just in case
+                year: formData.academicYear,
+                date_of_birth: formattedDob,
+                email: formData.email,
             };
 
             const resultAction = await dispatch(updateUserProfile(payload));
 
             if (updateUserProfile.fulfilled.match(resultAction)) {
                 setIsLoading(false);
-                showToastMessage({message: 'Profile updated successfully'});
+                showToastMessage({ message: 'Profile updated successfully' });
                 navigation.goBack();
             } else {
                 setIsLoading(false);

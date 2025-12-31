@@ -14,7 +14,7 @@ import {
   Platform,
   PermissionsAndroid,
   Linking,
-  AppState,
+
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import Toast from 'react-native-toast-message';
@@ -47,7 +47,7 @@ const getCurrencySymbol = (currencyCode: string) => {
   }
 };
 
-const RegisterExamScreen = ({ navigation }: any) => {
+const RegisterExamScreen = ({ navigation, route }: any) => {
   // Redux User State
   const user = useSelector((state: RootState) => state.user.user);
 
@@ -107,54 +107,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
     }
   }, [selectedCountry]);
 
-  // Payment Countdown State
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [countDown, setCountDown] = useState(10);
-  const [paymentStartTime, setPaymentStartTime] = useState<number | null>(null);
-  const timerIntervalRef = React.useRef<any>(null);
 
-  // Handle Countdown and AppState
-  useEffect(() => {
-    // Timer Logic
-    if (showPaymentModal && paymentStartTime) {
-      timerIntervalRef.current = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - paymentStartTime) / 1000);
-        const remaining = 10 - elapsed;
-
-        if (remaining <= 0) {
-          finishCountdown();
-        } else {
-          setCountDown(remaining);
-        }
-      }, 1000);
-    } else {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    }
-
-    // AppState Logic to check when user returns
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active' && showPaymentModal && paymentStartTime) {
-        const elapsed = Math.floor((Date.now() - paymentStartTime) / 1000);
-        if (elapsed >= 10) {
-          finishCountdown();
-        } else {
-          setCountDown(10 - elapsed);
-        }
-      }
-    });
-
-    return () => {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-      subscription.remove();
-    };
-  }, [showPaymentModal, paymentStartTime]);
-
-  const finishCountdown = () => {
-    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    setShowPaymentModal(false);
-    setPaymentStartTime(null);
-    navigation.navigate(ScreenNames.PaymentSuccess);
-  };
 
   const fetchExamCenters = async (countryId: number) => {
     try {
@@ -221,11 +174,19 @@ const RegisterExamScreen = ({ navigation }: any) => {
 
       if (response.data && response.data.status && response.data.data) {
         setCountries(response.data.data);
-        // Default to United Kingdom (id: 1) or the first available country
-        const defaultCountry =
-          response.data.data.find((c: any) => c.name === 'United Kingdom') ||
-          response.data.data[0];
-        setSelectedCountry(defaultCountry);
+
+        let targetCountry;
+        // Check if a country was passed via navigation params
+        if (route.params?.country) {
+          targetCountry = response.data.data.find((c: any) => c.id === route.params.country.id);
+        }
+
+        // If no param or country not found in list, default to UK or first available
+        if (!targetCountry) {
+          targetCountry = response.data.data.find((c: any) => c.name === 'United Kingdom') || response.data.data[0];
+        }
+
+        setSelectedCountry(targetCountry);
       }
     } catch (error: any) {
       console.error('Failed to fetch countries', error);
@@ -440,10 +401,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
             showToastMessage({ message: 'Could not open payment page.' });
           });
 
-          // Start Countdown for Auto-Navigation
-          setCountDown(10);
-          setPaymentStartTime(Date.now());
-          setShowPaymentModal(true);
+          navigation.navigate(ScreenNames.PaymentSuccess, { fromRegistration: true });
         }
       } else {
         showToastMessage({
@@ -480,9 +438,9 @@ const RegisterExamScreen = ({ navigation }: any) => {
           <Icon name="arrow-left" size={24} color={Colors.textGray} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Registration Form 2026</Text>
-        <TouchableOpacity>
-          <Icon name="help-circle" size={24} color={Colors.textGray} />
-        </TouchableOpacity>
+        {/* <TouchableOpacity>
+          <Icon name="help-circle" size={24} color={Colors.textGray} style={{ paddingTop: 20 }} />
+        </TouchableOpacity> */}
       </View>
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContent}
@@ -568,78 +526,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
           </View>
         </Modal>
 
-        {/* Payment Countdown Modal */}
-        <Modal
-          visible={showPaymentModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => {
-            // Optional: Allow cancel on back press?
-            // setShowPaymentModal(false);
-            // if (countDownRef.current) clearInterval(countDownRef.current);
-          }}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { alignItems: 'center' }]}>
-              <View
-                style={{
-                  marginBottom: 20,
-                  backgroundColor: '#E1F0F5',
-                  padding: 15,
-                  borderRadius: 50,
-                }}
-              >
-                <Icon name="timer-sand" size={40} color={Colors.primaryBlue} />
-              </View>
-              <Text style={styles.modalTitle}>Completing Payment</Text>
-              <Text
-                style={{
-                  textAlign: 'center',
-                  color: '#666',
-                  marginBottom: 20,
-                  fontSize: 14,
-                }}
-              >
-                Please complete the payment in the browser.
-              </Text>
-              <Text
-                style={{
-                  fontSize: 48,
-                  fontFamily: Fonts.InterBold,
-                  color: Colors.primaryBlue,
-                  marginBottom: 10,
-                }}
-              >
-                {countDown}
-              </Text>
-              <Text
-                style={{
-                  textAlign: 'center',
-                  color: '#888',
-                  marginBottom: 30,
-                  fontSize: 12,
-                }}
-              >
-                Redirecting back to app automatically...
-              </Text>
 
-              <TouchableOpacity
-                style={[
-                  styles.closeModalButton,
-                  { width: '100%', backgroundColor: '#f0f0f0' },
-                ]}
-                onPress={() => {
-                  setShowPaymentModal(false);
-                  setPaymentStartTime(null);
-                }}
-              >
-                <Text style={[styles.closeModalText, { color: '#333' }]}>
-                  Cancel Auto-Redirect
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
 
         {/* FORM FIELDS */}
         <CustomTextInput
@@ -721,6 +608,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
           value={telephone}
           onChangeText={setTelephone}
           required
+          keyboardType="number-pad"
         />
         <CustomTextInput
           label="Mobile"
@@ -889,7 +777,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
         </View>
 
         <Text style={styles.noteText}>
-          Note: please print and bring on the exam day
+          Note: Please Print and bring on the exam day
         </Text>
 
         {/* TERMS */}
@@ -916,7 +804,7 @@ const RegisterExamScreen = ({ navigation }: any) => {
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>
-              {selectedCountry ? selectedCountry.name : 'Exam'} Exam
+              {selectedCountry ? selectedCountry.name : 'Exam'} Exam Fees
             </Text>
             <Text style={styles.summaryValue}>
               {selectedCountry && selectedCountry.registration_fee
@@ -987,11 +875,15 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     backgroundColor: Colors.white,
   },
-  backButton: { padding: 5 },
+  backButton: { padding: 5, paddingTop: 20 },
   headerTitle: {
     fontSize: 16,
     fontFamily: Fonts.InterBold,
     color: Colors.primaryBlue,
+    paddingTop: 20,
+    // justifyContent: 'center',
+    // alignItems: 'center',
+    marginRight: 90,
   },
   scrollContent: {
     padding: 20,
