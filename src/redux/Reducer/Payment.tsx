@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import OtherService from '../../service/OtherService';
+import { logoutUser } from './User';
 
 export interface PaymentItem {
     id: number;
@@ -100,6 +101,14 @@ export const PaymentSlice = createSlice({
         builder.addCase(fetchPaymentHistory.rejected, (state, action) => {
             state.isLoading = false;
             state.error = action.payload as string;
+        });
+
+        // Listen for logout action from User slice
+        builder.addCase(logoutUser.fulfilled, (state) => {
+            state.history = [];
+            state.pagination = null;
+            state.isLoading = false;
+            state.error = null;
         });
     },
 });

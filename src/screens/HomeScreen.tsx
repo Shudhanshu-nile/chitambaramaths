@@ -14,7 +14,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
 import HomeBackground from '../assets/images/Homebackground.png';
-import { Colors, Gradients, Fonts, ScreenNames } from '../constants';
+import { Colors, Gradients, Fonts, ScreenNames, showToastMessage } from '../constants';
 import NotificationService from '../utils/NotificationServices';
 // import { useAuth } from '../context/AuthContext';
 import { useSelector } from 'react-redux';
@@ -362,6 +362,11 @@ const HomeScreen = ({ navigation }: any) => {
                             key={item.id || index}
                             style={styles.examItem}
                             onPress={() => {
+                                if (item.is_registartion_open !== 'open') {
+                                    showToastMessage({ message: "Registration is closed" });
+                                    return;
+                                }
+
                                 if (!isLoggedIn) {
                                     navigation.navigate(ScreenNames.Login);
                                 } else {

@@ -72,13 +72,13 @@ const ProfileScreen = () => {
       try {
         const response = await OtherService.emailInvoice(order.id);
         if (response?.status) {
-          Alert.alert('Success', response.message || 'Invoice emailed successfully.');
+          Alert.alert('Success', response.message || 'Admit Card emailed successfully.');
         } else {
-          Alert.alert('Error', response?.message || 'Failed to email invoice.');
+          Alert.alert('Error', response?.message || 'Failed to email Admit Card.');
         }
       } catch (error) {
         console.error('Email invoice failed:', error);
-        Alert.alert('Error', 'Failed to email invoice. Please try again.');
+        Alert.alert('Error', 'Failed to email Admit Card. Please try again.');
       }
     }
   };
@@ -88,9 +88,23 @@ const ProfileScreen = () => {
       try {
         const fileName = `invoice-${order.student_registration_id}`;
         await OtherService.downloadInvoice(order.id, fileName);
+        Alert.alert('Success', 'Invoice downloaded successfully.');
       } catch (error) {
         console.error('Download failed:', error);
         Alert.alert('Error', 'Failed to download invoice. Please try again.');
+      }
+    }
+  };
+
+  const handleDownloadAdmitCard = async (order: any) => {
+    if (order?.id) {
+      try {
+        const fileName = `admit-card-${order.student_registration_id}`;
+        await OtherService.downloadAdmitCard(order.id, fileName);
+        Alert.alert('Success', 'Admit Card downloaded successfully.');
+      } catch (error) {
+        console.error('Download failed:', error);
+        Alert.alert('Error', 'Failed to download Admit Card. Please try again.');
       }
     }
   };
@@ -271,11 +285,23 @@ const ProfileScreen = () => {
                     onPress={() => handleEmailInvoice(latestOrder)}
                   >
                     <Icon
-                      name="file-document-outline"
+                      name="email-outline"
                       size={18}
                       color="#005884"
                     />
-                    <Text style={styles.invoiceBtnText}>Email Invoice</Text>
+                    <Text style={styles.invoiceBtnText}>Email Admit Card</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.invoiceBtn, { width: '100%' }]}
+                    onPress={() => handleDownloadAdmitCard(latestOrder)}
+                  >
+                    <Icon
+                      name="download"
+                      size={18}
+                      color="#005884"
+                    />
+                    <Text style={styles.invoiceBtnText}>Download Admit Card</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity

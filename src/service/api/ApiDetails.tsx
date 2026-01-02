@@ -17,6 +17,7 @@ export const API = {
   PAYMENT_HISTORY: DOMAIN + 'payments-history',
   GET_BANNERS: DOMAIN + 'banners',
   DOWNLOAD_INVOICE: DOMAIN + 'download-invoice',
+  DOWNLOAD_ADMIT_CARD: DOMAIN + 'download-admit-card',
   PAYMENTS: DOMAIN + 'payments',
   TERMS_AND_CONDITIONS: 'https://app.chithambaramaths.com/terms-condition',
   PRIVACY_POLICY: 'https://app.chithambaramaths.com/privacy-policy',

@@ -27,7 +27,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
                     <Icon name={icon} size={20} color="#999" style={styles.icon} />
                 )}
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, textInputProps.style]}
                     placeholderTextColor="#999"
                     {...textInputProps}
                 />

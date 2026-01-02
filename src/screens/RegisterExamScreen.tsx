@@ -63,9 +63,11 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
   const [telephone, setTelephone] = useState('');
   const [mobile, setMobile] = useState('');
 
-  const [selectedYear, setSelectedYear] = useState('2');
+  const [selectedYear, setSelectedYear] = useState<string | null>(null);
 
   const [agreed, setAgreed] = useState(true);
+
+  const currentYear = new Date().getFullYear();
 
   // Dynamic Country State
   const [countries, setCountries] = useState<any[]>([]);
@@ -175,15 +177,22 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
       if (response.data && response.data.status && response.data.data) {
         setCountries(response.data.data);
 
-        let targetCountry;
+        let targetCountry = null;
         // Check if a country was passed via navigation params
         if (route.params?.country) {
-          targetCountry = response.data.data.find((c: any) => c.id === route.params.country.id);
-        }
+          const paramCountry = response.data.data.find(
+            (c: any) => c.id === route.params.country.id,
+          );
 
-        // If no param or country not found in list, default to UK or first available
-        if (!targetCountry) {
-          targetCountry = response.data.data.find((c: any) => c.name === 'United Kingdom') || response.data.data[0];
+          if (paramCountry) {
+            if (paramCountry.is_registartion_open === 'open') {
+              targetCountry = paramCountry;
+            } else {
+              showToastMessage({
+                message: `Registration is closed for ${paramCountry.name}`,
+              });
+            }
+          }
         }
 
         setSelectedCountry(targetCountry);
@@ -347,6 +356,11 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
       return;
     }
 
+    if (selectedCountry.is_registartion_open !== 'open') {
+      showToastMessage({ message: `Registration is closed for ${selectedCountry.name}` });
+      return;
+    }
+
     if (!selectedYear) {
       showToastMessage({ message: `Please select a grade of study.` });
       return;
@@ -437,7 +451,7 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
         >
           <Icon name="arrow-left" size={24} color={Colors.textGray} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Registration Form 2026</Text>
+        <Text style={styles.headerTitle}>Registration Form {currentYear}</Text>
         {/* <TouchableOpacity>
           <Icon name="help-circle" size={24} color={Colors.textGray} style={{ paddingTop: 20 }} />
         </TouchableOpacity> */}
@@ -462,7 +476,11 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
           <View style={{ flex: 1 }}>
             <Text style={styles.registeringLabel}>Registering for</Text>
             <Text style={styles.registeringValue}>
-              {selectedCountry ? selectedCountry.name : 'Loading...'}
+              {selectedCountry
+                ? selectedCountry.name
+                : countries.length > 0
+                  ? 'Select Country'
+                  : 'Loading...'}
             </Text>
           </View>
           <TouchableOpacity
@@ -493,8 +511,15 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
                       styles.countryOption,
                       selectedCountry?.id === item.id &&
                       styles.countryOptionSelected,
+                      item.is_registartion_open !== 'open' && { opacity: 0.5 },
                     ]}
                     onPress={() => {
+                      if (item.is_registartion_open !== 'open') {
+                        showToastMessage({
+                          message: `Registration is closed for ${item.name}`,
+                        });
+                        return;
+                      }
                       setSelectedCountry(item);
                       setShowCountryModal(false);
                     }}
@@ -507,6 +532,9 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
                       ]}
                     >
                       {item.name}
+                      {item.is_registartion_open !== 'open'
+                        ? ' (Closed)'
+                        : ''}
                     </Text>
                     {selectedCountry?.id === item.id && (
                       <Icon name="check" size={20} color={Colors.primaryBlue} />
@@ -573,6 +601,9 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
             selection={addressSelection}
             onFocus={() => setAddressSelection(undefined)}
             required
+            multiline={true}
+            numberOfLines={2}
+            style={{ height: 70, textAlignVertical: 'top' }}
           />
           <TouchableOpacity
             style={styles.geoButton}
@@ -628,7 +659,7 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
                 */}
         <Text style={styles.sectionTitle}>
           {/* {apiData.title} */}
-          {'Select the grade of study in 2025'}
+          {'Select the grade of study in '}{currentYear} <Text style={{ color: Colors.red }}>*</Text>
         </Text>
 
         <View>
@@ -698,7 +729,7 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
                     3. Response structure: [{id: 1, name: "Alperton", seats: "67 Seats remaining"}, ...]
                     4. Render the list horizontally.
                 */}
-        <Text style={styles.sectionTitle}>Select Nearby exam center</Text>
+        <Text style={styles.sectionTitle}>Select Nearby exam center <Text style={{ color: Colors.red }}>*</Text></Text>
         <Text style={styles.subLabel}>Select your preferred location</Text>
 
         <TouchableOpacity style={styles.chooseCenterBtn}>

@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Linking,
   AppState,
+  Alert,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import LinearGradient from 'react-native-linear-gradient';
@@ -284,7 +285,21 @@ const RegisterScreen = ({ navigation }: any) => {
   const requestLocationPermission = async () => {
     if (Platform.OS === 'ios') {
       const auth = await Geolocation.requestAuthorization('whenInUse');
-      return auth === 'granted';
+      if (auth === 'granted') {
+        return true;
+      }
+
+      if (auth === 'denied' || auth === 'restricted') {
+        Alert.alert(
+          'Location Permission Required',
+          'Please enable location services in settings to auto-fill your address.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          ],
+        );
+      }
+      return false;
     }
 
     if (Platform.OS === 'android') {
@@ -301,7 +316,29 @@ const RegisterScreen = ({ navigation }: any) => {
           result[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
           PermissionsAndroid.RESULTS.GRANTED;
 
-        return fineLocationGranted || coarseLocationGranted;
+        if (fineLocationGranted || coarseLocationGranted) {
+          return true;
+        }
+
+        const fineLocationNeverAsk =
+          result[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] ===
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN;
+        const coarseLocationNeverAsk =
+          result[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN;
+
+        if (fineLocationNeverAsk || coarseLocationNeverAsk) {
+          Alert.alert(
+            'Location Permission Required',
+            'Please enable location services in settings to auto-fill your address.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ],
+          );
+        }
+
+        return false;
       } catch (err) {
         console.warn(err);
         return false;
@@ -433,6 +470,13 @@ const RegisterScreen = ({ navigation }: any) => {
           if (age < 5) {
             showToastMessage({
               message: 'You must be at least 5 years old to register.',
+            });
+            return;
+          }
+
+          if (age > 16) {
+            showToastMessage({
+              message: 'You cannot be older than 16 years to register.',
             });
             return;
           }

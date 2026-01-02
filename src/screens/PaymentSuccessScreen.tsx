@@ -62,6 +62,7 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
                 // console.log('Download Exam PDF', recentOrder.id);
                 const fileName = `invoice-${recentOrder.student_registration_id}`;
                 await OtherService.downloadInvoice(recentOrder.id, fileName);
+                Alert.alert('Success', 'Invoice downloaded successfully.');
             } catch (error) {
                 console.error('Download failed:', error);
                 Alert.alert('Error', 'Failed to download invoice. Please try again.');
@@ -74,13 +75,26 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
             try {
                 const response = await OtherService.emailInvoice(recentOrder.id);
                 if (response?.status) {
-                    Alert.alert('Success', response.message || 'Invoice emailed successfully.');
+                    Alert.alert('Success', response.message || 'Admit Card emailed successfully.');
                 } else {
-                    Alert.alert('Error', response?.message || 'Failed to email invoice.');
+                    Alert.alert('Error', response?.message || 'Failed to email Admit Card.');
                 }
             } catch (error) {
                 console.error('Email invoice failed:', error);
-                Alert.alert('Error', 'Failed to email invoice. Please try again.');
+                Alert.alert('Error', 'Failed to email Admit Card. Please try again.');
+            }
+        }
+    };
+
+    const handleDownloadAdmitCard = async () => {
+        if (recentOrder?.id) {
+            try {
+                const fileName = `admit-card-${recentOrder.student_registration_id}`;
+                await OtherService.downloadAdmitCard(recentOrder.id, fileName);
+                Alert.alert('Success', 'Admit Card downloaded successfully.');
+            } catch (error) {
+                console.error('Download failed:', error);
+                Alert.alert('Error', 'Failed to download Admit Card. Please try again.');
             }
         }
     };
@@ -108,26 +122,41 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
     };
 
     // Helper to safely get display values
-    // Helper to get currency symbol using Intl
-    const getCurrencySymbol = (currency: string) => {
-        if (!currency) return '£';
-        try {
-            const formatter = new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: currency,
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-            });
-            const parts = formatter.formatToParts(0);
-            const currencyPart = parts.find(part => part.type === 'currency');
-            return currencyPart ? currencyPart.value : currency;
-        } catch (error) {
-            return currency; // Fallback to code if Intl fails
+    // Helper to get currency symbol
+    const getCurrencySymbol = (currency: string, country?: string) => {
+        // 1. Try explicit currency code
+        if (currency) {
+            const code = currency.toUpperCase();
+            switch (code) {
+                case 'GBP': return '£';
+                case 'USD': return '$';
+                case 'AUD': return '$';
+                case 'CAD': return '$';
+                case 'EUR': return '€';
+                case 'NZD': return '$';
+                case 'SGD': return '$';
+            }
         }
+
+        // 2. Fallback to country mapping
+        if (country) {
+            const upperCountry = country.toUpperCase();
+            if (upperCountry.includes('UNITED KINGDOM') || upperCountry.includes('UK')) return '£';
+            if (upperCountry.includes('USA') || upperCountry.includes('UNITED STATES')) return '$';
+            if (upperCountry.includes('AUSTRALIA')) return '$';
+            if (upperCountry.includes('CANADA')) return '$';
+            if (upperCountry.includes('FRANCE') || upperCountry.includes('GERMANY') || upperCountry.includes('NETHERLANDS') || upperCountry.includes('IRELAND') || upperCountry.includes('SPAIN')) return '€';
+            if (upperCountry.includes('NEW ZEALAND')) return '$';
+            if (upperCountry.includes('SINGAPORE')) return '$';
+        }
+
+        // 3. Last resort fallback
+        return '£';
     };
 
-    const currencyCode = recentOrder?.currency?.toUpperCase();
-    const currencySymbol = currencyCode ? getCurrencySymbol(currencyCode) : '£';
+    const currencyCode = recentOrder?.currency;
+    const countryName = recentOrder?.country || recentOrder?.country_name;
+    const currencySymbol = getCurrencySymbol(currencyCode, countryName);
     const amount = recentOrder?.amount ? `${currencySymbol}${recentOrder.amount}` : `${currencySymbol}0.00`;
     const orderId = recentOrder?.stripe_payment_intent_id;
     // ? `TXN-${recentOrder.stripe_payment_intent_id.slice(-8).toUpperCase()}`
@@ -244,7 +273,7 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
 
                     <View style={styles.breakdownRow}>
                         <Text style={styles.breakdownLabel}>Total</Text>
-                        <Text style={styles.breakdownValue}>{recentOrder?.amount}</Text>
+                        <Text style={styles.breakdownValue}>{amount}</Text>
                     </View>
                     {/* <View style={styles.breakdownRow}>
                         <Text style={styles.breakdownLabel}>Processing Fee</Text>
@@ -272,7 +301,12 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
 
                         <TouchableOpacity style={styles.outlineButton} onPress={handleEmailExam}>
                             <Icon name="email-outline" size={20} color={Colors.primaryDarkBlue} />
-                            <Text style={styles.outlineButtonText}>Email Invoice</Text>
+                            <Text style={styles.outlineButtonText}>Email Admit Card</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.outlineButton} onPress={handleDownloadAdmitCard}>
+                            <Icon name="download" size={20} color={Colors.primaryDarkBlue} />
+                            <Text style={styles.outlineButtonText}>Download Admit Card</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.outlineButton} onPress={handleGoHome}>
