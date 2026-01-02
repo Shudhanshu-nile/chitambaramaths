@@ -8,6 +8,8 @@ import RegisterExamScreen from '../screens/RegisterExamScreen';
 import BottomTabNavigator from './BottomTabNavigator';
 import PurchaseSuccessful from '../screens/PurchaseSuccessful';
 import PaymentSuccessScreen from '../screens/PaymentSuccessScreen';
+import PaymentFailedScreen from '../screens/PaymentFailedScreen';
+import PaymentPendingScreen from '../screens/PaymentPendingScreen';
 import ForgotScreen from '../screens/ForgetScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import ResetPassword from '../screens/ResetPassword';
@@ -25,6 +27,8 @@ const Appstack = () => {
             <Stack.Screen name="Main" component={BottomTabNavigator} />
             <Stack.Screen name="PurchaseSuccessful" component={PurchaseSuccessful} />
             <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
+            <Stack.Screen name="PaymentFailed" component={PaymentFailedScreen} />
+            <Stack.Screen name="PaymentPending" component={PaymentPendingScreen} />
             <Stack.Screen name="Forgot" component={ForgotScreen} />
             <Stack.Screen name="ResetPassword" component={ResetPassword} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />

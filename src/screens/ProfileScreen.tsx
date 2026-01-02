@@ -35,13 +35,20 @@ const ProfileScreen = () => {
     dispatch(fetchPaymentHistory(1));
   }, [dispatch]);
 
-  // Get only the latest order (assuming history is new-to-old or we just take the first one)
-  // If we need to sort by ID descending to be safe:
+  // Get only the latest SUCCESSFUL order
   const latestOrder = React.useMemo(() => {
     if (!history || history.length === 0) return null;
-    // Sort just to be safe, or just take index 0 if API guarantees it.
-    // Assuming API returns newest first, or we sort descending by ID.
-    return [...history].sort((a: any, b: any) => (b.id || 0) - (a.id || 0))[0];
+
+    // Filter for successful orders
+    const successOrders = history.filter((order: any) => {
+      const s = order.payment_status || order.status;
+      return s === 'success' || s === 'succeeded' || s === 'Success';
+    });
+
+    if (successOrders.length === 0) return null;
+
+    // Sort by ID descending to get the newest successful one
+    return [...successOrders].sort((a: any, b: any) => (b.id || 0) - (a.id || 0))[0];
   }, [history]);
 
 
@@ -100,7 +107,7 @@ const ProfileScreen = () => {
     if (order?.id) {
       try {
         const fileName = `admit-card-${order.student_registration_id}`;
-        await OtherService.downloadAdmitCard(order.id, fileName);
+        await OtherService.downloadAdmitCard(order.exam_registration_id, fileName);
         Alert.alert('Success', 'Admit Card downloaded successfully.');
       } catch (error) {
         console.error('Download failed:', error);

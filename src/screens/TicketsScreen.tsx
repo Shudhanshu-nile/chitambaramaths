@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { StyleSheet, View, Text, StatusBar, FlatList, RefreshControl, ActivityIndicator, TouchableOpacity, Image, Modal, Alert } from 'react-native';
+import { StyleSheet, View, Text, StatusBar, FlatList, RefreshControl, ActivityIndicator, TouchableOpacity, Image, Modal, Alert, Linking } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
@@ -82,9 +82,10 @@ const TicketsScreen = () => {
     }, [history, sortBy, filterType, filterValue]);
 
     const handleEmailInvoice = async (order: any) => {
-        if (order?.id) {
+        const id = order.registration_id || order.id;
+        if (id) {
             try {
-                const response = await OtherService.emailInvoice(order.id);
+                const response = await OtherService.emailInvoice(id);
                 if (response?.status) {
                     Alert.alert('Success', response.message || 'Admit Card emailed successfully.');
                 } else {
@@ -98,10 +99,11 @@ const TicketsScreen = () => {
     };
 
     const handleDownloadInvoice = async (order: any) => {
-        if (order?.id) {
+        const id = order.registration_id || order.id;
+        if (id) {
             try {
                 const fileName = `invoice-${order.student_registration_id}`;
-                await OtherService.downloadInvoice(order.id, fileName);
+                await OtherService.downloadInvoice(id, fileName);
                 Alert.alert('Success', 'Invoice downloaded successfully.');
             } catch (error) {
                 console.error('Download failed:', error);
@@ -114,12 +116,27 @@ const TicketsScreen = () => {
         if (order?.id) {
             try {
                 const fileName = `admit-card-${order.student_registration_id}`;
-                await OtherService.downloadAdmitCard(order.id, fileName);
+                await OtherService.downloadAdmitCard(order.exam_registration_id, fileName);
                 Alert.alert('Success', 'Admit Card downloaded successfully.');
             } catch (error) {
                 console.error('Download failed:', error);
                 Alert.alert('Error', 'Failed to download Admit Card. Please try again.');
             }
+        }
+    };
+
+    const handlePayAgain = async (url: string) => {
+        if (url) {
+            try {
+                await Linking.openURL(url);
+            } catch (err) {
+                console.error('An error occurred', err);
+                Alert.alert('Error', 'Cannot open payment link.');
+            }
+        } else {
+            // Fallback to old behavior if no URL? Or just show error?
+            // User request implies we should use the URL.
+            navigation.navigate(ScreenNames.RegisterExam);
         }
     };
 
@@ -129,12 +146,15 @@ const TicketsScreen = () => {
         return (
             <View style={styles.card}>
                 <View style={styles.cardHeader}>
-                    <Text style={styles.orderType}>{item.order_type || 'Exam Registration'}</Text>
+                    <View>
+                        <Text style={styles.orderType}>{item.order_type || 'Exam Registration'}</Text>
+                        <Text style={{ fontSize: 12, color: '#666', fontFamily: Fonts.InterRegular, marginTop: 2 }}>{item.country_name}</Text>
+                    </View>
                     <Text style={[
                         styles.status,
-                        { color: (item.status === 'succeeded' || item.status === 'Success' || item.status === 'success') ? Colors.iconGreen : Colors.red }
+                        { color: ((item.payment_status || item.status) === 'succeeded' || (item.payment_status || item.status) === 'Success' || (item.payment_status || item.status) === 'success') ? Colors.iconGreen : Colors.red }
                     ]}>
-                        {item.status}
+                        {(item.payment_status || item.status) === 'not_initiated' ? 'Failed' : (item.payment_status || item.status || 'Pending')}
                     </Text>
                 </View>
                 <View style={styles.row}>
@@ -147,46 +167,62 @@ const TicketsScreen = () => {
                 </View>
                 <View style={styles.row}>
                     <Text style={styles.label}>Amount:</Text>
-                    <Text style={styles.amount}>{item.amount} {item.currency.toUpperCase()}</Text>
+                    <Text style={styles.amount}>{item.amount ? `${item.amount} ${item.currency ? item.currency.toUpperCase() : ''}` : 'N/A'}</Text>
                 </View>
                 <View style={styles.row}>
                     <Text style={styles.label}>Payment Method:</Text>
-                    <Text style={styles.value}>{item.payment_method}</Text>
+                    <Text style={[styles.value, { textTransform: 'capitalize' }]}>
+                        {item.payment_method ? (item.payment_method === 'card' ? 'Card' : item.payment_method) : 'N/A'}
+                    </Text>
                 </View>
 
-                <View style={styles.actionButtonsContainer}>
-                    <TouchableOpacity
-                        style={styles.invoiceBtn}
-                        onPress={() => handleEmailInvoice(item)}
-                    >
-                        <Icon
-                            name="email-outline"
-                            size={18}
-                            color="#005884"
-                        />
-                        <Text style={styles.invoiceBtnText}>Email Admit Card</Text>
-                    </TouchableOpacity>
+                {(item.payment_status === 'success' || item.status === 'success' || item.status === 'succeeded') ? (
+                    <View style={styles.actionButtonsContainer}>
+                        <TouchableOpacity
+                            style={styles.invoiceBtn}
+                            onPress={() => handleEmailInvoice(item)}
+                        >
+                            <Icon
+                                name="email-outline"
+                                size={18}
+                                color="#005884"
+                            />
+                            <Text style={styles.invoiceBtnText}>Email Admit Card</Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={styles.invoiceBtn}
-                        onPress={() => handleDownloadAdmitCard(item)}
-                    >
-                        <Icon
-                            name="download"
-                            size={18}
-                            color="#005884"
-                        />
-                        <Text style={styles.invoiceBtnText}>Download Admit Card</Text>
-                    </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.invoiceBtn}
+                            onPress={() => handleDownloadAdmitCard(item)}
+                        >
+                            <Icon
+                                name="download"
+                                size={18}
+                                color="#005884"
+                            />
+                            <Text style={styles.invoiceBtnText}>Download Admit Card</Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={styles.downloadBtn}
-                        onPress={() => handleDownloadInvoice(item)}
-                    >
-                        <Icon name="download" size={18} color="white" />
-                        <Text style={styles.downloadBtnText}>Download Invoice</Text>
-                    </TouchableOpacity>
-                </View>
+                        <TouchableOpacity
+                            style={styles.downloadBtn}
+                            onPress={() => handleDownloadInvoice(item)}
+                        >
+                            <Icon name="download" size={18} color="white" />
+                            <Text style={styles.downloadBtnText}>Download Invoice</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    ((item.payment_status || item.status) === 'failed' || (item.payment_status || item.status) === 'not_initiated') && (
+                        <View style={styles.actionButtonsContainer}>
+                            <TouchableOpacity
+                                style={styles.downloadBtn}
+                                onPress={() => handlePayAgain(item.payment_url || '')}
+                            >
+                                <Icon name="refresh" size={18} color="white" />
+                                <Text style={styles.downloadBtnText}>Pay Again</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )
+                )}
             </View >
         );
     };
@@ -257,7 +293,7 @@ const TicketsScreen = () => {
                     <FlatList
                         data={processedHistory}
                         renderItem={renderItem}
-                        keyExtractor={(item) => item.id.toString()}
+                        keyExtractor={(item) => (item.registration_id || item.id || Math.random()).toString()}
                         contentContainerStyle={styles.listContent}
                         refreshControl={
                             <RefreshControl refreshing={isLoading} onRefresh={loadOrders} colors={[Colors.primaryBlue]} />

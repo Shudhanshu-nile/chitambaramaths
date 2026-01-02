@@ -103,6 +103,8 @@ export const ScreenNames = {
     RegisterExam: 'RegisterExam',
     PurchaseSuccessful: 'PurchaseSuccessful',
     PaymentSuccess: 'PaymentSuccess',
+    PaymentFailed: 'PaymentFailed',
+    PaymentPending: 'PaymentPending',
     EditProfile: 'EditProfile',
     Forgot: 'Forgot',
     ResetPassword: 'ResetPassword',

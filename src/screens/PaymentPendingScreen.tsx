@@ -1,0 +1,319 @@
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useDispatch, useSelector } from 'react-redux';
+import { Colors, FontSizes, Fonts, Spacing, ScreenNames, responsiveScreenHeight } from '../constants';
+import { replaceToMain } from '../navigation/GlobalNavigation';
+import { fetchPaymentHistory } from '../redux/Reducer/Payment';
+
+const PaymentPendingScreen = ({ navigation }: any) => {
+    const dispatch = useDispatch();
+    const { history } = useSelector((state: any) => state.payment);
+    const { user } = useSelector((state: any) => state.user);
+
+    // Get the most recent order effectively
+    const recentOrder = history && history.length > 0 ? history[0] : null;
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            dispatch(fetchPaymentHistory(1) as any);
+        }, 5000); // Poll every 5 seconds
+
+        return () => clearInterval(interval);
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (recentOrder) {
+            if (recentOrder.payment_status === 'success' || recentOrder.status === 'success') {
+                navigation.replace(ScreenNames.PaymentSuccess);
+            } else if (recentOrder.payment_status === 'not_initiated' || recentOrder.payment_status === 'failed') {
+                navigation.replace(ScreenNames.PaymentFailed);
+            }
+        }
+    }, [recentOrder, navigation]);
+
+
+    const handleCheckStatus = () => {
+        dispatch(fetchPaymentHistory(1) as any);
+    };
+
+    const handleGoHome = () => {
+        replaceToMain(ScreenNames.Home);
+    };
+
+    // Helper to safely get display values
+    const getCurrencySymbol = (currency: string, country?: string) => {
+        if (currency) {
+            const code = currency.toUpperCase();
+            switch (code) {
+                case 'GBP': return '£';
+                case 'USD': return '$';
+                case 'AUD': return '$';
+                case 'CAD': return '$';
+                case 'EUR': return '€';
+                case 'NZD': return '$';
+                case 'SGD': return '$';
+            }
+        }
+        if (country) {
+            const upperCountry = country.toUpperCase();
+            if (upperCountry.includes('UNITED KINGDOM') || upperCountry.includes('UK')) return '£';
+            if (upperCountry.includes('USA') || upperCountry.includes('UNITED STATES')) return '$';
+            if (upperCountry.includes('AUSTRALIA')) return '$';
+            if (upperCountry.includes('CANADA')) return '$';
+            if (upperCountry.includes('FRANCE') || upperCountry.includes('GERMANY') || upperCountry.includes('NETHERLANDS') || upperCountry.includes('IRELAND') || upperCountry.includes('SPAIN')) return '€';
+            if (upperCountry.includes('NEW ZEALAND')) return '$';
+            if (upperCountry.includes('SINGAPORE')) return '$';
+        }
+        return '£';
+    };
+
+    const currencyCode = recentOrder?.currency;
+    const countryName = recentOrder?.country || recentOrder?.country_name;
+    const currencySymbol = getCurrencySymbol(currencyCode, countryName);
+    const amount = recentOrder?.amount ? `${currencySymbol}${recentOrder.amount}` : `Pending`;
+
+    return (
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor={Colors.blueDark} translucent={false} />
+
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+                bounces={false}
+            >
+                {/* Header Background & Content */}
+                <LinearGradient
+                    colors={[Colors.blueDark, '#4E86B0']}
+                    style={styles.headerBackground}
+                >
+                    <View style={styles.headerContent}>
+                        <View style={styles.iconCircle}>
+                            <ActivityIndicator size="large" color={Colors.primaryBlue} />
+                        </View>
+                        <Text style={styles.title}>Payment Processing</Text>
+                        <Text style={styles.subtitle}>
+                            We are checking your payment status...
+                        </Text>
+                    </View>
+                </LinearGradient>
+
+                {/* White Details Card */}
+                <View style={styles.detailsCard}>
+
+                    <View style={styles.paymentHeader}>
+                        <View style={styles.paymentInfoCol}>
+                            <Text style={styles.paymentInfoLabel}>Pending Amount</Text>
+                            <Text style={styles.amountValue}>{amount}</Text>
+                        </View>
+                    </View>
+
+                    <Text style={styles.sectionTitle}>Registration Details</Text>
+
+                    {/* Student Name */}
+                    <View style={styles.summaryItem}>
+                        <View style={styles.summaryIconBox}>
+                            <Icon name="school" size={24} color={Colors.primaryDarkBlue} />
+                        </View>
+                        <View style={styles.summaryDetails}>
+                            <Text style={styles.summaryLabel}>Student Name</Text>
+                            <Text style={styles.summaryValue}>{user?.fullName || 'Student'}</Text>
+                        </View>
+                    </View>
+
+                    {/* Action Buttons */}
+                    <View style={styles.actionButtonsContainer}>
+                        <TouchableOpacity style={styles.primaryButton} onPress={handleCheckStatus}>
+                            <Text style={styles.primaryButtonText}>Refresh Status</Text>
+                            <Icon name="refresh" size={20} color={Colors.white} style={{ marginLeft: 8 }} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.outlineButton} onPress={handleGoHome}>
+                            <Text style={styles.outlineButtonText}>Return to Home</Text>
+                        </TouchableOpacity>
+
+                        <Text style={styles.infoText}>
+                            Note: If you have completed the payment, it may take a few moments to reflect.
+                        </Text>
+                    </View>
+
+                </View>
+                <View style={{ height: 50 }} />
+            </ScrollView>
+        </View >
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#F5F5F5',
+    },
+    headerBackground: {
+        width: '100%',
+        paddingBottom: 60,
+    },
+    scrollContent: {
+        paddingBottom: Spacing.spacing.xl,
+        paddingTop: 0,
+    },
+    headerContent: {
+        alignItems: 'center',
+        paddingHorizontal: Spacing.spacing.lg,
+        paddingTop: 60,
+        paddingBottom: 80,
+    },
+    iconCircle: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: Colors.white,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: Spacing.spacing.lg,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    title: {
+        fontSize: FontSizes.xxl,
+        fontFamily: Fonts.InterBold,
+        color: Colors.white,
+        textAlign: 'center',
+        marginBottom: Spacing.spacing.xs,
+    },
+    subtitle: {
+        fontSize: FontSizes.sm,
+        fontFamily: Fonts.InterRegular,
+        color: 'rgba(255,255,255,0.9)',
+        textAlign: 'center',
+        marginBottom: Spacing.spacing.xl,
+    },
+    detailsCard: {
+        backgroundColor: '#F5F7FA',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        marginTop: -24,
+        paddingHorizontal: Spacing.spacing.lg,
+        paddingTop: Spacing.spacing.xl,
+        flex: 1,
+        minHeight: responsiveScreenHeight(60),
+    },
+    paymentHeader: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        backgroundColor: Colors.blueDark, // 
+        borderRadius: Spacing.borderRadius.medium,
+        padding: Spacing.spacing.lg,
+        marginBottom: Spacing.spacing.lg,
+    },
+    paymentInfoCol: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    paymentInfoLabel: {
+        fontSize: FontSizes.xs,
+        color: 'rgba(255,255,255,0.8)',
+        marginBottom: 4,
+        fontFamily: Fonts.InterRegular,
+    },
+    amountValue: {
+        fontSize: FontSizes.xxl,
+        color: Colors.white,
+        fontFamily: Fonts.InterBold,
+    },
+    sectionTitle: {
+        fontSize: FontSizes.lg,
+        fontFamily: Fonts.InterBold,
+        color: '#374151',
+        marginTop: Spacing.spacing.md,
+        marginBottom: Spacing.spacing.md,
+    },
+    summaryItem: {
+        flexDirection: 'row',
+        backgroundColor: Colors.white,
+        borderRadius: Spacing.borderRadius.medium,
+        padding: Spacing.spacing.md,
+        marginBottom: Spacing.spacing.md,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    summaryIconBox: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: '#E0F2FE', // Light blue bg
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: Spacing.spacing.md,
+    },
+    summaryDetails: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    summaryLabel: {
+        fontSize: FontSizes.xs,
+        color: '#6B7280',
+        fontFamily: Fonts.InterRegular,
+    },
+    summaryValue: {
+        fontSize: FontSizes.md,
+        color: '#111827',
+        fontFamily: Fonts.InterBold,
+        marginBottom: 2,
+    },
+    summarySubtext: {
+        fontSize: FontSizes.xs,
+        color: '#9CA3AF',
+        fontFamily: Fonts.InterRegular,
+    },
+    actionButtonsContainer: {
+        marginTop: Spacing.spacing.xl,
+        gap: Spacing.spacing.md,
+    },
+    primaryButton: {
+        backgroundColor: Colors.primaryBlue,
+        borderRadius: Spacing.borderRadius.medium,
+        paddingVertical: Spacing.spacing.md,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 8,
+    },
+    primaryButtonText: {
+        color: Colors.white,
+        fontFamily: Fonts.InterBold,
+        fontSize: FontSizes.md,
+    },
+    outlineButton: {
+        backgroundColor: Colors.white,
+        borderRadius: Spacing.borderRadius.medium,
+        paddingVertical: Spacing.spacing.md,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 8,
+        borderWidth: 1,
+        borderColor: Colors.borderGray,
+    },
+    outlineButtonText: {
+        color: Colors.textGray,
+        fontFamily: Fonts.InterBold,
+        fontSize: FontSizes.md,
+    },
+    infoText: {
+        fontSize: FontSizes.sm,
+        color: Colors.gray,
+        fontFamily: Fonts.InterRegular,
+        textAlign: 'center',
+        marginTop: Spacing.spacing.sm,
+    }
+});
+
+export default PaymentPendingScreen;

@@ -872,18 +872,20 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
             </Text>
           </View>
 
-          <TouchableOpacity
-            style={[styles.proceedButton, loading && { opacity: 0.7 }]}
-            onPress={handleProceed}
-            disabled={loading}
-          >
-            <Text style={styles.proceedText}>
-              {loading ? 'Processing...' : 'Proceed to Payment'}
-            </Text>
-            {!loading && (
-              <Icon name="arrow-right" size={18} color={Colors.white} />
-            )}
-          </TouchableOpacity>
+          {selectedCountry && (
+            <TouchableOpacity
+              style={[styles.proceedButton, loading && { opacity: 0.7 }]}
+              onPress={handleProceed}
+              disabled={loading}
+            >
+              <Text style={styles.proceedText}>
+                {loading ? 'Processing...' : 'Proceed to Payment'}
+              </Text>
+              {!loading && (
+                <Icon name="arrow-right" size={18} color={Colors.white} />
+              )}
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={{ height: 40 }} />

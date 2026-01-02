@@ -3,17 +3,23 @@ import OtherService from '../../service/OtherService';
 import { logoutUser } from './User';
 
 export interface PaymentItem {
-    id: number;
+    id?: number; // Optional as API seems to return registration_id
+    registration_id: number;
     amount: number;
     currency: string;
     country_name: string;
-    order_type: string;
+    order_type?: string;
     payment_method: string;
+    payment_status?: string; // Add payment_status
+    payment_url?: string;
     status: string;
     created_at: string;
     exam_registration_id: number;
     stripe_payment_intent_id: string;
     student_registration_id: string;
+    exam_center_name?: string;
+    exam_center_address?: string;
+    country?: string;
 }
 
 export interface PaginationData {

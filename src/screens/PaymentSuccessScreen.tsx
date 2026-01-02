@@ -52,16 +52,36 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
     // Get the most recent order effectively
     const recentOrder = history && history.length > 0 ? history[0] : null;
 
+    // Check status and redirect if necessary
+    useEffect(() => {
+        if (recentOrder) {
+            console.log('Checking Payment Status:', recentOrder.payment_status);
+
+            // Check based on API response structure
+            const status = recentOrder.payment_status || recentOrder.status;
+
+            if (status === 'success' || status === 'succeeded') {
+                // Stay on this screen
+                return;
+            } else if (status === 'pending' || status === 'processing') {
+                navigation.replace(ScreenNames.PaymentPending);
+            } else if (status === 'failed' || status === 'not_initiated' || status === 'canceled') {
+                navigation.replace(ScreenNames.PaymentFailed);
+            }
+        }
+    }, [recentOrder, navigation]);
+
     const handleGoHome = () => {
         replaceToMain(ScreenNames.Home);
     };
 
     const handleDownloadExam = async () => {
-        if (recentOrder?.id) {
+        const id = recentOrder?.registration_id || recentOrder?.id;
+        if (id) {
             try {
-                // console.log('Download Exam PDF', recentOrder.id);
+                // console.log('Download Exam PDF', id);
                 const fileName = `invoice-${recentOrder.student_registration_id}`;
-                await OtherService.downloadInvoice(recentOrder.id, fileName);
+                await OtherService.downloadInvoice(id, fileName);
                 Alert.alert('Success', 'Invoice downloaded successfully.');
             } catch (error) {
                 console.error('Download failed:', error);
@@ -71,9 +91,10 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
     };
 
     const handleEmailExam = async () => {
-        if (recentOrder?.id) {
+        const id = recentOrder?.registration_id || recentOrder?.id;
+        if (id) {
             try {
-                const response = await OtherService.emailInvoice(recentOrder.id);
+                const response = await OtherService.emailInvoice(id);
                 if (response?.status) {
                     Alert.alert('Success', response.message || 'Admit Card emailed successfully.');
                 } else {
@@ -87,10 +108,11 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
     };
 
     const handleDownloadAdmitCard = async () => {
-        if (recentOrder?.id) {
+        const id = recentOrder?.exam_registration_id || recentOrder?.id;
+        if (id) {
             try {
                 const fileName = `admit-card-${recentOrder.student_registration_id}`;
-                await OtherService.downloadAdmitCard(recentOrder.id, fileName);
+                await OtherService.downloadAdmitCard(id, fileName);
                 Alert.alert('Success', 'Admit Card downloaded successfully.');
             } catch (error) {
                 console.error('Download failed:', error);
