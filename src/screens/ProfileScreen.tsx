@@ -74,17 +74,18 @@ const ProfileScreen = () => {
     ]);
   };
 
-  const handleEmailInvoice = async (order: any) => {
-    if (order?.id) {
+  const handleEmailAdmitCard = async (order: any) => {
+    const registration_id = order?.registration_id || order?.id;
+    if (registration_id) {
       try {
-        const response = await OtherService.emailInvoice(order.id);
+        const response = await OtherService.emailAdmitCard(registration_id);
         if (response?.status) {
           Alert.alert('Success', response.message || 'Admit Card emailed successfully.');
         } else {
           Alert.alert('Error', response?.message || 'Failed to email Admit Card.');
         }
       } catch (error) {
-        console.error('Email invoice failed:', error);
+        console.error('Email admit card failed:', error);
         Alert.alert('Error', 'Failed to email Admit Card. Please try again.');
       }
     }
@@ -104,10 +105,11 @@ const ProfileScreen = () => {
   };
 
   const handleDownloadAdmitCard = async (order: any) => {
-    if (order?.id) {
+    const registration_id = order?.registration_id || order?.id;
+    if (registration_id) {
       try {
         const fileName = `admit-card-${order.student_registration_id}`;
-        await OtherService.downloadAdmitCard(order.exam_registration_id, fileName);
+        await OtherService.downloadAdmitCard(registration_id, fileName);
         Alert.alert('Success', 'Admit Card downloaded successfully.');
       } catch (error) {
         console.error('Download failed:', error);
@@ -289,7 +291,7 @@ const ProfileScreen = () => {
                 <View style={[styles.orderActions, { flexDirection: 'column' }]}>
                   <TouchableOpacity
                     style={[styles.invoiceBtn, { width: '100%' }]}
-                    onPress={() => handleEmailInvoice(latestOrder)}
+                    onPress={() => handleEmailAdmitCard(latestOrder)}
                   >
                     <Icon
                       name="email-outline"

@@ -18,6 +18,7 @@ export const API = {
   GET_BANNERS: DOMAIN + 'banners',
   DOWNLOAD_INVOICE: DOMAIN + 'download-invoice',
   DOWNLOAD_ADMIT_CARD: DOMAIN + 'download-admit-card',
+  EMAIL_ADMIT_CARD: DOMAIN + 'admit-card/email',
   PAYMENTS: DOMAIN + 'payments',
   TERMS_AND_CONDITIONS: 'https://app.chithambaramaths.com/terms-condition',
   PRIVACY_POLICY: 'https://app.chithambaramaths.com/privacy-policy',

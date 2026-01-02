@@ -61,6 +61,12 @@ class OtherService {
     return response;
   }
 
+  public static async emailAdmitCard(registration_id: any) {
+    const url = `${API.EMAIL_ADMIT_CARD}/${registration_id}`;
+    const response = await Http.get(url);
+    return response;
+  }
+
   public static async downloadInvoice(id: any, fileName: string) {
     if (Platform.OS === 'android') {
       try {

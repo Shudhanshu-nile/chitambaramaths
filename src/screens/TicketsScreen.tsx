@@ -16,7 +16,7 @@ import OtherService from '../service/OtherService';
 const TicketsScreen = () => {
     const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
     const navigation = useNavigation<any>();
-    const { history, isLoading } = useSelector((state: RootState) => state.payment);
+    const { history, isLoading, pagination } = useSelector((state: RootState) => state.payment);
     const { isLoggedIn } = useSelector((state: RootState) => state.user);
 
     const [sortVisible, setSortVisible] = useState(false);
@@ -30,6 +30,12 @@ const TicketsScreen = () => {
         dispatch(fetchPaymentHistory(1));
         fetchCountries();
     }, [dispatch]);
+
+    const loadMoreOrders = useCallback(() => {
+        if (pagination && pagination.current_page < pagination.last_page && !isLoading) {
+            dispatch(fetchPaymentHistory(pagination.current_page + 1));
+        }
+    }, [dispatch, pagination, isLoading]);
 
     const fetchCountries = async () => {
         try {
@@ -87,12 +93,29 @@ const TicketsScreen = () => {
             try {
                 const response = await OtherService.emailInvoice(id);
                 if (response?.status) {
+                    Alert.alert('Success', response.message || 'Invoice emailed successfully.');
+                } else {
+                    Alert.alert('Error', response?.message || 'Failed to email invoice.');
+                }
+            } catch (error) {
+                console.error('Email invoice failed:', error);
+                Alert.alert('Error', 'Failed to email invoice. Please try again.');
+            }
+        }
+    };
+
+    const handleEmailAdmitCard = async (order: any) => {
+        const registration_id = order.registration_id || order.id;
+        if (registration_id) {
+            try {
+                const response = await OtherService.emailAdmitCard(registration_id);
+                if (response?.status) {
                     Alert.alert('Success', response.message || 'Admit Card emailed successfully.');
                 } else {
                     Alert.alert('Error', response?.message || 'Failed to email Admit Card.');
                 }
             } catch (error) {
-                console.error('Email invoice failed:', error);
+                console.error('Email admit card failed:', error);
                 Alert.alert('Error', 'Failed to email Admit Card. Please try again.');
             }
         }
@@ -113,10 +136,11 @@ const TicketsScreen = () => {
     };
 
     const handleDownloadAdmitCard = async (order: any) => {
-        if (order?.id) {
+        const registration_id = order?.registration_id || order?.id;
+        if (registration_id) {
             try {
                 const fileName = `admit-card-${order.student_registration_id}`;
-                await OtherService.downloadAdmitCard(order.exam_registration_id, fileName);
+                await OtherService.downloadAdmitCard(registration_id, fileName);
                 Alert.alert('Success', 'Admit Card downloaded successfully.');
             } catch (error) {
                 console.error('Download failed:', error);
@@ -180,7 +204,7 @@ const TicketsScreen = () => {
                     <View style={styles.actionButtonsContainer}>
                         <TouchableOpacity
                             style={styles.invoiceBtn}
-                            onPress={() => handleEmailInvoice(item)}
+                            onPress={() => handleEmailAdmitCard(item)}
                         >
                             <Icon
                                 name="email-outline"
@@ -299,6 +323,13 @@ const TicketsScreen = () => {
                             <RefreshControl refreshing={isLoading} onRefresh={loadOrders} colors={[Colors.primaryBlue]} />
                         }
                         showsVerticalScrollIndicator={false}
+                        onEndReached={loadMoreOrders}
+                        onEndReachedThreshold={0.5}
+                        ListFooterComponent={
+                            isLoading && history.length > 0 ? (
+                                <ActivityIndicator size="small" color={Colors.primaryBlue} style={{ paddingVertical: 20 }} />
+                            ) : null
+                        }
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
                                 <Text style={styles.emptyText}>No orders found</Text>
