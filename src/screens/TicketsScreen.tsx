@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { StyleSheet, View, Text, StatusBar, FlatList, RefreshControl, ActivityIndicator, TouchableOpacity, Image, Modal, Alert, Linking } from 'react-native';
+import { StyleSheet, View, Text, StatusBar, FlatList, RefreshControl, ActivityIndicator, TouchableOpacity, Image, Modal, Alert, Linking, Platform } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
@@ -442,7 +442,8 @@ const styles = StyleSheet.create({
         // paddingTop: 60,
         paddingBottom: 30,
         // paddingHorizontal: 20, // Handled by inner views
-        height: 160,
+        height: Platform.OS === 'ios' ? 200 : 160,
+
     },
     headerTop: {
         flexDirection: 'row',
@@ -457,7 +458,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 40,
+        marginTop: 60,
         // width: 208, // Removed fixed width to prevent clipping
     },
     notificationBtn: {

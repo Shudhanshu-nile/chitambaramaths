@@ -9,6 +9,7 @@ import {
   Dimensions,
   StatusBar,
   Alert,
+  Platform,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -231,7 +232,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     alignItems: 'center',
-    paddingTop: 60,
+    paddingTop: 0,
   },
 
   headerTopRow: {
@@ -241,6 +242,7 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 20,
     marginBottom: 20,
+    marginTop: Platform.OS === 'ios' ? 50 : 60,
   },
 
   backButton: {
@@ -261,6 +263,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 6,
+    marginTop: Platform.OS === 'ios' ? 12 : 8,
   },
 
   loginCard: {

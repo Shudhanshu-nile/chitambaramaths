@@ -9,6 +9,7 @@ import {
     Image,
     ImageBackground,
     Dimensions,
+    Platform,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -399,13 +400,13 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.lightGray },
 
     header: {
-        height: 300,
+        height: Platform.OS === 'ios' ? 320 : 300,
         // alignItems: 'center',
         justifyContent: 'center',
     },
 
     headerLoggedIn: {
-        height: 250,
+        height: Platform.OS === 'ios' ? 280 : 250,
         // alignItems: 'center',
         justifyContent: 'center',
     },
@@ -425,6 +426,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         width: 208,
+        marginTop: Platform.OS === 'ios' ? 40 : 0,
     },
 
     notificationBtn: {

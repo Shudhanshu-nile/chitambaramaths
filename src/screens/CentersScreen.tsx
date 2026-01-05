@@ -490,6 +490,7 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.InterBold,
         color: Colors.white,
         marginHorizontal: 20,
+        marginTop: Platform.OS === 'ios' ? 12 : 0,
     },
     filterbutton: {
         marginHorizontal: 20,

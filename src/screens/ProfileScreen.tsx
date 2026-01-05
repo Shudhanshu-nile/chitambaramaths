@@ -392,6 +392,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: 208,
+    marginTop: Platform.OS === 'ios' ? 15 : 0,
   },
   notificationBtn: {
     width: 44,
@@ -615,6 +616,7 @@ const styles = StyleSheet.create({
   ordersSection: {
     marginTop: 20,
     paddingHorizontal: 0,
+    paddingTop: Platform.OS === 'ios' ? 20 : 0,
   },
   sectionHeader: {
     flexDirection: 'row',
