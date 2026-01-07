@@ -398,11 +398,12 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
       formData.append('country_id', selectedCountry.id);
       formData.append('study_year', selectedYear);
       formData.append('center_id', selectedCenterId);
+      formData.append('child_id', ''); // Added empty child_id as per request
 
       formData.append('agree_terms', '1');
       if (dateOfBirth) {
         const formattedDate = dateOfBirth.toISOString().split('T')[0];
-        formData.append('date_of_birth', formattedDate);
+        formData.append('child_dob', formattedDate);
       }
 
       console.log('Submitting Registration:', formData);

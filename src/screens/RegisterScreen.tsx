@@ -18,7 +18,7 @@ import Geolocation from 'react-native-geolocation-service';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Logo from '../assets/images/logo.svg';
-import DatePicker from 'react-native-date-picker';
+
 import Toast from 'react-native-toast-message';
 import { Colors, Gradients, showToastMessage } from '../constants';
 // import { useAuth } from '../context/AuthContext';
@@ -44,11 +44,11 @@ const RegisterScreen = ({ navigation }: any) => {
     email: '',
     phone: '',
     address: '',
-    dob: '',
+
     password: '',
     confirmPassword: '',
     country: '',
-    academicYear: '',
+
     agreeToTerms: false,
     sendUpdates: false,
     isExamCenter: false,
@@ -56,7 +56,7 @@ const RegisterScreen = ({ navigation }: any) => {
 
   // Dynamic Data State
   const [countries, setCountries] = useState<any[]>([]);
-  const [studyYears, setStudyYears] = useState<any[]>([]);
+
   const [selectedCountryId, setSelectedCountryId] = useState<number | null>(
     null,
   );
@@ -83,33 +83,12 @@ const RegisterScreen = ({ navigation }: any) => {
     }
   };
 
-  const fetchStudyYears = async (countryId: number) => {
-    try {
-      const response = await OtherService.getStudyYears(countryId);
-      if (response.data && response.data.status && response.data.data) {
-        const sortedData = response.data.data.sort((a: any, b: any) => {
-          const getNum = (str: string) => {
-            const parts = str.split('-');
-            return parts.length > 1 ? parseInt(parts[1], 10) : 0;
-          };
-          return getNum(a.name) - getNum(b.name);
-        });
-        setStudyYears(sortedData);
-      } else {
-        setStudyYears([]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch study years', error);
-      setStudyYears([]);
-    }
-  };
+
 
   const handleCountrySelect = (item: any) => {
     updateField('country', item.name);
     setSelectedCountryId(item.id);
-    setStudyYears([]); // Clear previous study years
-    updateField('academicYear', ''); // Clear previous selection
-    fetchStudyYears(item.id);
+
     setIsCountryOpen(false);
   };
 
@@ -266,10 +245,9 @@ const RegisterScreen = ({ navigation }: any) => {
   const updateField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
-  const [dobDate, setDobDate] = useState(new Date());
-  const [open, setOpen] = useState(false);
+
   const [isCountryOpen, setIsCountryOpen] = useState(false);
-  const [isYearOpen, setIsYearOpen] = useState(false);
+
 
   // Geolocation Logic
   const [geoLoading, setGeoLoading] = useState(false);
@@ -422,11 +400,11 @@ const RegisterScreen = ({ navigation }: any) => {
         { key: 'email', label: 'Email Address' },
         { key: 'phone', label: 'Phone Number' },
         { key: 'address', label: 'Address' },
-        { key: 'dob', label: 'Date of Birth' },
+
         { key: 'password', label: 'Password' },
         { key: 'confirmPassword', label: 'Confirm Password' },
         { key: 'country', label: 'Country' },
-        { key: 'academicYear', label: 'Academic Year' },
+
       ];
 
       // Check for empty fields
@@ -450,42 +428,7 @@ const RegisterScreen = ({ navigation }: any) => {
         return;
       }
 
-      // Convert MM/DD/YYYY to YYYY-MM-DD
-      // Add safety check for dob format
-      let formattedDob = formData.dob;
-      if (formData.dob && formData.dob.includes('/')) {
-        const parts = formData.dob.split('/');
-        if (parts.length === 3) {
-          const [month, day, year] = parts;
 
-          // AGE VALIDATION: Must be at least 5 years old
-          const birthDate = new Date(Number(year), Number(month) - 1, Number(day));
-          const today = new Date();
-          let age = today.getFullYear() - birthDate.getFullYear();
-          const m = today.getMonth() - birthDate.getMonth();
-          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-          }
-
-          if (age < 5) {
-            showToastMessage({
-              message: 'You must be at least 5 years old to register.',
-            });
-            return;
-          }
-
-          if (age > 16) {
-            showToastMessage({
-              message: 'You cannot be older than 16 years to register.',
-            });
-            return;
-          }
-
-          formattedDob = `${year}-${month}-${day}`;
-        } else {
-          console.warn('Invalid DOB format, using raw value:', formData.dob);
-        }
-      }
 
       // Sign up user
       const payload = {
@@ -493,12 +436,10 @@ const RegisterScreen = ({ navigation }: any) => {
         email: formData.email,
         password: formData.password,
         password_confirmation: formData.confirmPassword,
-        date_of_birth: formattedDob,
+
         phone: formData.phone,
         address: formData.address,
-        country: formData.country,
-        year: formData.academicYear,
-        grade: '10', // Default grade
+        country: selectedCountryId ? String(selectedCountryId) : '',
         accepted_terms: 1,
         receive_updates: formData.sendUpdates ? 1 : 0,
       };
@@ -605,13 +546,7 @@ const RegisterScreen = ({ navigation }: any) => {
               onChangeText={v => updateField('phone', v)}
             />
 
-            <CustomDropdown
-              label="Date of Birth"
-              placeholder="mm/dd/yyyy"
-              rightIcon="calendar-outline"
-              value={formData.dob}
-              onPress={() => setOpen(true)}
-            />
+
 
             <CustomPasswordInput
               label="Password"
@@ -731,56 +666,7 @@ const RegisterScreen = ({ navigation }: any) => {
                           </TouchableOpacity> */}
             </View>
 
-            {/* <CustomDropdown
-              label="Academic Year"
-              placeholder={formData.academicYear || 'Select your year'}
-              value={formData.academicYear}
-              icon="school-outline"
-              rightIcon={isYearOpen ? 'chevron-up' : 'chevron-down'}
-              onPress={() => setIsYearOpen(!isYearOpen)}
-            /> */}
 
-            {isYearOpen && (
-              <View style={styles.dropdownList}>
-                {studyYears.length > 0 ? (
-                  studyYears.map(item => (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        updateField('academicYear', item.name);
-                        setIsYearOpen(false);
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownItemText,
-                          formData.academicYear === item.name &&
-                          styles.selectedDropdownItemText,
-                        ]}
-                      >
-                        {item.name}
-                      </Text>
-                      {formData.academicYear === item.name && (
-                        <Icon
-                          name="check"
-                          size={18}
-                          color={Colors.primaryDarkBlue}
-                        />
-                      )}
-                    </TouchableOpacity>
-                  ))
-                ) : (
-                  <View style={styles.dropdownItem}>
-                    <Text style={styles.dropdownItemText}>
-                      {selectedCountryId
-                        ? 'No study years available'
-                        : 'Select a country first'}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
 
             {/* TERMS */}
             {/* TERMS */}
@@ -866,25 +752,7 @@ const RegisterScreen = ({ navigation }: any) => {
           </View> */}
         </KeyboardAwareScrollView>
       </View>
-      <DatePicker
-        modal
-        open={open}
-        date={dobDate}
-        mode="date"
-        maximumDate={new Date(new Date().setFullYear(new Date().getFullYear() - 5))}
-        onConfirm={date => {
-          setOpen(false);
-          setDobDate(date);
-          // Format date as mm/dd/yyyy
-          const month = (date.getMonth() + 1).toString().padStart(2, '0');
-          const day = date.getDate().toString().padStart(2, '0');
-          const formattedDate = `${month}/${day}/${date.getFullYear()}`;
-          updateField('dob', formattedDate);
-        }}
-        onCancel={() => {
-          setOpen(false);
-        }}
-      />
+
       <TermsModal
         title={termsTitle}
         visible={showTermsModal}

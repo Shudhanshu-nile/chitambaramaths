@@ -20,7 +20,7 @@ import { RootState } from '../redux/Reducer/RootReducer';
 import { updateUserProfile } from '../redux/Reducer/User';
 import CustomTextInput from '../components/CustomTextInput';
 import CustomDropdown from '../components/CustomDropdown';
-import DatePicker from 'react-native-date-picker';
+
 import Toast from 'react-native-toast-message';
 import OtherService from '../service/OtherService';
 
@@ -40,25 +40,10 @@ const EditProfileScreen = () => {
         fullName: user?.fullName || '',
         email: user?.email || '',
         phone: user?.phone || '',
-        dob: user?.dateOfBirth ? (isValidDate(user.dateOfBirth) ? user.dateOfBirth : formatDate(new Date(user.dateOfBirth))) : '',
         country: user?.country || '',
         academicYear: user?.academicYear || '',
     });
 
-    // Helper to check if date string is likely already in MM/DD/YYYY format
-    function isValidDate(dateString: string) {
-        // Simple regex to check for MM/DD/YYYY
-        const regex = /^\d{2}\/\d{2}\/\d{4}$/;
-        return regex.test(dateString);
-    }
-
-    // Helper to format date for display/input (MM/DD/YYYY)
-    function formatDate(date: Date) {
-        if (isNaN(date.getTime())) return '';
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${month}/${day}/${date.getFullYear()}`;
-    }
 
     // Dynamic Data State
     const [countries, setCountries] = useState<any[]>([]);
@@ -66,8 +51,6 @@ const EditProfileScreen = () => {
     const [selectedCountryId, setSelectedCountryId] = useState<number | null>(null);
 
     // UI Helper State
-    const [openDob, setOpenDob] = useState(false);
-    const [dobDate, setDobDate] = useState(new Date());
     const [isCountryOpen, setIsCountryOpen] = useState(false);
     const [isYearOpen, setIsYearOpen] = useState(false);
 
@@ -85,9 +68,18 @@ const EditProfileScreen = () => {
 
                 // If user has a country selected, try to find its ID to fetch years
                 if (user?.country) {
-                    const country = response.data.data.find((c: any) => c.name === user.country);
+                    // Check if user.country matches an ID or a Name
+                    const country = response.data.data.find(
+                        (c: any) => c.id == user.country || c.name === user.country
+                    );
+
                     if (country) {
                         setSelectedCountryId(country.id);
+                        // Ensure we display the name, not the ID
+                        if (formData.country !== country.name) {
+                            updateField('country', country.name);
+                        }
+
                         fetchStudyYears(country.id);
                     }
                 }
@@ -140,15 +132,7 @@ const EditProfileScreen = () => {
 
         setIsLoading(true);
         try {
-            // Convert MM/DD/YYYY to YYYY-MM-DD
-            let formattedDob = formData.dob;
-            if (formData.dob && formData.dob.includes('/')) {
-                const parts = formData.dob.split('/');
-                if (parts.length === 3) {
-                    const [month, day, year] = parts;
-                    formattedDob = `${year}-${month}-${day}`;
-                }
-            }
+
 
             const payload = {
                 name: formData.fullName,
@@ -160,7 +144,7 @@ const EditProfileScreen = () => {
                 mobile: formData.phone,
                 country: formData.country,
                 year: formData.academicYear,
-                date_of_birth: formattedDob,
+
                 email: formData.email,
             };
 
@@ -250,13 +234,7 @@ const EditProfileScreen = () => {
                         onChangeText={(v) => updateField('phone', v)}
                     />
 
-                    <CustomDropdown
-                        label="Date of Birth"
-                        placeholder="mm/dd/yyyy"
-                        rightIcon="calendar-outline"
-                        value={formData.dob}
-                        onPress={() => setOpenDob(true)}
-                    />
+
 
                     <CustomDropdown
                         label="Country"
@@ -347,24 +325,7 @@ const EditProfileScreen = () => {
                 </View>
             </ScrollView>
 
-            <DatePicker
-                modal
-                open={openDob}
-                date={dobDate}
-                mode="date"
-                onConfirm={(date) => {
-                    setOpenDob(false);
-                    setDobDate(date);
-                    // Format date as mm/dd/yyyy
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const formattedDate = `${month}/${day}/${date.getFullYear()}`;
-                    updateField('dob', formattedDate);
-                }}
-                onCancel={() => {
-                    setOpenDob(false);
-                }}
-            />
+
         </View>
     );
 };
