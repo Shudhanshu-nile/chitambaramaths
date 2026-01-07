@@ -20,6 +20,7 @@ export interface PaymentItem {
     exam_center_name?: string;
     exam_center_address?: string;
     country?: string;
+    child_name?: string;
 }
 
 export interface PaginationData {

@@ -20,6 +20,7 @@ export const API = {
   DOWNLOAD_ADMIT_CARD: DOMAIN + 'download-admit-card',
   EMAIL_ADMIT_CARD: DOMAIN + 'admit-card/email',
   PAYMENTS: DOMAIN + 'payments',
+  GET_CHILDREN: DOMAIN + 'children',
   TERMS_AND_CONDITIONS: 'https://app.chithambaramaths.com/terms-condition',
   PRIVACY_POLICY: 'https://app.chithambaramaths.com/privacy-policy',
 };

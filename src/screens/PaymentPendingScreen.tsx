@@ -7,7 +7,7 @@ import { Colors, FontSizes, Fonts, Spacing, ScreenNames, responsiveScreenHeight 
 import { replaceToMain } from '../navigation/GlobalNavigation';
 import { fetchPaymentHistory } from '../redux/Reducer/Payment';
 
-const PaymentPendingScreen = ({ navigation }: any) => {
+const PaymentPendingScreen = ({ navigation, route }: any) => {
     const dispatch = useDispatch();
     const { history } = useSelector((state: any) => state.payment);
     const { user } = useSelector((state: any) => state.user);
@@ -25,13 +25,29 @@ const PaymentPendingScreen = ({ navigation }: any) => {
 
     useEffect(() => {
         if (recentOrder) {
+            // Race Condition Check in Pending Screen mostly for robustness
+            if (route.params?.registrationStartTime && recentOrder.created_at) {
+                const startTime = new Date(route.params.registrationStartTime);
+                startTime.setHours(0, 0, 0, 0); // Normalize to start of day
+
+                const orderTime = new Date(recentOrder.created_at);
+                orderTime.setHours(0, 0, 0, 0); // Normalize to start of day
+
+                // Only ignore if the order date is STRICTLY BEFORE the registration date (e.g., yesterday)
+                if (orderTime.getTime() < startTime.getTime()) {
+                    console.log('Pending Screen: Ignoring old order', recentOrder.id);
+                    return; // Keep polling
+                }
+            }
+
             if (recentOrder.payment_status === 'success' || recentOrder.status === 'success') {
                 navigation.replace(ScreenNames.PaymentSuccess);
-            } else if (recentOrder.payment_status === 'not_initiated' || recentOrder.payment_status === 'failed') {
+            } else if (recentOrder.payment_status === 'failed') { // Removed 'not_initiated' from failure trigger
                 navigation.replace(ScreenNames.PaymentFailed);
             }
+            // Implicitly: if 'pending', 'processing', or 'not_initiated', do nothing (keep polling)
         }
-    }, [recentOrder, navigation]);
+    }, [recentOrder, navigation, route.params]);
 
 
     const handleCheckStatus = () => {

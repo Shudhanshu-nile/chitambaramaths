@@ -25,6 +25,12 @@ class OtherService {
     return response;
   }
 
+  public static async getChildren() {
+    const url = `${API.GET_CHILDREN}`;
+    const response = await Http.get(url);
+    return response;
+  }
+
   public static async getExamCenters(countryId: any) {
     const url = `${API.GET_EXAM_CENTERS}/${countryId}`;
     const response = await Http.get(url);

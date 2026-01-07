@@ -55,7 +55,28 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
     // Check status and redirect if necessary
     useEffect(() => {
         if (recentOrder) {
-            console.log('Checking Payment Status:', recentOrder.payment_status);
+            // Race Condition Check:
+            // If we have a registrationStartTime, ignore orders created BEFORE that time.
+            if (route.params?.registrationStartTime && recentOrder.created_at) {
+                const startTime = new Date(route.params.registrationStartTime);
+                startTime.setHours(0, 0, 0, 0); // Normalize to start of day
+
+                const orderTime = new Date(recentOrder.created_at);
+                orderTime.setHours(0, 0, 0, 0); // Normalize to start of day
+
+                // Only ignore if the order is from a PREVIOUS day. 
+                // Since API returns date only ("07 Jan 2026"), orderTime will be midnight.
+                // If we register at 7PM, orderTime < startTime (exact).
+                // So we MUST compare Normalized Dates (Days).
+                if (orderTime.getTime() < startTime.getTime()) {
+                    console.log('Ignoring old order:', recentOrder.id, 'Created:', recentOrder.created_at, 'Start:', route.params.registrationStartTime);
+                    // Treat as pending (waiting for new order)
+                    navigation.replace(ScreenNames.PaymentPending, {
+                        registrationStartTime: route.params.registrationStartTime
+                    });
+                    return;
+                }
+            }
 
             // Check based on API response structure
             const status = recentOrder.payment_status || recentOrder.status;
@@ -63,9 +84,9 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
             if (status === 'success' || status === 'succeeded') {
                 // Stay on this screen
                 return;
-            } else if (status === 'pending' || status === 'processing') {
+            } else if (status === 'pending' || status === 'processing' || status === 'not_initiated') {
                 navigation.replace(ScreenNames.PaymentPending);
-            } else if (status === 'failed' || status === 'not_initiated' || status === 'canceled') {
+            } else if (status === 'failed' || status === 'canceled') {
                 navigation.replace(ScreenNames.PaymentFailed);
             }
         }

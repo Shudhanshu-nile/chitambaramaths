@@ -182,6 +182,10 @@ const TicketsScreen = () => {
                     </Text>
                 </View>
                 <View style={styles.row}>
+                    <Text style={styles.label}>Student Name:</Text>
+                    <Text style={[styles.value, { textTransform: 'capitalize' }]}>{item.child_name || 'N/A'}</Text>
+                </View>
+                <View style={styles.row}>
                     <Text style={styles.label}>Student ID:</Text>
                     <Text style={styles.value}>{item.student_registration_id || 'N/A'}</Text>
                 </View>

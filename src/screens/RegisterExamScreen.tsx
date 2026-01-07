@@ -80,6 +80,12 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [showCountryModal, setShowCountryModal] = useState(false);
 
+  // Dynamic Children State
+  const [children, setChildren] = useState<any[]>([]);
+  const [selectedChild, setSelectedChild] = useState<any>(null);
+  const [showChildModal, setShowChildModal] = useState(false);
+  const [childId, setChildId] = useState<string>('');
+
   // Dynamic Exam Center State
   const [examCenters, setExamCenters] = useState<any[]>([]);
   const [selectedCenterId, setSelectedCenterId] = useState<number | null>(null);
@@ -89,6 +95,7 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
 
   useEffect(() => {
     fetchCountries();
+    fetchChildren();
   }, []);
 
   // Autofill User Details
@@ -198,6 +205,62 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
       console.error('Failed to fetch countries', error);
       showToastMessage({ message: 'Failed to load countries' });
     }
+  };
+
+  const fetchChildren = async () => {
+    try {
+      console.log('Fetching Children...');
+      const response = await OtherService.getChildren();
+      console.log('Children API Response:', JSON.stringify(response.data, null, 2));
+
+      if (response.data && Array.isArray(response.data)) {
+        setChildren(response.data);
+      } else {
+        setChildren([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch children', error);
+      setChildren([]);
+    }
+  };
+
+  const handleChildSelect = (child: any) => {
+    // Validation: Check if child is already registered for this Country AND Study Year
+    if (selectedCountry && selectedYear && child.registrations && Array.isArray(child.registrations)) {
+      const isAlreadyRegistered = child.registrations.some((reg: any) =>
+        // using loose equality for potentially string vs number comparison
+        reg.country_id == selectedCountry.id && reg.study_year == selectedYear
+      );
+
+      if (isAlreadyRegistered) {
+        showToastMessage({
+          message: `This child is already registered for the selected Country and Grade.`,
+        });
+        return;
+      }
+    }
+
+    setSelectedChild(child);
+    setChildId(child.id);
+
+    // Auto-fill fields
+    const fullName = child.name || '';
+    const nameParts = fullName.trim().split(' ');
+    const fName = nameParts[0] || '';
+    const lName = nameParts.slice(1).join(' ') || '';
+
+    setFirstName(fName);
+    setLastName(lName);
+    setParentName(child.parent_name || '');
+
+    if (child.dob) {
+      const dobDate = new Date(child.dob);
+      if (!isNaN(dobDate.getTime())) {
+        setDateOfBirth(dobDate);
+      }
+    }
+
+    setShowChildModal(false);
   };
 
   const [loading, setLoading] = useState(false);
@@ -398,7 +461,7 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
       formData.append('country_id', selectedCountry.id);
       formData.append('study_year', selectedYear);
       formData.append('center_id', selectedCenterId);
-      formData.append('child_id', ''); // Added empty child_id as per request
+      formData.append('child_id', childId); // Updated to use state variable
 
       formData.append('agree_terms', '1');
       if (dateOfBirth) {
@@ -498,7 +561,95 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
           </TouchableOpacity>
         </View>
 
+        {/* SELECT CHILD DROPDOWN */}
+        <View style={[styles.registeringCard, { marginTop: 10 }]}>
+          <View style={styles.registeringIconBox}>
+            <Icon name="account-child" size={24} color={Colors.primaryBlue} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.registeringLabel}>Select Child</Text>
+            <Text style={styles.registeringValue}>
+              {selectedChild
+                ? selectedChild.name
+                : 'Select Child (Optional)'}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.changeButton}
+            onPress={() => setShowChildModal(true)}
+          >
+            <Text style={styles.changeButtonText}>Change</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Country Selection Modal */}
+        <Modal
+          visible={showChildModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowChildModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Select Child</Text>
+
+              <FlatList
+                data={children}
+                keyExtractor={item => item.id.toString()}
+                renderItem={({ item }) => {
+                  // Check availability
+                  let isRegistered = false;
+                  if (selectedCountry && selectedYear && item.registrations && Array.isArray(item.registrations)) {
+                    isRegistered = item.registrations.some((reg: any) =>
+                      reg.country_id == selectedCountry.id && reg.study_year == selectedYear
+                    );
+                  }
+
+                  return (
+                    <TouchableOpacity
+                      style={[
+                        styles.countryOption,
+                        selectedChild?.id === item.id && styles.countryOptionSelected,
+                        isRegistered && { opacity: 0.5 }
+                      ]}
+                      onPress={() => handleChildSelect(item)}
+                    >
+                      <View style={{ flexDirection: 'column' }}>
+                        <Text
+                          style={[
+                            styles.countryOptionText,
+                            selectedChild?.id === item.id &&
+                            styles.countryOptionTextSelected,
+                          ]}
+                        >
+                          {item.name}
+                        </Text>
+                        {isRegistered && (
+                          <Text style={{ fontSize: 10, color: Colors.red, marginLeft: 15 }}>
+                            Already Registered
+                          </Text>
+                        )}
+                      </View>
+
+                      {selectedChild?.id === item.id && (
+                        <Icon name="check" size={20} color={Colors.primaryBlue} />
+                      )}
+                    </TouchableOpacity>
+                  );
+                }}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                ListEmptyComponent={<Text style={{ padding: 20, textAlign: 'center', color: Colors.gray }}>No children found</Text>}
+              />
+
+              <TouchableOpacity
+                style={styles.closeModalButton}
+                onPress={() => setShowChildModal(false)}
+              >
+                <Text style={styles.closeModalText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
         <Modal
           visible={showCountryModal}
           transparent
