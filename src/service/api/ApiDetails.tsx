@@ -1,5 +1,5 @@
 // const DOMAIN = 'https://niletechinnovations.com/projects/chitambramaths/api/'; //  server dev
-const DOMAIN = 'https://app.chithambaramaths.com/api/'; // live server
+const DOMAIN = 'https://staging.chithambaramaths.com/api/'; // live server
 
 export const API = {
   LOGIN: DOMAIN + `login`,

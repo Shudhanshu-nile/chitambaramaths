@@ -731,14 +731,14 @@ const RegisterScreen = ({ navigation }: any) => {
                           </TouchableOpacity> */}
             </View>
 
-            <CustomDropdown
+            {/* <CustomDropdown
               label="Academic Year"
               placeholder={formData.academicYear || 'Select your year'}
               value={formData.academicYear}
               icon="school-outline"
               rightIcon={isYearOpen ? 'chevron-up' : 'chevron-down'}
               onPress={() => setIsYearOpen(!isYearOpen)}
-            />
+            /> */}
 
             {isYearOpen && (
               <View style={styles.dropdownList}>

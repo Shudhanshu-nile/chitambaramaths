@@ -131,7 +131,7 @@ const LoginScreen = ({ navigation }: any) => {
 
         {/* LOGIN CARD */}
         <View style={styles.loginCard}>
-          <Text style={styles.title}>Student Login</Text>
+          <Text style={styles.title}>Login</Text>
           <Text style={styles.subtitle}>
             Enter your credentials to access your account
           </Text>

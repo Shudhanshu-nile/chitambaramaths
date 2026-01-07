@@ -23,6 +23,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../redux/Reducer/RootReducer';
 import { Colors, Fonts, showToastMessage, ScreenNames } from '../constants';
 import OtherService from '../service/OtherService';
+import DatePicker from 'react-native-date-picker';
 import CustomTextInput from '../components/CustomTextInput';
 import CustomLoader from '../components/CustomLoader';
 import Logo from '../assets/images/logo.svg';
@@ -62,12 +63,17 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
   const [postalCode, setPostalCode] = useState('');
   const [telephone, setTelephone] = useState('');
   const [mobile, setMobile] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
 
   const [agreed, setAgreed] = useState(true);
 
   const currentYear = new Date().getFullYear();
+  const today = new Date();
+  const minDate = new Date(today.getFullYear() - 16, today.getMonth(), today.getDate());
+  const maxDate = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate());
 
   // Dynamic Country State
   const [countries, setCountries] = useState<any[]>([]);
@@ -88,15 +94,6 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
   // Autofill User Details
   useEffect(() => {
     if (user) {
-      if (user.fullName) {
-        const parts = user.fullName.trim().split(/\s+/);
-        if (parts.length > 0) {
-          setFirstName(parts[0]);
-          if (parts.length > 1) {
-            setLastName(parts.slice(1).join(' '));
-          }
-        }
-      }
       if (user.email) setEmail(user.email);
       if (user.phone) setMobile(user.phone);
     }
@@ -371,6 +368,11 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
       return;
     }
 
+    if (!dateOfBirth) {
+      showToastMessage({ message: `Please select Date of Birth.` });
+      return;
+    }
+
     if (!agreed) {
       showToastMessage({
         message: `Please agree to the Terms and Conditions.`,
@@ -398,6 +400,10 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
       formData.append('center_id', selectedCenterId);
 
       formData.append('agree_terms', '1');
+      if (dateOfBirth) {
+        const formattedDate = dateOfBirth.toISOString().split('T')[0];
+        formData.append('date_of_birth', formattedDate);
+      }
 
       console.log('Submitting Registration:', formData);
 
@@ -554,6 +560,22 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
           </View>
         </Modal>
 
+        <DatePicker
+          modal
+          open={showDatePicker}
+          date={dateOfBirth || new Date(new Date().setFullYear(new Date().getFullYear() - 10))}
+          mode="date"
+          minimumDate={minDate}
+          maximumDate={maxDate}
+          onConfirm={(date) => {
+            setShowDatePicker(false)
+            setDateOfBirth(date)
+          }}
+          onCancel={() => {
+            setShowDatePicker(false)
+          }}
+        />
+
 
 
         {/* FORM FIELDS */}
@@ -581,6 +603,18 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
           icon="account"
           required
         />
+        <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+          <View pointerEvents="none">
+            <CustomTextInput
+              label="Date of Birth"
+              placeholder="Select Date of Birth"
+              value={dateOfBirth ? dateOfBirth.toISOString().split('T')[0] : ''}
+              editable={false}
+              icon="calendar"
+              required
+            />
+          </View>
+        </TouchableOpacity>
 
         <CustomTextInput
           label="Door Number"
