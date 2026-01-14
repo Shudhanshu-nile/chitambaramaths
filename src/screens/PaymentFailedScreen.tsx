@@ -1,17 +1,33 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Linking } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Linking, Alert } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useSelector } from 'react-redux';
 import { Colors, FontSizes, Fonts, Spacing, ScreenNames, responsiveScreenHeight } from '../constants';
 import { replaceToMain } from '../navigation/GlobalNavigation';
+import OtherService from '../service/OtherService';
 
 const PaymentFailedScreen = ({ navigation }: any) => {
-    const { history } = useSelector((state: any) => state.payment);
     const { user } = useSelector((state: any) => state.user);
+    const [recentOrder, setRecentOrder] = useState<any>(null);
 
-    // Get the most recent order to display details
-    const recentOrder = history && history.length > 0 ? history[0] : null;
+    // Fetch payment history directly from API
+    useEffect(() => {
+        const fetchLatestPayment = async () => {
+            try {
+                const response = await OtherService.getPaymentHistory(1);
+
+                if (response.data && response.data.status && response.data.data?.data?.length > 0) {
+                    const latestPayment = response.data.data.data[0];
+                    setRecentOrder(latestPayment);
+                }
+            } catch (error) {
+                console.error('PaymentFailedScreen: Error fetching payment history:', error);
+            }
+        };
+
+        fetchLatestPayment();
+    }, []);
 
     const handleRetry = async () => {
         if (recentOrder?.payment_url) {

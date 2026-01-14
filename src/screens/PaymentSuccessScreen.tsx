@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -9,11 +9,12 @@ import {
     StatusBar,
     Dimensions,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { BlurView } from '@react-native-community/blur';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
     Colors,
     FontSizes,
@@ -23,84 +24,98 @@ import {
     responsiveScreenWidth,
     ScreenNames,
 } from '../constants';
-import { fetchPaymentHistory } from '../redux/Reducer/Payment';
 import { replaceToMain } from '../navigation/GlobalNavigation';
 import OtherService from '../service/OtherService';
 
 const { width } = Dimensions.get('window');
 
 const PaymentSuccessScreen = ({ navigation, route }: any) => {
-    const dispatch = useDispatch();
-    const { history, isLoading } = useSelector((state: any) => state.payment);
     const { user } = useSelector((state: any) => state.user);
+    const [recentOrder, setRecentOrder] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Fetch only the latest payment history
-    // Fetch only the latest payment history
+    // Fetch payment history directly from API
+    const fetchLatestPayment = async () => {
+        try {
+            setIsLoading(true);
+            const response = await OtherService.getPaymentHistory(1);
+            console.log('PaymentSuccessScreen: API Response received');
+
+            if (response.data && response.data.status && response.data.data?.data?.length > 0) {
+                const latestPayment = response.data.data.data[0];
+                console.log('PaymentSuccessScreen: Latest payment:', latestPayment.registration_id, latestPayment.payment_status);
+                setRecentOrder(latestPayment);
+            } else {
+                console.log('PaymentSuccessScreen: No payment history found');
+                setRecentOrder(null);
+            }
+        } catch (error) {
+            console.error('PaymentSuccessScreen: Error fetching payment history:', error);
+            setRecentOrder(null);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Fetch on mount
     useEffect(() => {
-        dispatch(fetchPaymentHistory(1) as any);
+        // If coming from registration, wait 6 seconds before first fetch
+        // to give backend time to update payment status
+        const initialDelay = route.params?.fromRegistration ? 6000 : 0;
 
-        // Polling if coming from registration
+        const initialTimer = setTimeout(() => {
+            fetchLatestPayment();
+        }, initialDelay);
+
+        // Additional polling if coming from registration
         if (route.params?.fromRegistration) {
-            const timer = setTimeout(() => {
-                dispatch(fetchPaymentHistory(1) as any);
+            const pollingTimer = setTimeout(() => {
+                fetchLatestPayment();
             }, 10000);
 
-            return () => clearTimeout(timer);
+            return () => {
+                clearTimeout(initialTimer);
+                clearTimeout(pollingTimer);
+            };
         }
-    }, [dispatch, route.params]);
 
-    // Get the most recent order effectively with explicit sort
-    const recentOrder = React.useMemo(() => {
-        if (!history || history.length === 0) return null;
-        return [...history].sort((a: any, b: any) => b.id - a.id)[0];
-    }, [history]);
-
-    console.log('PaymentSuccessScreen: RecentOrder:', recentOrder?.id, recentOrder?.payment_status, recentOrder?.status);
+        return () => clearTimeout(initialTimer);
+    }, [route.params]);
 
 
-    // Check status and redirect if necessary
+    // Check status and redirect if necessary - ONLY after loading is complete
     useEffect(() => {
-        if (recentOrder) {
-            // Race Condition Check:
-            // If we have a registrationStartTime, ignore orders created BEFORE that time.
-            if (route.params?.registrationStartTime && recentOrder.created_at) {
-                const startTime = new Date(route.params.registrationStartTime);
-                startTime.setHours(0, 0, 0, 0); // Normalize to start of day
-
-                const orderTime = new Date(recentOrder.created_at);
-                orderTime.setHours(0, 0, 0, 0); // Normalize to start of day
-
-                // Only ignore if the order is from a PREVIOUS day. 
-                // Since API returns date only ("07 Jan 2026"), orderTime will be midnight.
-                // If we register at 7PM, orderTime < startTime (exact).
-                // So we MUST compare Normalized Dates (Days).
-                if (orderTime.getTime() < startTime.getTime()) {
-                    console.log('Ignoring old order:', recentOrder.id, 'Created:', recentOrder.created_at, 'Start:', route.params.registrationStartTime);
-                    // Treat as pending (waiting for new order)
-                    navigation.replace(ScreenNames.PaymentPending, {
-                        registrationStartTime: route.params.registrationStartTime
-                    });
-                    return;
-                }
-            }
-
-            // Check based on API response structure
-            const rawStatus = recentOrder.payment_status || recentOrder.status || '';
-            const status = rawStatus.toLowerCase();
-
-            if (status === 'success' || status === 'succeeded' || status.includes('success')) {
-                // Stay on this screen
-                return;
-            } else if (status === 'pending' || status === 'processing') {
-                navigation.replace(ScreenNames.PaymentPending, {
-                    registrationStartTime: route.params?.registrationStartTime
-                });
-            } else if (status === 'failed' || status === 'canceled' || status === 'not_initiated') {
-                navigation.replace(ScreenNames.PaymentFailed);
-            }
+        // Don't check status while loading or if no data
+        if (isLoading || !recentOrder) {
+            return;
         }
 
-    }, [recentOrder, navigation]);
+        const rawStatus = recentOrder.payment_status || recentOrder.status || '';
+        const status = rawStatus.toLowerCase();
+
+        console.log('PaymentSuccessScreen: Checking status:', status);
+
+        if (status === 'success' || status === 'succeeded' || status.includes('success')) {
+            console.log('PaymentSuccessScreen: ✅ Staying on success screen');
+            // Stay on success screen
+            return;
+        } else if (status === 'pending' || status === 'processing') {
+            console.log('PaymentSuccessScreen: ⏳ Redirecting to pending screen');
+            navigation.replace(ScreenNames.PaymentPending);
+        } else if (status === 'not_initiated' && route.params?.fromRegistration) {
+            // Special case: if coming from registration and status is not_initiated,
+            // backend might not have updated yet - wait and retry once
+            console.log('PaymentSuccessScreen: ⏸️ Status is not_initiated, waiting 3s before retry...');
+            const retryTimer = setTimeout(() => {
+                console.log('PaymentSuccessScreen: Retrying after not_initiated...');
+                fetchLatestPayment();
+            }, 3000);
+            return () => clearTimeout(retryTimer);
+        } else {
+            console.log('PaymentSuccessScreen: ❌ Redirecting to failed screen');
+            navigation.replace(ScreenNames.PaymentFailed);
+        }
+    }, [recentOrder, isLoading, navigation, route.params, fetchLatestPayment]);
 
     const handleGoHome = () => {
         replaceToMain(ScreenNames.Home);
@@ -219,6 +234,17 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
     const paymentDate = recentOrder?.created_at ? formatDate(recentOrder.created_at) : 'Just now';
     const paymentMethod = recentOrder?.payment_method === 'card' ? 'Visa' : recentOrder?.payment_method || 'Card';
     // const last4 = '3456';
+
+    // Show loading state while fetching
+    if (isLoading) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <StatusBar barStyle="light-content" backgroundColor={Colors.primaryDarkBlue} translucent={false} />
+                <ActivityIndicator size="large" color={Colors.primaryBlue} />
+                <Text style={{ marginTop: 16, color: Colors.textGray }}>Loading payment details...</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>

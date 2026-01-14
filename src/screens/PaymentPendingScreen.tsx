@@ -1,66 +1,71 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Colors, FontSizes, Fonts, Spacing, ScreenNames, responsiveScreenHeight } from '../constants';
 import { replaceToMain } from '../navigation/GlobalNavigation';
-import { fetchPaymentHistory } from '../redux/Reducer/Payment';
+import OtherService from '../service/OtherService';
 
 const PaymentPendingScreen = ({ navigation, route }: any) => {
-    const dispatch = useDispatch();
-    const { history } = useSelector((state: any) => state.payment);
     const { user } = useSelector((state: any) => state.user);
+    const [recentOrder, setRecentOrder] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Get the most recent order effectively
-    const recentOrder = React.useMemo(() => {
-        if (!history || history.length === 0) return null;
-        return [...history].sort((a: any, b: any) => b.id - a.id)[0];
-    }, [history]);
+    // Fetch payment history directly from API
+    const fetchLatestPayment = async () => {
+        try {
+            const response = await OtherService.getPaymentHistory(1);
+            console.log('PaymentPendingScreen: API Response received');
 
-    console.log('PaymentPendingScreen: RecentOrder:', recentOrder?.id, recentOrder?.payment_status);
+            if (response.data && response.data.status && response.data.data?.data?.length > 0) {
+                const latestPayment = response.data.data.data[0];
+                console.log('PaymentPendingScreen: Latest payment:', latestPayment.registration_id, latestPayment.payment_status);
+                setRecentOrder(latestPayment);
+            } else {
+                console.log('PaymentPendingScreen: No payment history found');
+                setRecentOrder(null);
+            }
+        } catch (error) {
+            console.error('PaymentPendingScreen: Error fetching payment history:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-
+    // Fetch on mount and poll every 5 seconds
     useEffect(() => {
+        fetchLatestPayment();
+
         const interval = setInterval(() => {
-            dispatch(fetchPaymentHistory(1) as any);
+            fetchLatestPayment();
         }, 5000); // Poll every 5 seconds
 
         return () => clearInterval(interval);
-    }, [dispatch]);
+    }, []);
 
+    // Check status and redirect if necessary
     useEffect(() => {
-        if (recentOrder) {
-            // Race Condition Check in Pending Screen mostly for robustness
-            if (route.params?.registrationStartTime && recentOrder.created_at) {
-                const startTime = new Date(route.params.registrationStartTime);
-                startTime.setHours(0, 0, 0, 0); // Normalize to start of day
-
-                const orderTime = new Date(recentOrder.created_at);
-                orderTime.setHours(0, 0, 0, 0); // Normalize to start of day
-
-                // Only ignore if the order date is STRICTLY BEFORE the registration date (e.g., yesterday)
-                if (orderTime.getTime() < startTime.getTime()) {
-                    console.log('Pending Screen: Ignoring old order', recentOrder.id);
-                    return; // Keep polling
-                }
-            }
-
+        if (!isLoading && recentOrder) {
             const rawStatus = recentOrder.payment_status || recentOrder.status || '';
             const status = rawStatus.toLowerCase();
 
+            console.log('PaymentPendingScreen: Checking status:', status);
+
             if (status === 'success' || status === 'succeeded' || status.includes('success')) {
+                console.log('PaymentPendingScreen: ✅ Redirecting to success screen');
                 navigation.replace(ScreenNames.PaymentSuccess);
-            } else if (status === 'failed' || status === 'not_initiated') {
+            } else if (status === 'failed' || status === 'not_initiated' || status === 'canceled') {
+                console.log('PaymentPendingScreen: ❌ Redirecting to failed screen');
                 navigation.replace(ScreenNames.PaymentFailed);
             }
-            // Implicitly: if 'pending', 'processing', or 'not_initiated', do nothing (keep polling)
+            // If 'pending' or 'processing', stay on this screen and keep polling
         }
-    }, [recentOrder, navigation, route.params]);
+    }, [recentOrder, isLoading, navigation]);
 
 
     const handleCheckStatus = () => {
-        dispatch(fetchPaymentHistory(1) as any);
+        fetchLatestPayment();
     };
 
     const handleGoHome = () => {
