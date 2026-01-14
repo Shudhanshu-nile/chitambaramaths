@@ -182,6 +182,26 @@ export const updateUserProfile = createAsyncThunk(
   },
 );
 
+export const deleteUserAccount = createAsyncThunk(
+  'user/deleteAccount',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await UserAuthService.deleteAccount();
+      if (response.data && response.data.status) {
+        return true;
+      } else {
+        return rejectWithValue(
+          response.data.message || 'Failed to delete account',
+        );
+      }
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to delete account',
+      );
+    }
+  },
+);
+
 export const UserSlice = createSlice({
   name: 'user',
   initialState,
@@ -272,6 +292,22 @@ export const UserSlice = createSlice({
       }
     });
     builder.addCase(updateUserProfile.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload as string;
+    });
+
+    // Delete Account
+    builder.addCase(deleteUserAccount.pending, state => {
+      state.isLoading = true;
+      state.error = null;
+    });
+    builder.addCase(deleteUserAccount.fulfilled, state => {
+      state.isLoading = false;
+      state.isLoggedIn = false;
+      state.user = null;
+      state.error = null;
+    });
+    builder.addCase(deleteUserAccount.rejected, (state, action) => {
       state.isLoading = false;
       state.error = action.payload as string;
     });

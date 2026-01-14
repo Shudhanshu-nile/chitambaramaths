@@ -49,8 +49,14 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
         }
     }, [dispatch, route.params]);
 
-    // Get the most recent order effectively
-    const recentOrder = history && history.length > 0 ? history[0] : null;
+    // Get the most recent order effectively with explicit sort
+    const recentOrder = React.useMemo(() => {
+        if (!history || history.length === 0) return null;
+        return [...history].sort((a: any, b: any) => b.id - a.id)[0];
+    }, [history]);
+
+    console.log('PaymentSuccessScreen: RecentOrder:', recentOrder?.id, recentOrder?.payment_status, recentOrder?.status);
+
 
     // Check status and redirect if necessary
     useEffect(() => {
@@ -79,17 +85,21 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
             }
 
             // Check based on API response structure
-            const status = recentOrder.payment_status || recentOrder.status;
+            const rawStatus = recentOrder.payment_status || recentOrder.status || '';
+            const status = rawStatus.toLowerCase();
 
-            if (status === 'success' || status === 'succeeded') {
+            if (status === 'success' || status === 'succeeded' || status.includes('success')) {
                 // Stay on this screen
                 return;
-            } else if (status === 'pending' || status === 'processing' || status === 'not_initiated') {
-                navigation.replace(ScreenNames.PaymentPending);
-            } else if (status === 'failed' || status === 'canceled') {
+            } else if (status === 'pending' || status === 'processing') {
+                navigation.replace(ScreenNames.PaymentPending, {
+                    registrationStartTime: route.params?.registrationStartTime
+                });
+            } else if (status === 'failed' || status === 'canceled' || status === 'not_initiated') {
                 navigation.replace(ScreenNames.PaymentFailed);
             }
         }
+
     }, [recentOrder, navigation]);
 
     const handleGoHome = () => {
@@ -97,7 +107,7 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
     };
 
     const handleDownloadExam = async () => {
-        const id = recentOrder?.registration_id || recentOrder?.id;
+        const id = recentOrder?.payment_id;
         if (id) {
             try {
                 // console.log('Download Exam PDF', id);
@@ -108,6 +118,8 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
                 console.error('Download failed:', error);
                 Alert.alert('Error', 'Failed to download invoice. Please try again.');
             }
+        } else {
+            Alert.alert('Error', 'Invoice not available for this order.');
         }
     };
 

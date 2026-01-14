@@ -44,24 +44,16 @@ const CentersScreen = () => {
 
     const initLocationAndCenters = async () => {
         setLoading(true);
-        // We will try to get location. 
-        // If we have permission or can get it, we use the country from there.
-        // If not, we fallback to United Kingdom.
+        // Compliance: Do not auto-request permission on mount.
+        // Only check if already granted (Android). For iOS, we default to UK to avoid popup.
         if (Platform.OS === 'ios') {
-            const auth = await Geolocation.requestAuthorization('whenInUse');
-            if (auth === 'granted') {
-                getLocation(true);
-            } else {
-                loadCenters('United Kingdom');
-            }
+            loadCenters('United Kingdom');
         } else {
             const result = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
             if (result) {
                 getLocation(true);
             } else {
-                // Request it now? Or just load default? 
-                // User wants dynamic, so let's request once.
-                requestLocationPermission(true);
+                loadCenters('United Kingdom');
             }
         }
     };

@@ -10,17 +10,18 @@ import {
   Alert,
   Platform,
   Modal,
+  Linking,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Colors, Gradients, Fonts, ScreenNames } from '../constants';
+import { Colors, Gradients, Fonts, ScreenNames, showToastMessage } from '../constants';
 import Logo from '../assets/images/logo.svg';
 import { BlurView } from '@react-native-community/blur';
 import { useNavigation } from '@react-navigation/native';
 // import { navigate } from '../navigation/GlobalNavigation';
 // import { useAuth } from '../context/AuthContext';
 import { useDispatch, useSelector } from 'react-redux';
-import { logoutUser } from '../redux/Reducer/User';
+import { logoutUser, deleteUserAccount } from '../redux/Reducer/User';
 import { fetchPaymentHistory } from '../redux/Reducer/Payment';
 import { RootState } from '../redux/Reducer/RootReducer';
 import OtherService from '../service/OtherService';
@@ -92,15 +93,17 @@ const ProfileScreen = () => {
   };
 
   const handleDownloadInvoice = async (order: any) => {
-    if (order?.id) {
+    if (order?.payment_id) {
       try {
-        const fileName = `invoice-${order.student_registration_id}`;
-        await OtherService.downloadInvoice(order.id, fileName);
+        const fileName = `invoice-${order.student_registration_id ? order.student_registration_id.replace(/[^a-zA-Z0-9-_]/g, '_') : 'unknown'}`;
+        await OtherService.downloadInvoice(order.payment_id, fileName);
         Alert.alert('Success', 'Invoice downloaded successfully.');
       } catch (error) {
         console.error('Download failed:', error);
         Alert.alert('Error', 'Failed to download invoice. Please try again.');
       }
+    } else {
+      Alert.alert('Error', 'Invoice not available for this order.');
     }
   };
 
@@ -108,7 +111,7 @@ const ProfileScreen = () => {
     const registration_id = order?.registration_id || order?.id;
     if (registration_id) {
       try {
-        const fileName = `admit-card-${order.student_registration_id}`;
+        const fileName = `admit-card-${order.student_registration_id ? order.student_registration_id.replace(/[^a-zA-Z0-9-_]/g, '_') : 'unknown'}`;
         await OtherService.downloadAdmitCard(registration_id, fileName);
         Alert.alert('Success', 'Admit Card downloaded successfully.');
       } catch (error) {
@@ -126,12 +129,39 @@ const ProfileScreen = () => {
         { text: 'Cancel', onPress: () => { }, style: 'cancel' },
         {
           text: 'Delete',
-          onPress: () => console.log('Deleting account...'),
+          onPress: async () => {
+            try {
+              const result = await dispatch(deleteUserAccount());
+              if (deleteUserAccount.fulfilled.match(result)) {
+
+                navigation.navigate(ScreenNames.Login);
+                showToastMessage({ message: 'Account deleted successfully' });
+              } else {
+                Alert.alert('Error', result.payload as string || 'Failed to delete account');
+              }
+            } catch (error) {
+              Alert.alert('Error', 'An unexpected error occurred');
+            }
+          },
           style: 'destructive',
         },
       ],
     );
   };
+
+  const getInitials = (name: string) => {
+    if (!name) return '';
+    const names = name.trim().split(' ');
+    if (names.length === 0) return '';
+    if (names.length === 1) return names[0].charAt(0).toUpperCase();
+    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+  };
+
+  const InitialsAvatar = ({ name }: { name: string }) => (
+    <View style={[styles.profileImage, styles.initialsContainer]}>
+      <Text style={styles.initialsText}>{getInitials(name)}</Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -176,10 +206,7 @@ const ProfileScreen = () => {
               >
                 <View style={styles.profileCard}>
                   <View style={styles.profileImageContainer}>
-                    <Image
-                      source={userProfile.profileImage}
-                      style={styles.profileImage}
-                    />
+                    <InitialsAvatar name={userProfile.name} />
                   </View>
 
                   <View style={styles.profileInfoContainer}>
@@ -193,10 +220,7 @@ const ProfileScreen = () => {
               <View style={[styles.blurContainer, { backgroundColor: 'rgba(255, 255, 255, 0.15)', borderColor: 'rgba(255, 255, 255, 0.3)', overflow: 'hidden' }]}>
                 <View style={styles.profileCard}>
                   <View style={styles.profileImageContainer}>
-                    <Image
-                      source={userProfile.profileImage}
-                      style={styles.profileImage}
-                    />
+                    <InitialsAvatar name={userProfile.name} />
                   </View>
 
                   <View style={styles.profileInfoContainer}>
@@ -249,7 +273,7 @@ const ProfileScreen = () => {
             </View>
 
             {/* Active Order Card */}
-            {latestOrder && (
+            {latestOrder ? (
               <View key={latestOrder.id} style={styles.orderCard}>
                 <View style={styles.orderHeader}>
                   <View style={styles.orderIconBg}>
@@ -321,6 +345,10 @@ const ProfileScreen = () => {
                     <Text style={styles.downloadBtnText}>Download Invoice</Text>
                   </TouchableOpacity>
                 </View>
+              </View>
+            ) : (
+              <View style={styles.noOrderContainer}>
+                <Text style={styles.noOrderText}>No Order Found</Text>
               </View>
             )}
           </View>
@@ -507,12 +535,27 @@ const styles = StyleSheet.create({
     // backgroundColor: 'rgba(227, 242, 253, 0.6)',
   },
   profileImage: {
-    width: 80,
-    height: 80,
+    // width: 80,
+    // height: 80,
     alignSelf: 'center',
     // borderRadius: 50,
     // borderWidth: 4,
     // borderColor: Colors.white,
+  },
+  initialsContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  initialsText: {
+    fontSize: 32,
+    fontFamily: Fonts.InterBold,
+    color: Colors.primaryBlue,
   },
   profileInfoContainer: {
     paddingBottom: 20,
@@ -762,5 +805,17 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.InterSemiBold,
     marginLeft: 6,
   },
-
+  noOrderContainer: {
+    padding: 20,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 100,
+  },
+  noOrderText: {
+    fontSize: 16,
+    fontFamily: Fonts.InterSemiBold,
+    color: '#666',
+  },
 });

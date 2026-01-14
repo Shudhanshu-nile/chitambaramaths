@@ -74,6 +74,9 @@ class OtherService {
   }
 
   public static async downloadInvoice(id: any, fileName: string) {
+    // Sanitize filename
+    const safeFileName = fileName.replace(/[^a-zA-Z0-9-_]/g, '_');
+    // 1. Permission check for Android (legacy)
     if (Platform.OS === 'android') {
       try {
         if ((Platform.Version as number) < 33) {
@@ -102,30 +105,56 @@ class OtherService {
     const token = await AsyncStorage.getItem('authToken');
     const { config, fs, ios } = ReactNativeBlobUtil;
 
-    let RootDir = Platform.OS === 'ios' ? fs.dirs.DocumentDir : fs.dirs.DownloadDir;
-    let path = `${RootDir}/${fileName}.pdf`;
+    // 2. Determine paths
+    const isAndroid = Platform.OS === 'android';
+    const downloadDir = isAndroid ? fs.dirs.DownloadDir : fs.dirs.DocumentDir;
+    const cacheDir = fs.dirs.CacheDir;
 
-    let options = {
+    // Use a temp path for the initial download on Android
+    const tempPath = isAndroid ? `${cacheDir}/${safeFileName}.pdf` : `${downloadDir}/${safeFileName}.pdf`;
+
+    const options = {
       fileCache: true,
-      path: path,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: true,
-        path: path,
-        description: 'Downloading Invoice',
-        mime: 'application/pdf',
-        mediaScannable: true,
-      },
+      path: tempPath,
     };
 
     try {
+      // 3. Fetch with headers
       const res = await config(options).fetch('GET', url, {
         Authorization: `Bearer ${token}`,
       });
 
-      if (Platform.OS === 'ios') {
-        ios.previewDocument(res.path());
+      // 4. On Android, use MediaCollection to copy to Downloads
+      if (isAndroid) {
+        try {
+          const mimeType = 'application/pdf';
+          await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+            {
+              name: safeFileName, // Automatically handles duplicate names by appending (1), (2) etc.
+              parentFolder: '', // Empty means 'Downloads' root
+              mimeType: mimeType,
+            },
+            'Download',
+            res.path()
+          );
+
+          // Delete temp file after copy
+          if (await fs.exists(res.path())) {
+            await fs.unlink(res.path());
+          }
+
+          console.log("File saved via MediaCollection");
+        } catch (copyError) {
+          console.error("MediaCollection copy failed", copyError);
+          throw copyError;
+        }
+      } else {
+        // iOS
+        if (Platform.OS === 'ios') {
+          ios.previewDocument(res.path());
+        }
       }
+
       return res;
     } catch (error) {
       console.error("Download Error", error);
@@ -134,6 +163,9 @@ class OtherService {
   }
 
   public static async downloadAdmitCard(id: any, fileName: string) {
+    // Sanitize filename
+    const safeFileName = fileName.replace(/[^a-zA-Z0-9-_]/g, '_');
+
     if (Platform.OS === 'android') {
       try {
         if ((Platform.Version as number) < 33) {
@@ -162,20 +194,16 @@ class OtherService {
     const token = await AsyncStorage.getItem('authToken');
     const { config, fs, ios } = ReactNativeBlobUtil;
 
-    let RootDir = Platform.OS === 'ios' ? fs.dirs.DocumentDir : fs.dirs.DownloadDir;
-    let path = `${RootDir}/${fileName}.pdf`;
+    const isAndroid = Platform.OS === 'android';
+    const downloadDir = isAndroid ? fs.dirs.DownloadDir : fs.dirs.DocumentDir;
+    const cacheDir = fs.dirs.CacheDir;
 
-    let options = {
+    // Use a temp path for the initial download on Android
+    const tempPath = isAndroid ? `${cacheDir}/${safeFileName}.pdf` : `${downloadDir}/${safeFileName}.pdf`;
+
+    const options = {
       fileCache: true,
-      path: path,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: true,
-        path: path,
-        description: 'Downloading Admit Card',
-        mime: 'application/pdf',
-        mediaScannable: true,
-      },
+      path: tempPath,
     };
 
     try {
@@ -183,8 +211,30 @@ class OtherService {
         Authorization: `Bearer ${token}`,
       });
 
-      if (Platform.OS === 'ios') {
-        ios.previewDocument(res.path());
+      if (isAndroid) {
+        try {
+          const mimeType = 'application/pdf';
+          await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+            {
+              name: safeFileName,
+              parentFolder: '',
+              mimeType: mimeType,
+            },
+            'Download',
+            res.path()
+          );
+
+          if (await fs.exists(res.path())) {
+            await fs.unlink(res.path());
+          }
+        } catch (copyError) {
+          console.error("MediaCollection copy failed", copyError);
+          throw copyError;
+        }
+      } else {
+        if (Platform.OS === 'ios') {
+          ios.previewDocument(res.path());
+        }
       }
       return res;
     } catch (error) {

@@ -72,9 +72,9 @@ const TicketsScreen = () => {
         res.sort((a: any, b: any) => {
             switch (sortBy) {
                 case 'newest':
-                    return (b.id || 0) - (a.id || 0);
+                    return (b.registration_id || b.id || 0) - (a.registration_id || a.id || 0);
                 case 'oldest':
-                    return (a.id || 0) - (b.id || 0);
+                    return (a.registration_id || a.id || 0) - (b.registration_id || b.id || 0);
                 case 'amount_high':
                     return parseFloat(b.amount || '0') - parseFloat(a.amount || '0');
                 case 'amount_low':
@@ -122,7 +122,7 @@ const TicketsScreen = () => {
     };
 
     const handleDownloadInvoice = async (order: any) => {
-        const id = order.registration_id || order.id;
+        const id = order.payment_id;
         if (id) {
             try {
                 const fileName = `invoice-${order.student_registration_id}`;
@@ -132,6 +132,8 @@ const TicketsScreen = () => {
                 console.error('Download failed:', error);
                 Alert.alert('Error', 'Failed to download invoice. Please try again.');
             }
+        } else {
+            Alert.alert('Error', 'Invoice not available for this order.');
         }
     };
 
@@ -356,7 +358,16 @@ const TicketsScreen = () => {
                     onPress={() => setFilterVisible(false)}
                 >
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Filter Orders</Text>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <Text style={[styles.modalTitle, { marginBottom: 0 }]}>Filter Orders</Text>
+                            <TouchableOpacity onPress={() => {
+                                setFilterType('All');
+                                setFilterValue('');
+                                setFilterVisible(false);
+                            }}>
+                                <Text style={{ color: Colors.primaryBlue, fontFamily: Fonts.InterMedium, fontSize: 14 }}>Clear All</Text>
+                            </TouchableOpacity>
+                        </View>
                         <FlatList
                             data={[{ name: 'All', id: 'all' }, ...countriesList]}
                             keyExtractor={(item) => `country-${item.id || item.name}`}
@@ -401,7 +412,15 @@ const TicketsScreen = () => {
                     onPress={() => setSortVisible(false)}
                 >
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Sort Orders</Text>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <Text style={[styles.modalTitle, { marginBottom: 0 }]}>Sort Orders</Text>
+                            <TouchableOpacity onPress={() => {
+                                setSortBy('newest');
+                                setSortVisible(false);
+                            }}>
+                                <Text style={{ color: Colors.primaryBlue, fontFamily: Fonts.InterMedium, fontSize: 14 }}>Clear All</Text>
+                            </TouchableOpacity>
+                        </View>
                         {[
                             { label: 'Date: Newest First', value: 'newest' },
                             { label: 'Date: Oldest First', value: 'oldest' },
@@ -484,7 +503,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.red,
     },
     headerTitleContainer: {
-        marginTop: 20,
+        marginTop: 13,
         paddingHorizontal: 20,
         justifyContent: 'center',
         alignItems: 'center',

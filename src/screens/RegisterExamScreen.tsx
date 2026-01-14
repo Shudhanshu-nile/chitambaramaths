@@ -562,25 +562,27 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
         </View>
 
         {/* SELECT CHILD DROPDOWN */}
-        <View style={[styles.registeringCard, { marginTop: 10 }]}>
-          <View style={styles.registeringIconBox}>
-            <Icon name="account-child" size={24} color={Colors.primaryBlue} />
+        {children.length > 0 && (
+          <View style={[styles.registeringCard, { marginTop: 10 }]}>
+            <View style={styles.registeringIconBox}>
+              <Icon name="account-child" size={24} color={Colors.primaryBlue} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.registeringLabel}>Select Child</Text>
+              <Text style={styles.registeringValue}>
+                {selectedChild
+                  ? selectedChild.name
+                  : 'Select Child (Optional)'}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.changeButton}
+              onPress={() => setShowChildModal(true)}
+            >
+              <Text style={styles.changeButtonText}>Change</Text>
+            </TouchableOpacity>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.registeringLabel}>Select Child</Text>
-            <Text style={styles.registeringValue}>
-              {selectedChild
-                ? selectedChild.name
-                : 'Select Child (Optional)'}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.changeButton}
-            onPress={() => setShowChildModal(true)}
-          >
-            <Text style={styles.changeButtonText}>Change</Text>
-          </TouchableOpacity>
-        </View>
+        )}
 
         {/* Country Selection Modal */}
         <Modal

@@ -1,5 +1,5 @@
 // const DOMAIN = 'https://niletechinnovations.com/projects/chitambramaths/api/'; //  server dev
-const DOMAIN = 'https://staging.chithambaramaths.com/api/'; // live server
+const DOMAIN = 'https://app.chithambaramaths.com/api/'; // live server
 
 export const API = {
   LOGIN: DOMAIN + `login`,
@@ -23,4 +23,5 @@ export const API = {
   GET_CHILDREN: DOMAIN + 'children',
   TERMS_AND_CONDITIONS: 'https://app.chithambaramaths.com/terms-condition',
   PRIVACY_POLICY: 'https://app.chithambaramaths.com/privacy-policy',
+  DELETE_ACCOUNT: DOMAIN + 'delete-student',
 };

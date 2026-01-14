@@ -37,10 +37,7 @@
 	<string>Chitambaramaths needs access to your location to show exam centers near you.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Chitambaramaths needs access to your location to show exam centers near you.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Chitambaramaths needs access to your photos library to upload a profile picture.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Photo Library Access</string>
+
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>

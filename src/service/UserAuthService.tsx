@@ -55,6 +55,13 @@ class UserAuthService {
     const response = await Http.post(url, userData);
     return response;
   }
+
+  public static async deleteAccount() {
+    const url = `${API.DELETE_ACCOUNT}`;
+    // User specified this is a GET request with token
+    const response = await Http.get(url);
+    return response;
+  }
 }
 
 export default UserAuthService;

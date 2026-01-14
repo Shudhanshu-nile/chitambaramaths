@@ -13,7 +13,13 @@ const PaymentPendingScreen = ({ navigation, route }: any) => {
     const { user } = useSelector((state: any) => state.user);
 
     // Get the most recent order effectively
-    const recentOrder = history && history.length > 0 ? history[0] : null;
+    const recentOrder = React.useMemo(() => {
+        if (!history || history.length === 0) return null;
+        return [...history].sort((a: any, b: any) => b.id - a.id)[0];
+    }, [history]);
+
+    console.log('PaymentPendingScreen: RecentOrder:', recentOrder?.id, recentOrder?.payment_status);
+
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -40,9 +46,12 @@ const PaymentPendingScreen = ({ navigation, route }: any) => {
                 }
             }
 
-            if (recentOrder.payment_status === 'success' || recentOrder.status === 'success') {
+            const rawStatus = recentOrder.payment_status || recentOrder.status || '';
+            const status = rawStatus.toLowerCase();
+
+            if (status === 'success' || status === 'succeeded' || status.includes('success')) {
                 navigation.replace(ScreenNames.PaymentSuccess);
-            } else if (recentOrder.payment_status === 'failed') { // Removed 'not_initiated' from failure trigger
+            } else if (status === 'failed' || status === 'not_initiated') {
                 navigation.replace(ScreenNames.PaymentFailed);
             }
             // Implicitly: if 'pending', 'processing', or 'not_initiated', do nothing (keep polling)
