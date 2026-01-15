@@ -1,5 +1,6 @@
 //external imports
 import axios from 'axios';
+import { Linking } from 'react-native';
 
 class AxiosInterceptor {
   private static reqInterceptor: number;
@@ -33,7 +34,17 @@ class AxiosInterceptor {
         (error: any) => {
           // handle the response error
           if (error.response) {
-            console.log('API ERROR RESPONSE:', JSON.stringify(error.response.data, null, 2));
+            const data = error.response.data;
+            console.log('API ERROR RESPONSE (NEW):', JSON.stringify(data, null, 2));
+
+            if (data?.repayment_url) {
+              console.log('Attempting to open repayment URL:', data.repayment_url);
+              Linking.openURL(data.repayment_url)
+                .then(() => console.log('Successfully opened URL'))
+                .catch((err) => console.error('An error occurred opening URL:', err));
+            } else {
+              console.log('No repayment_url found in error response');
+            }
           } else {
             console.log('API ERROR', error.message, '-->', error.config.url);
           }

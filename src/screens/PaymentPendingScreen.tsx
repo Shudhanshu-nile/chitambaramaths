@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
+import { useIsFocused } from '@react-navigation/native'; // Added useIsFocused
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useSelector } from 'react-redux';
@@ -8,9 +9,11 @@ import { replaceToMain } from '../navigation/GlobalNavigation';
 import OtherService from '../service/OtherService';
 
 const PaymentPendingScreen = ({ navigation, route }: any) => {
+    const isFocused = useIsFocused();
     const { user } = useSelector((state: any) => state.user);
     const [recentOrder, setRecentOrder] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [childrenList, setChildrenList] = useState<any[]>([]); // Added for name fix
 
     // Fetch payment history directly from API
     const fetchLatestPayment = async () => {
@@ -33,16 +36,42 @@ const PaymentPendingScreen = ({ navigation, route }: any) => {
         }
     };
 
+    const fetchChildren = React.useCallback(async () => {
+        try {
+            const response = await OtherService.getChildren();
+            if (response.data && Array.isArray(response.data)) {
+                setChildrenList(response.data);
+            }
+        } catch (error) {
+            console.error('PaymentPendingScreen: Failed to fetch children', error);
+        }
+    }, []);
+
     // Fetch on mount and poll every 5 seconds
     useEffect(() => {
-        fetchLatestPayment();
+        // If coming from registration, wait 6 seconds before first fetch
+        // to give backend time to update payment status
+        fetchChildren();
+        const initialDelay = route.params?.fromRegistration ? 6000 : 0;
 
-        const interval = setInterval(() => {
-            fetchLatestPayment();
-        }, 5000); // Poll every 5 seconds
+        let initialTimer: any;
+        let interval: any;
 
-        return () => clearInterval(interval);
-    }, []);
+        if (isFocused) {
+            initialTimer = setTimeout(() => {
+                fetchLatestPayment();
+            }, initialDelay);
+
+            interval = setInterval(() => {
+                fetchLatestPayment();
+            }, 5000); // Poll every 5 seconds
+        }
+
+        return () => {
+            if (initialTimer) clearTimeout(initialTimer);
+            if (interval) clearInterval(interval);
+        };
+    }, [isFocused]); // Depend on isFocused
 
     // Check status and redirect if necessary
     useEffect(() => {
@@ -148,7 +177,9 @@ const PaymentPendingScreen = ({ navigation, route }: any) => {
                         </View>
                         <View style={styles.summaryDetails}>
                             <Text style={styles.summaryLabel}>Student Name</Text>
-                            <Text style={styles.summaryValue}>{user?.fullName || 'Student'}</Text>
+                            <Text style={styles.summaryValue}>
+                                {childrenList.find((c: any) => c.id == recentOrder?.child_id)?.name || recentOrder?.child_name || user?.fullName || 'Student'}
+                            </Text>
                         </View>
                     </View>
 

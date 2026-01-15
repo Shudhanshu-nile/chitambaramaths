@@ -21,6 +21,7 @@ export interface PaymentItem {
     exam_center_address?: string;
     country?: string;
     child_name?: string;
+    child_id?: number; // Added to map correct child name
 }
 
 export interface PaginationData {

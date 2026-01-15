@@ -485,7 +485,7 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
             showToastMessage({ message: 'Could not open payment page.' });
           });
 
-          navigation.navigate(ScreenNames.PaymentSuccess, { fromRegistration: true });
+          navigation.navigate(ScreenNames.PaymentPending, { fromRegistration: true });
         }
       } else {
         showToastMessage({

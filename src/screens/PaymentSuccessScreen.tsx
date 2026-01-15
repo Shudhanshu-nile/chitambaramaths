@@ -33,11 +33,15 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
     const { user } = useSelector((state: any) => state.user);
     const [recentOrder, setRecentOrder] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [childrenList, setChildrenList] = useState<any[]>([]); // Added for name fix
+    const [retryCount, setRetryCount] = useState(0);
+    const MAX_RETRIES = 1;
 
     // Fetch payment history directly from API
-    const fetchLatestPayment = async () => {
+    // Added isBackground param to prevent loading spinner on polling
+    const fetchLatestPayment = React.useCallback(async (isBackground = false) => {
         try {
-            setIsLoading(true);
+            if (!isBackground) setIsLoading(true);
             const response = await OtherService.getPaymentHistory(1);
             console.log('PaymentSuccessScreen: API Response received');
 
@@ -53,12 +57,25 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
             console.error('PaymentSuccessScreen: Error fetching payment history:', error);
             setRecentOrder(null);
         } finally {
-            setIsLoading(false);
+            if (!isBackground) setIsLoading(false);
         }
-    };
+    }, []);
+
+    const fetchChildren = React.useCallback(async () => {
+        try {
+            const response = await OtherService.getChildren();
+            if (response.data && Array.isArray(response.data)) {
+                setChildrenList(response.data);
+            }
+        } catch (error) {
+            console.error('PaymentSuccessScreen: Failed to fetch children', error);
+        }
+    }, []);
 
     // Fetch on mount
     useEffect(() => {
+        fetchChildren(); // Fetch children for mapping
+
         // If coming from registration, wait 6 seconds before first fetch
         // to give backend time to update payment status
         const initialDelay = route.params?.fromRegistration ? 6000 : 0;
@@ -70,7 +87,7 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
         // Additional polling if coming from registration
         if (route.params?.fromRegistration) {
             const pollingTimer = setTimeout(() => {
-                fetchLatestPayment();
+                fetchLatestPayment(true); // Pass true for silent update
             }, 10000);
 
             return () => {
@@ -80,7 +97,7 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
         }
 
         return () => clearTimeout(initialTimer);
-    }, [route.params]);
+    }, [route.params, fetchLatestPayment, fetchChildren]);
 
 
     // Check status and redirect if necessary - ONLY after loading is complete
@@ -93,7 +110,7 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
         const rawStatus = recentOrder.payment_status || recentOrder.status || '';
         const status = rawStatus.toLowerCase();
 
-        console.log('PaymentSuccessScreen: Checking status:', status);
+        console.log('PaymentSuccessScreen: Checking status:', status, 'Retry count:', retryCount);
 
         if (status === 'success' || status === 'succeeded' || status.includes('success')) {
             console.log('PaymentSuccessScreen: ✅ Staying on success screen');
@@ -102,20 +119,22 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
         } else if (status === 'pending' || status === 'processing') {
             console.log('PaymentSuccessScreen: ⏳ Redirecting to pending screen');
             navigation.replace(ScreenNames.PaymentPending);
-        } else if (status === 'not_initiated' && route.params?.fromRegistration) {
+        } else if (status === 'not_initiated' && route.params?.fromRegistration && retryCount < MAX_RETRIES) {
             // Special case: if coming from registration and status is not_initiated,
-            // backend might not have updated yet - wait and retry once
-            console.log('PaymentSuccessScreen: ⏸️ Status is not_initiated, waiting 3s before retry...');
+            // backend might not have updated yet - wait and retry (max 2 times)
+            console.log(`PaymentSuccessScreen: ⏸️ Status is not_initiated, retry ${retryCount + 1}/${MAX_RETRIES}, waiting 3s...`);
             const retryTimer = setTimeout(() => {
                 console.log('PaymentSuccessScreen: Retrying after not_initiated...');
+                setRetryCount(prev => prev + 1);
                 fetchLatestPayment();
             }, 3000);
             return () => clearTimeout(retryTimer);
         } else {
-            console.log('PaymentSuccessScreen: ❌ Redirecting to failed screen');
+            // Either not from registration, or max retries reached, or genuinely failed
+            console.log('PaymentSuccessScreen: ❌ Redirecting to failed screen (retries exhausted or failed status)');
             navigation.replace(ScreenNames.PaymentFailed);
         }
-    }, [recentOrder, isLoading, navigation, route.params, fetchLatestPayment]);
+    }, [recentOrder, isLoading, navigation, route.params, retryCount, fetchLatestPayment, MAX_RETRIES]);
 
     const handleGoHome = () => {
         replaceToMain(ScreenNames.Home);
@@ -322,7 +341,9 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
                         </View>
                         <View style={styles.summaryDetails}>
                             <Text style={styles.summaryLabel}>Student Name</Text>
-                            <Text style={styles.summaryValue}>{user?.fullName || 'Student'}</Text>
+                            <Text style={styles.summaryValue}>
+                                {childrenList.find((c: any) => c.id == recentOrder?.child_id)?.name || recentOrder?.child_name || user?.fullName || 'Student'}
+                            </Text>
                         </View>
                     </View>
 

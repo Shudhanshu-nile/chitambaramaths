@@ -25,6 +25,7 @@ const TicketsScreen = () => {
     const [filterType, setFilterType] = useState('All'); // 'All', 'Country'
     const [filterValue, setFilterValue] = useState('');
     const [countriesList, setCountriesList] = useState<any[]>([]);
+    const [childrenList, setChildrenList] = useState<any[]>([]);
 
     const loadOrders = useCallback(() => {
         dispatch(fetchPaymentHistory(1));
@@ -48,6 +49,18 @@ const TicketsScreen = () => {
         }
     };
 
+    const fetchChildren = useCallback(async () => {
+        try {
+            const response = await OtherService.getChildren();
+
+            if (response.data && Array.isArray(response.data)) {
+                setChildrenList(response.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch children for name mapping', error);
+        }
+    }, []);
+
     useEffect(() => {
         if (!isLoggedIn) {
             navigation.navigate(ScreenNames.Login);
@@ -59,6 +72,12 @@ const TicketsScreen = () => {
             loadOrders();
         }
     }, [loadOrders, isLoggedIn]);
+
+    useEffect(() => {
+        if (isLoggedIn) {
+            fetchChildren();
+        }
+    }, [fetchChildren, isLoggedIn]);
 
     const processedHistory = React.useMemo(() => {
         let res = [...history];
@@ -185,7 +204,9 @@ const TicketsScreen = () => {
                 </View>
                 <View style={styles.row}>
                     <Text style={styles.label}>Student Name:</Text>
-                    <Text style={[styles.value, { textTransform: 'capitalize' }]}>{item.child_name || 'N/A'}</Text>
+                    <Text style={[styles.value, { textTransform: 'capitalize' }]}>
+                        {childrenList.find((c: any) => c.id == item.child_id)?.name || item.child_name || 'N/A'}
+                    </Text>
                 </View>
                 <View style={styles.row}>
                     <Text style={styles.label}>Student ID:</Text>
