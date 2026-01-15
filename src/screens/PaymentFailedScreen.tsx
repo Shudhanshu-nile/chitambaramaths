@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Linking, Alert } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Linking, Alert, AppState } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useSelector } from 'react-redux';
@@ -8,26 +9,76 @@ import { replaceToMain } from '../navigation/GlobalNavigation';
 import OtherService from '../service/OtherService';
 
 const PaymentFailedScreen = ({ navigation }: any) => {
+    const isFocused = useIsFocused();
+    const appState = useRef(AppState.currentState);
+    const [childrenList, setChildrenList] = useState<any[]>([]); // Added for name fix
     const { user } = useSelector((state: any) => state.user);
     const [recentOrder, setRecentOrder] = useState<any>(null);
 
-    // Fetch payment history directly from API
-    useEffect(() => {
-        const fetchLatestPayment = async () => {
-            try {
-                const response = await OtherService.getPaymentHistory(1);
-
-                if (response.data && response.data.status && response.data.data?.data?.length > 0) {
-                    const latestPayment = response.data.data.data[0];
-                    setRecentOrder(latestPayment);
-                }
-            } catch (error) {
-                console.error('PaymentFailedScreen: Error fetching payment history:', error);
+    const fetchChildren = React.useCallback(async () => {
+        try {
+            const response = await OtherService.getChildren();
+            if (response.data && Array.isArray(response.data)) {
+                setChildrenList(response.data);
             }
-        };
-
-        fetchLatestPayment();
+        } catch (error) {
+            console.error('PaymentFailedScreen: Failed to fetch children', error);
+        }
     }, []);
+
+    // Fetch children on mount
+    useEffect(() => {
+        fetchChildren();
+    }, []);
+
+    // Fetch payment history directly from API
+    const fetchLatestPayment = async () => {
+        try {
+            const response = await OtherService.getPaymentHistory(1);
+
+            if (response.data && response.data.status && response.data.data?.data?.length > 0) {
+                const latestPayment = response.data.data.data[0];
+                setRecentOrder(latestPayment);
+
+                // Auto-redirect checks
+                const rawStatus = latestPayment.payment_status || latestPayment.status || '';
+                const status = rawStatus.toLowerCase();
+
+                if (status === 'success' || status === 'succeeded' || status.includes('success')) {
+                    navigation.replace(ScreenNames.PaymentSuccess);
+                } else if (status === 'pending' || status === 'processing') {
+                    navigation.replace(ScreenNames.PaymentPending);
+                }
+            }
+        } catch (error) {
+            console.error('PaymentFailedScreen: Error fetching payment history:', error);
+        }
+    };
+
+    // Listen for AppState changes (Background -> Foreground)
+    useEffect(() => {
+        const subscription = AppState.addEventListener('change', nextAppState => {
+            if (
+                appState.current.match(/inactive|background/) &&
+                nextAppState === 'active'
+            ) {
+                console.log('PaymentFailedScreen: App came to foreground, checking status...');
+                fetchLatestPayment();
+            }
+            appState.current = nextAppState;
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, []);
+
+    // Listen for Screen Focus
+    useEffect(() => {
+        if (isFocused) {
+            fetchLatestPayment();
+        }
+    }, [isFocused]);
 
     const handleRetry = async () => {
         if (recentOrder?.payment_url) {
@@ -123,7 +174,9 @@ const PaymentFailedScreen = ({ navigation }: any) => {
                         </View>
                         <View style={styles.summaryDetails}>
                             <Text style={styles.summaryLabel}>Student Name</Text>
-                            <Text style={styles.summaryValue}>{user?.fullName || 'Student'}</Text>
+                            <Text style={styles.summaryValue}>
+                                {childrenList.find((c: any) => c.id == recentOrder?.child_id)?.name || recentOrder?.child_name || user?.fullName || 'Student'}
+                            </Text>
                         </View>
                     </View>
 

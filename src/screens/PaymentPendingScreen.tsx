@@ -178,7 +178,7 @@ const PaymentPendingScreen = ({ navigation, route }: any) => {
                         <View style={styles.summaryDetails}>
                             <Text style={styles.summaryLabel}>Student Name</Text>
                             <Text style={styles.summaryValue}>
-                                {childrenList.find((c: any) => c.id == recentOrder?.child_id)?.name || recentOrder?.child_name || user?.fullName || 'Student'}
+                                {childrenList.find((c: any) => c.id == recentOrder?.child_id)?.name || recentOrder?.child_name || 'Student'}
                             </Text>
                         </View>
                     </View>
