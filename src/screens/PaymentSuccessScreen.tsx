@@ -35,6 +35,9 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
     const [isLoading, setIsLoading] = useState(true);
     const [childrenList, setChildrenList] = useState<any[]>([]); // Added for name fix
     const [retryCount, setRetryCount] = useState(0);
+    const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
+    const [isEmailingAdmitCard, setIsEmailingAdmitCard] = useState(false);
+    const [isDownloadingAdmitCard, setIsDownloadingAdmitCard] = useState(false);
     const MAX_RETRIES = 1;
 
     // Fetch payment history directly from API
@@ -144,6 +147,7 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
         const id = recentOrder?.payment_id;
         if (id) {
             try {
+                setIsDownloadingInvoice(true);
                 // console.log('Download Exam PDF', id);
                 const fileName = `invoice-${recentOrder.student_registration_id}`;
                 await OtherService.downloadInvoice(id, fileName);
@@ -151,6 +155,8 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
             } catch (error) {
                 console.error('Download failed:', error);
                 Alert.alert('Error', 'Failed to download invoice. Please try again.');
+            } finally {
+                setIsDownloadingInvoice(false);
             }
         } else {
             Alert.alert('Error', 'Invoice not available for this order.');
@@ -161,6 +167,7 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
         const registration_id = recentOrder?.registration_id || recentOrder?.id;
         if (registration_id) {
             try {
+                setIsEmailingAdmitCard(true);
                 const response = await OtherService.emailAdmitCard(registration_id);
                 if (response?.status) {
                     Alert.alert('Success', response.message || 'Admit Card emailed successfully.');
@@ -170,6 +177,8 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
             } catch (error) {
                 console.error('Email admit card failed:', error);
                 Alert.alert('Error', 'Failed to email Admit Card. Please try again.');
+            } finally {
+                setIsEmailingAdmitCard(false);
             }
         }
     };
@@ -178,12 +187,15 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
         const registration_id = recentOrder?.registration_id || recentOrder?.id;
         if (registration_id) {
             try {
+                setIsDownloadingAdmitCard(true);
                 const fileName = `admit-card-${recentOrder.student_registration_id}`;
                 await OtherService.downloadAdmitCard(registration_id, fileName);
                 Alert.alert('Success', 'Admit Card downloaded successfully.');
             } catch (error) {
                 console.error('Download failed:', error);
                 Alert.alert('Error', 'Failed to download Admit Card. Please try again.');
+            } finally {
+                setIsDownloadingAdmitCard(false);
             }
         }
     };
@@ -396,19 +408,37 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
 
                     {/* Action Buttons */}
                     <View style={styles.actionButtonsContainer}>
-                        <TouchableOpacity style={styles.primaryButton} onPress={handleDownloadExam}>
+                        <TouchableOpacity
+                            style={[styles.primaryButton, isDownloadingInvoice && { opacity: 0.5 }]}
+                            onPress={handleDownloadExam}
+                            disabled={isDownloadingInvoice}
+                        >
                             <Icon name="download" size={20} color={Colors.white} />
-                            <Text style={styles.primaryButtonText}>Download Invoice</Text>
+                            <Text style={styles.primaryButtonText}>
+                                {isDownloadingInvoice ? 'Downloading...' : 'Download Invoice'}
+                            </Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.outlineButton} onPress={handleEmailExam}>
+                        <TouchableOpacity
+                            style={[styles.outlineButton, isEmailingAdmitCard && { opacity: 0.5 }]}
+                            onPress={handleEmailExam}
+                            disabled={isEmailingAdmitCard}
+                        >
                             <Icon name="email-outline" size={20} color={Colors.primaryDarkBlue} />
-                            <Text style={styles.outlineButtonText}>Email Admit Card</Text>
+                            <Text style={styles.outlineButtonText}>
+                                {isEmailingAdmitCard ? 'Emailing...' : 'Email Admit Card'}
+                            </Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.outlineButton} onPress={handleDownloadAdmitCard}>
+                        <TouchableOpacity
+                            style={[styles.outlineButton, isDownloadingAdmitCard && { opacity: 0.5 }]}
+                            onPress={handleDownloadAdmitCard}
+                            disabled={isDownloadingAdmitCard}
+                        >
                             <Icon name="download" size={20} color={Colors.primaryDarkBlue} />
-                            <Text style={styles.outlineButtonText}>Download Admit Card</Text>
+                            <Text style={styles.outlineButtonText}>
+                                {isDownloadingAdmitCard ? 'Downloading...' : 'Download Admit Card'}
+                            </Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.outlineButton} onPress={handleGoHome}>

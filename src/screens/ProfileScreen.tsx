@@ -32,6 +32,11 @@ const ProfileScreen = () => {
   const navigation = useNavigation<any>();
   const { user } = useSelector((state: RootState) => state.user);
   const { history, isLoading: isOrdersLoading, pagination } = useSelector((state: RootState) => state.payment);
+
+  const [downloadingAdmitCardId, setDownloadingAdmitCardId] = useState<string | number | null>(null);
+  const [emailingAdmitCardId, setEmailingAdmitCardId] = useState<string | number | null>(null);
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | number | null>(null);
+
   React.useEffect(() => {
     dispatch(fetchPaymentHistory(1));
   }, [dispatch]);
@@ -79,6 +84,7 @@ const ProfileScreen = () => {
     const registration_id = order?.registration_id || order?.id;
     if (registration_id) {
       try {
+        setEmailingAdmitCardId(registration_id);
         const response = await OtherService.emailAdmitCard(registration_id);
         if (response?.status) {
           Alert.alert('Success', response.message || 'Admit Card emailed successfully.');
@@ -88,19 +94,25 @@ const ProfileScreen = () => {
       } catch (error) {
         console.error('Email admit card failed:', error);
         Alert.alert('Error', 'Failed to email Admit Card. Please try again.');
+      } finally {
+        setEmailingAdmitCardId(null);
       }
     }
   };
 
   const handleDownloadInvoice = async (order: any) => {
+    const regId = order?.registration_id || order?.id;
     if (order?.payment_id) {
       try {
+        setDownloadingInvoiceId(regId);
         const fileName = `invoice-${order.student_registration_id ? order.student_registration_id.replace(/[^a-zA-Z0-9-_]/g, '_') : 'unknown'}`;
         await OtherService.downloadInvoice(order.payment_id, fileName);
         Alert.alert('Success', 'Invoice downloaded successfully.');
       } catch (error) {
         console.error('Download failed:', error);
         Alert.alert('Error', 'Failed to download invoice. Please try again.');
+      } finally {
+        setDownloadingInvoiceId(null);
       }
     } else {
       Alert.alert('Error', 'Invoice not available for this order.');
@@ -111,12 +123,15 @@ const ProfileScreen = () => {
     const registration_id = order?.registration_id || order?.id;
     if (registration_id) {
       try {
+        setDownloadingAdmitCardId(registration_id);
         const fileName = `admit-card-${order.student_registration_id ? order.student_registration_id.replace(/[^a-zA-Z0-9-_]/g, '_') : 'unknown'}`;
         await OtherService.downloadAdmitCard(registration_id, fileName);
         Alert.alert('Success', 'Admit Card downloaded successfully.');
       } catch (error) {
         console.error('Download failed:', error);
         Alert.alert('Error', 'Failed to download Admit Card. Please try again.');
+      } finally {
+        setDownloadingAdmitCardId(null);
       }
     }
   };
@@ -314,35 +329,44 @@ const ProfileScreen = () => {
 
                 <View style={[styles.orderActions, { flexDirection: 'column' }]}>
                   <TouchableOpacity
-                    style={[styles.invoiceBtn, { width: '100%' }]}
+                    style={[styles.invoiceBtn, { width: '100%' }, (emailingAdmitCardId === (latestOrder.registration_id || latestOrder.id)) && { opacity: 0.5 }]}
                     onPress={() => handleEmailAdmitCard(latestOrder)}
+                    disabled={emailingAdmitCardId === (latestOrder.registration_id || latestOrder.id)}
                   >
                     <Icon
                       name="email-outline"
                       size={18}
                       color="#005884"
                     />
-                    <Text style={styles.invoiceBtnText}>Email Admit Card</Text>
+                    <Text style={styles.invoiceBtnText}>
+                      {emailingAdmitCardId === (latestOrder.registration_id || latestOrder.id) ? 'Emailing...' : 'Email Admit Card'}
+                    </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.invoiceBtn, { width: '100%' }]}
+                    style={[styles.invoiceBtn, { width: '100%' }, (downloadingAdmitCardId === (latestOrder.registration_id || latestOrder.id)) && { opacity: 0.5 }]}
                     onPress={() => handleDownloadAdmitCard(latestOrder)}
+                    disabled={downloadingAdmitCardId === (latestOrder.registration_id || latestOrder.id)}
                   >
                     <Icon
                       name="download"
                       size={18}
                       color="#005884"
                     />
-                    <Text style={styles.invoiceBtnText}>Download Admit Card</Text>
+                    <Text style={styles.invoiceBtnText}>
+                      {downloadingAdmitCardId === (latestOrder.registration_id || latestOrder.id) ? 'Downloading...' : 'Download Admit Card'}
+                    </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.downloadBtn, { width: '100%' }]}
+                    style={[styles.downloadBtn, { width: '100%' }, (downloadingInvoiceId === (latestOrder.registration_id || latestOrder.id)) && { opacity: 0.5 }]}
                     onPress={() => handleDownloadInvoice(latestOrder)}
+                    disabled={downloadingInvoiceId === (latestOrder.registration_id || latestOrder.id)}
                   >
                     <Icon name="download" size={18} color="white" />
-                    <Text style={styles.downloadBtnText}>Download Invoice</Text>
+                    <Text style={styles.downloadBtnText}>
+                      {downloadingInvoiceId === (latestOrder.registration_id || latestOrder.id) ? 'Downloading...' : 'Download Invoice'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>

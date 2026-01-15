@@ -26,6 +26,9 @@ const TicketsScreen = () => {
     const [filterValue, setFilterValue] = useState('');
     const [countriesList, setCountriesList] = useState<any[]>([]);
     const [childrenList, setChildrenList] = useState<any[]>([]);
+    const [downloadingAdmitCardId, setDownloadingAdmitCardId] = useState<string | number | null>(null);
+    const [emailingAdmitCardId, setEmailingAdmitCardId] = useState<string | number | null>(null);
+    const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | number | null>(null);
 
     const loadOrders = useCallback(() => {
         dispatch(fetchPaymentHistory(1));
@@ -127,6 +130,7 @@ const TicketsScreen = () => {
         const registration_id = order.registration_id || order.id;
         if (registration_id) {
             try {
+                setEmailingAdmitCardId(registration_id);
                 const response = await OtherService.emailAdmitCard(registration_id);
                 if (response?.status) {
                     Alert.alert('Success', response.message || 'Admit Card emailed successfully.');
@@ -136,20 +140,26 @@ const TicketsScreen = () => {
             } catch (error) {
                 console.error('Email admit card failed:', error);
                 Alert.alert('Error', 'Failed to email Admit Card. Please try again.');
+            } finally {
+                setEmailingAdmitCardId(null);
             }
         }
     };
 
     const handleDownloadInvoice = async (order: any) => {
         const id = order.payment_id;
+        const regId = order.registration_id || order.id;
         if (id) {
             try {
+                setDownloadingInvoiceId(regId);
                 const fileName = `invoice-${order.student_registration_id}`;
                 await OtherService.downloadInvoice(id, fileName);
                 Alert.alert('Success', 'Invoice downloaded successfully.');
             } catch (error) {
                 console.error('Download failed:', error);
                 Alert.alert('Error', 'Failed to download invoice. Please try again.');
+            } finally {
+                setDownloadingInvoiceId(null);
             }
         } else {
             Alert.alert('Error', 'Invoice not available for this order.');
@@ -160,12 +170,15 @@ const TicketsScreen = () => {
         const registration_id = order?.registration_id || order?.id;
         if (registration_id) {
             try {
+                setDownloadingAdmitCardId(registration_id);
                 const fileName = `admit-card-${order.student_registration_id}`;
                 await OtherService.downloadAdmitCard(registration_id, fileName);
                 Alert.alert('Success', 'Admit Card downloaded successfully.');
             } catch (error) {
                 console.error('Download failed:', error);
                 Alert.alert('Error', 'Failed to download Admit Card. Please try again.');
+            } finally {
+                setDownloadingAdmitCardId(null);
             }
         }
     };
@@ -230,35 +243,44 @@ const TicketsScreen = () => {
                 {(item.payment_status === 'success' || item.status === 'success' || item.status === 'succeeded') ? (
                     <View style={styles.actionButtonsContainer}>
                         <TouchableOpacity
-                            style={styles.invoiceBtn}
+                            style={[styles.invoiceBtn, (emailingAdmitCardId === (item.registration_id || item.id)) && { opacity: 0.5 }]}
                             onPress={() => handleEmailAdmitCard(item)}
+                            disabled={emailingAdmitCardId === (item.registration_id || item.id)}
                         >
                             <Icon
                                 name="email-outline"
                                 size={18}
                                 color="#005884"
                             />
-                            <Text style={styles.invoiceBtnText}>Email Admit Card</Text>
+                            <Text style={styles.invoiceBtnText}>
+                                {emailingAdmitCardId === (item.registration_id || item.id) ? 'Emailing...' : 'Email Admit Card'}
+                            </Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={styles.invoiceBtn}
+                            style={[styles.invoiceBtn, (downloadingAdmitCardId === (item.registration_id || item.id)) && { opacity: 0.5 }]}
                             onPress={() => handleDownloadAdmitCard(item)}
+                            disabled={downloadingAdmitCardId === (item.registration_id || item.id)}
                         >
                             <Icon
                                 name="download"
                                 size={18}
                                 color="#005884"
                             />
-                            <Text style={styles.invoiceBtnText}>Download Admit Card</Text>
+                            <Text style={styles.invoiceBtnText}>
+                                {downloadingAdmitCardId === (item.registration_id || item.id) ? 'Downloading...' : 'Download Admit Card'}
+                            </Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={styles.downloadBtn}
+                            style={[styles.downloadBtn, (downloadingInvoiceId === (item.registration_id || item.id)) && { opacity: 0.5 }]}
                             onPress={() => handleDownloadInvoice(item)}
+                            disabled={downloadingInvoiceId === (item.registration_id || item.id)}
                         >
                             <Icon name="download" size={18} color="white" />
-                            <Text style={styles.downloadBtnText}>Download Invoice</Text>
+                            <Text style={styles.downloadBtnText}>
+                                {downloadingInvoiceId === (item.registration_id || item.id) ? 'Downloading...' : 'Download Invoice'}
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 ) : (
