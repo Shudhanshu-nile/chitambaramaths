@@ -158,13 +158,6 @@ const PaymentFailedScreen = ({ navigation }: any) => {
                 {/* White Details Card */}
                 <View style={styles.detailsCard}>
 
-                    <View style={styles.paymentHeader}>
-                        <View style={styles.paymentInfoCol}>
-                            <Text style={styles.paymentInfoLabel}>Attempted Amount</Text>
-                            <Text style={styles.amountValue}>{amount}</Text>
-                        </View>
-                    </View>
-
                     <Text style={styles.sectionTitle}>Registration Details</Text>
 
                     {/* Student Name */}

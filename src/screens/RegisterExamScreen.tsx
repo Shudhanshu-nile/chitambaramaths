@@ -400,7 +400,6 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
       { value: town, name: 'Town' },
       { value: email, name: 'Email Address' },
       { value: postalCode, name: 'Postal Code' },
-      { value: telephone, name: 'Telephone' },
       { value: mobile, name: 'Mobile' },
     ];
 
@@ -454,7 +453,9 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
       formData.append('town', town);
       formData.append('postal_code', postalCode);
       formData.append('email', email);
-      formData.append('phone', telephone);
+      if (telephone.trim()) {
+        formData.append('phone', telephone);
+      }
       formData.append('mobile', mobile);
 
       // IDs
@@ -826,7 +827,6 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
           placeholder="Telephone Number"
           value={telephone}
           onChangeText={setTelephone}
-          required
           keyboardType="number-pad"
         />
         <CustomTextInput
