@@ -91,9 +91,10 @@ const ForgotScreen = () => {
       } else {
         showToastMessage({ message: "Failed to send OTP. Please try again." })
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Forgot password error:', error);
-      showToastMessage({ message: "An error occurred. Please try again." })
+      const errorMessage = error.response?.data?.message || "An error occurred. Please try again.";
+      showToastMessage({ message: errorMessage });
     } finally {
       setIsSubmitting(false);
     }
@@ -118,9 +119,10 @@ const ForgotScreen = () => {
       } else {
         setOtpError(response?.message || 'Invalid OTP. Please try again.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Verify OTP error:', error);
-      setOtpError('An error occurred. Please try again.');
+      const errorMessage = error.response?.data?.message || 'An error occurred. Please try again.';
+      setOtpError(errorMessage);
     } finally {
       setIsVerifying(false);
     }
@@ -139,9 +141,10 @@ const ForgotScreen = () => {
       } else {
         Alert.alert('Error', response?.message || 'Failed to resend OTP. Please try again.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Resend OTP error:', error);
-      Alert.alert('Error', 'An error occurred. Please try again.');
+      const errorMessage = error.response?.data?.message || 'An error occurred. Please try again.';
+      Alert.alert('Error', errorMessage);
     }
   };
 
@@ -227,12 +230,12 @@ const ForgotScreen = () => {
               />
             </TouchableOpacity>
           </View>
-          <View style={styles.infoContainer}>
+          {/* <View style={styles.infoContainer}>
             <Icon name="information-outline" size={16} color={Colors.gray} />
             <Text style={styles.infoText}>
               The reset link will expire in 1 hour for security reasons.
             </Text>
-          </View>
+          </View> */}
           <View style={styles.infoContainer2}>
             <Text style={styles.infoText}>
               Didn't receive the email? Check your spam folder or try again.

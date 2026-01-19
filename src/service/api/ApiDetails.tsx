@@ -25,4 +25,6 @@ export const API = {
   TERMS_AND_CONDITIONS: 'https://app.chithambaramaths.com/terms-condition',
   PRIVACY_POLICY: 'https://app.chithambaramaths.com/privacy-policy',
   DELETE_ACCOUNT: DOMAIN + 'delete-student',
+  GOOGLE_MAPS_API_KEY: 'AIzaSyBKJkKVBQoX-8z1c9wcvSXdAmT_iU9kS04',
+  NEAREST_EXAM_CENTERS: DOMAIN + 'nearest-exam-centers',
 };

@@ -188,34 +188,37 @@ const CentersScreen = () => {
 
     const getLocation = (isInit = false) => {
         console.log("Getting location...");
-        Geolocation.getCurrentPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
-                setUserLocation({ latitude, longitude });
-                getAddressFromCoordinates(latitude, longitude, isInit);
-            },
-            (error) => {
-                console.log("Location error:", error.code, error.message);
+        setTimeout(() => {
+            Geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    setUserLocation({ latitude, longitude });
+                    getAddressFromCoordinates(latitude, longitude, isInit);
+                },
+                (error) => {
+                    console.log("Location error:", error.code, error.message);
 
-                if (isInit) {
-                    // Fallback if location fails on init
-                    loadCenters('United Kingdom');
-                } else {
-                    let msg = 'Unable to retrieve location. Please check your GPS settings.';
-                    if (error.code === 3) {
-                        msg = 'Location request timed out.';
+                    if (isInit) {
+                        // Fallback if location fails on init
+                        loadCenters('United Kingdom');
+                    } else {
+                        let msg = 'Unable to retrieve location. Loading default centers.';
+                        if (error.code === 3) {
+                            msg = 'Location request timed out. Loading default centers.';
+                        }
+                        Alert.alert('Error', msg);
+                        loadCenters('United Kingdom');
                     }
-                    Alert.alert('Error', msg);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 60000,
+                    maximumAge: 86400000,
+                    forceLocationManager: true,
+                    showLocationDialog: true
                 }
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 10000,
-                forceLocationManager: true,
-                showLocationDialog: true
-            }
-        );
+            );
+        }, 500);
     };
 
     const getAddressFromCoordinates = async (lat: number, lng: number, isInit = false) => {

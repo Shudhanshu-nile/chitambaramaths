@@ -13,6 +13,9 @@ import {
   Linking,
   AppState,
   Alert,
+  FlatList,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import LinearGradient from 'react-native-linear-gradient';
@@ -60,6 +63,11 @@ const RegisterScreen = ({ navigation }: any) => {
   const [selectedCountryId, setSelectedCountryId] = useState<number | null>(
     null,
   );
+
+  // Address Suggestions State
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  const searchTimeout = React.useRef<any>(null);
 
   // Terms Modal State
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -244,6 +252,29 @@ const RegisterScreen = ({ navigation }: any) => {
 
   const updateField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddressChange = (text: string) => {
+    updateField('address', text);
+
+    if (text.length > 2) {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+      searchTimeout.current = setTimeout(async () => {
+        const results = await OtherService.getGoogleAddressSuggestions(text);
+        if (results && results.predictions) {
+          setAddressSuggestions(results.predictions);
+          setShowAddressSuggestions(true);
+        }
+      }, 500);
+    } else {
+      setShowAddressSuggestions(false);
+    }
+  };
+
+  const handleAddressSelect = (item: any) => {
+    updateField('address', item.description);
+    setShowAddressSuggestions(false);
+    Keyboard.dismiss();
   };
 
   const [isCountryOpen, setIsCountryOpen] = useState(false);
@@ -562,13 +593,25 @@ const RegisterScreen = ({ navigation }: any) => {
               onChangeText={v => updateField('confirmPassword', v)}
             />
 
-            <View style={{ position: 'relative' }}>
+            <View style={{ position: 'relative', zIndex: 1000 }}>
               <CustomTextInput
                 label="Address"
                 placeholder="Enter your address"
                 icon="map-marker-outline"
                 value={formData.address}
-                onChangeText={v => updateField('address', v)}
+                onChangeText={handleAddressChange}
+                multiline={true}
+                numberOfLines={3}
+                style={{
+                  height: 80,
+                  textAlignVertical: 'center',
+                  paddingRight: 50, // Prevent text overlap with GPS button
+                }}
+                onFocus={() => {
+                  if (formData.address.length > 2 && addressSuggestions.length > 0) {
+                    setShowAddressSuggestions(true);
+                  }
+                }}
               />
               <TouchableOpacity
                 style={styles.geoButton}
@@ -581,6 +624,27 @@ const RegisterScreen = ({ navigation }: any) => {
                   <Icon name="crosshairs-gps" size={20} color={Colors.primaryBlue} />
                 )}
               </TouchableOpacity>
+
+              {showAddressSuggestions && addressSuggestions.length > 0 && (
+                <View style={styles.suggestionsContainer}>
+                  <ScrollView
+                    style={{ maxHeight: 200 }}
+                    nestedScrollEnabled={true}
+                    keyboardShouldPersistTaps='handled'
+                  >
+                    {addressSuggestions.map((item) => (
+                      <TouchableOpacity
+                        key={item.place_id}
+                        style={styles.suggestionItem}
+                        onPress={() => handleAddressSelect(item)}
+                      >
+                        <Icon name="map-marker" size={16} color={Colors.gray} style={{ marginTop: 2, marginRight: 8 }} />
+                        <Text style={styles.suggestionText}>{item.description}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
             </View>
 
             <CustomDropdown
@@ -804,6 +868,34 @@ const styles = StyleSheet.create({
     left: -40,
   },
 
+  suggestionsContainer: {
+    position: 'absolute',
+    top: 85,
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.white,
+    borderRadius: 8,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    zIndex: 2000,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  suggestionText: {
+    fontSize: 14,
+    color: Colors.textGray,
+    flex: 1,
+  },
+
   backButton: {
     position: 'absolute',
     top: 56,
@@ -869,7 +961,7 @@ const styles = StyleSheet.create({
   geoButton: {
     position: 'absolute',
     right: 15,
-    top: 38, // Align with input field, adjusting for label
+    top: 56, // Align with input field, adjusting for label
     zIndex: 1,
   },
 

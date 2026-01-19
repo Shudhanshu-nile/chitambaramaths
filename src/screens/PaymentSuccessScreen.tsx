@@ -223,36 +223,10 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
     };
 
     // Helper to safely get display values
-    // Helper to get currency symbol
+    // Helper to get currency code
     const getCurrencySymbol = (currency: string, country?: string) => {
-        // 1. Try explicit currency code
-        if (currency) {
-            const code = currency.toUpperCase();
-            switch (code) {
-                case 'GBP': return '£';
-                case 'USD': return '$';
-                case 'AUD': return '$';
-                case 'CAD': return '$';
-                case 'EUR': return '€';
-                case 'NZD': return '$';
-                case 'SGD': return '$';
-            }
-        }
-
-        // 2. Fallback to country mapping
-        if (country) {
-            const upperCountry = country.toUpperCase();
-            if (upperCountry.includes('UNITED KINGDOM') || upperCountry.includes('UK')) return '£';
-            if (upperCountry.includes('USA') || upperCountry.includes('UNITED STATES')) return '$';
-            if (upperCountry.includes('AUSTRALIA')) return '$';
-            if (upperCountry.includes('CANADA')) return '$';
-            if (upperCountry.includes('FRANCE') || upperCountry.includes('GERMANY') || upperCountry.includes('NETHERLANDS') || upperCountry.includes('IRELAND') || upperCountry.includes('SPAIN')) return '€';
-            if (upperCountry.includes('NEW ZEALAND')) return '$';
-            if (upperCountry.includes('SINGAPORE')) return '$';
-        }
-
-        // 3. Last resort fallback
-        return '£';
+        // Return currency code as-is with a space
+        return currency ? currency.toUpperCase() + ' ' : '';
     };
 
     const currencyCode = recentOrder?.currency;

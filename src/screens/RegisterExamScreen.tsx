@@ -14,7 +14,8 @@ import {
   Platform,
   PermissionsAndroid,
   Linking,
-
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import Toast from 'react-native-toast-message';
@@ -30,22 +31,8 @@ import Logo from '../assets/images/logo.svg';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const getCurrencySymbol = (currencyCode: string) => {
-  switch (currencyCode) {
-    case 'GBP':
-      return '£';
-    case 'AUD':
-      return '$'; // or A$
-    case 'CAD':
-      return '$'; // or C$
-    case 'EUR':
-      return '€';
-    case 'NZD':
-      return '$'; // or NZ$
-    case 'USD':
-      return '$';
-    default:
-      return currencyCode + ' ';
-  }
+  // Return currency code as-is with a space
+  return currencyCode ? currencyCode + ' ' : '';
 };
 
 const RegisterExamScreen = ({ navigation, route }: any) => {
@@ -58,8 +45,10 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
   const [parentName, setParentName] = useState('');
   const [doorNo, setDoorNo] = useState('');
   const [street, setStreet] = useState('');
+  const [streetName, setStreetName] = useState('');
   const [town, setTown] = useState('');
   const [email, setEmail] = useState('');
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [postalCode, setPostalCode] = useState('');
   const [telephone, setTelephone] = useState('');
   const [mobile, setMobile] = useState('');
@@ -88,10 +77,61 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
 
   // Dynamic Exam Center State
   const [examCenters, setExamCenters] = useState<any[]>([]);
+  const [filteredCenters, setFilteredCenters] = useState<any[]>([]);
   const [selectedCenterId, setSelectedCenterId] = useState<number | null>(null);
+
+  // Haversine formula to calculate distance in km
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distance in km
+    return d;
+  };
+
+  const deg2rad = (deg: number) => {
+    return deg * (Math.PI / 180);
+  };
+
+  useEffect(() => {
+    /*
+    // Client-side sorting commented out favor of server-side sorting via nearest-exam-centers API
+    if (examCenters.length > 0 && coordinates) {
+      const centersWithDistance = examCenters.map(center => {
+        if (center.latitude && center.longitude) {
+          const dist = calculateDistance(
+            coordinates.lat,
+            coordinates.lng,
+            parseFloat(center.latitude),
+            parseFloat(center.longitude)
+          );
+          return { ...center, distance: dist };
+        }
+        return { ...center, distance: Infinity }; // Push to bottom if no coords
+      });
+
+      const sorted = centersWithDistance.sort((a, b) => a.distance - b.distance);
+      // Take top 5
+      setFilteredCenters(sorted.slice(0, 5));
+    } else {
+      setFilteredCenters(examCenters);
+    }
+    */
+    setFilteredCenters(examCenters);
+  }, [examCenters]);
 
   // Dynamic Study Years State
   const [studyYears, setStudyYears] = useState<any[]>([]);
+
+  // Address Suggestions State
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  const searchTimeout = React.useRef<any>(null);
 
   useEffect(() => {
     fetchCountries();
@@ -108,17 +148,29 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
 
   useEffect(() => {
     if (selectedCountry?.id) {
-      fetchExamCenters(selectedCountry.id);
       fetchStudyYears(selectedCountry.id);
     }
   }, [selectedCountry]);
+
+  useEffect(() => {
+    if (selectedCountry?.id && coordinates) {
+      fetchExamCenters(selectedCountry.id);
+    }
+  }, [selectedCountry, coordinates]);
 
 
 
   const fetchExamCenters = async (countryId: number) => {
     try {
-      console.log('Fetching Exam Centers for ID:', countryId);
-      const response = await OtherService.getExamCenters(countryId);
+      console.log('Fetching Exam Centers for ID:', countryId, 'Coords:', coordinates);
+      // const response = await OtherService.getExamCenters(countryId);
+
+      const formData = new FormData();
+      formData.append('country_id', String(countryId));
+      formData.append('latitude', String(coordinates?.lat));
+      formData.append('longitude', String(coordinates?.lng));
+
+      const response = await OtherService.getNearestExamCenters(formData);
 
       console.log(
         'Exam Centers API Response:',
@@ -263,12 +315,97 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
     setShowChildModal(false);
   };
 
+  const handleAddressChange = (text: string) => {
+    setStreet(text);
+    setAddressSelection(undefined);
+
+    if (text.length > 2) {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+      searchTimeout.current = setTimeout(async () => {
+        const results = await OtherService.getGoogleAddressSuggestions(text);
+        if (results && results.predictions) {
+          setAddressSuggestions(results.predictions);
+          setShowAddressSuggestions(true);
+        }
+      }, 500);
+    } else {
+      setShowAddressSuggestions(false);
+    }
+  };
+
+  const handleAddressSelect = async (item: any) => {
+    setStreet(item.description);
+    setShowAddressSuggestions(false);
+    Keyboard.dismiss();
+
+    try {
+      const details = await OtherService.getGooglePlaceDetails(item.place_id);
+      if (details && details.result && details.result.address_components) {
+        const components = details.result.address_components;
+        let fetchedTown = '';
+
+        for (const component of components) {
+          if (component.types.includes('locality')) {
+            fetchedTown = component.long_name;
+            break;
+          }
+          if (!fetchedTown && component.types.includes('administrative_area_level_2')) {
+            fetchedTown = component.long_name;
+          }
+          if (!fetchedTown && component.types.includes('sublocality_level_1')) {
+            fetchedTown = component.long_name;
+          }
+        }
+
+        if (fetchedTown) {
+          setTown(fetchedTown);
+        }
+
+        // Also autofill postal code if available
+        const postalCodeComponent = components.find((c: any) => c.types.includes('postal_code'));
+        if (postalCodeComponent) {
+          setPostalCode(postalCodeComponent.long_name);
+        }
+
+        // Autofill street name (route)
+        let fetchedStreet = '';
+        const streetComponent = components.find((c: any) => c.types.includes('route'));
+        if (streetComponent) {
+          fetchedStreet = streetComponent.long_name;
+        }
+
+        // Fallback: sublocality or neighborhood if route is missing
+        if (!fetchedStreet) {
+          const subLocality = components.find((c: any) => c.types.includes('sublocality') || c.types.includes('sublocality_level_1'));
+          if (subLocality) fetchedStreet = subLocality.long_name;
+        }
+
+        if (!fetchedStreet) {
+          const neighborhood = components.find((c: any) => c.types.includes('neighborhood'));
+          if (neighborhood) fetchedStreet = neighborhood.long_name;
+        }
+
+        if (fetchedStreet) {
+          setStreetName(fetchedStreet);
+        }
+
+        if (details.result.geometry && details.result.geometry.location) {
+          const { lat, lng } = details.result.geometry.location;
+          console.log('Selected Address Coordinates:', { lat, lng });
+          setCoordinates({ lat, lng });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch place details", error);
+    }
+  };
+
   const [loading, setLoading] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
   const [addressSelection, setAddressSelection] = useState<{ start: number; end: number } | undefined>(undefined);
 
   useEffect(() => {
-    Geolocation.setRNConfiguration({
+    (Geolocation as any).setRNConfiguration({
       skipPermissionRequests: true,
       authorizationLevel: 'whenInUse',
     });
@@ -324,6 +461,7 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
         async position => {
           const { latitude, longitude } = position.coords;
           console.log('Current Position:', latitude, longitude);
+          setCoordinates({ lat: latitude, lng: longitude });
 
           try {
             const response = await fetch(
@@ -347,9 +485,14 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
                 addr.hamlet ||
                 '';
               const fetchedStreet = data.display_name || '';
+              const road = addr.road || addr.street || addr.pedestrian || '';
+              const zip = addr.postcode || '';
 
               setTown(fetchedTown);
               setStreet(fetchedStreet);
+              if (road) setStreetName(road);
+              if (zip) setPostalCode(zip);
+
               setAddressSelection({ start: 0, end: 0 }); // Scroll to start
               showToastMessage({ message: 'Address details autofilled.' });
             } else {
@@ -397,6 +540,7 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
       { value: parentName, name: 'Parent/Guardian Name' },
       { value: doorNo, name: 'Door Number' },
       { value: street, name: 'Address' },
+      { value: streetName, name: 'Street Name' },
       { value: town, name: 'Town' },
       { value: email, name: 'Email Address' },
       { value: postalCode, name: 'Postal Code' },
@@ -449,7 +593,7 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
       formData.append('last_name', lastName);
       formData.append('parent_name', parentName);
       formData.append('door_number', doorNo);
-      formData.append('street_name', street);
+      formData.append('street_name', `${street}${streetName ? ', ' + streetName : ''}`);
       formData.append('town', town);
       formData.append('postal_code', postalCode);
       formData.append('email', email);
@@ -469,6 +613,9 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
         const formattedDate = dateOfBirth.toISOString().split('T')[0];
         formData.append('child_dob', formattedDate);
       }
+      formData.append('address', street);
+      formData.append('latitude', String(coordinates?.lat || 0));
+      formData.append('longitude', String(coordinates?.lng || 0));
 
       console.log('Submitting Registration:', formData);
 
@@ -778,21 +925,23 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
           onChangeText={setDoorNo}
           required
         />
-        <View style={{ position: 'relative' }}>
+        <View style={{ position: 'relative', zIndex: 1000 }}>
           <CustomTextInput
             label="Address"
             placeholder={geoLoading ? 'Fetching location...' : 'Enter Address'}
             value={street}
-            onChangeText={(text) => {
-              setStreet(text);
-              setAddressSelection(undefined);
-            }}
+            onChangeText={handleAddressChange}
             selection={addressSelection}
-            onFocus={() => setAddressSelection(undefined)}
+            onFocus={() => {
+              setAddressSelection(undefined);
+              if (street.length > 2 && addressSuggestions.length > 0) {
+                setShowAddressSuggestions(true);
+              }
+            }}
             required
             multiline={true}
             numberOfLines={2}
-            style={{ height: 70, textAlignVertical: 'top' }}
+            style={{ height: 70, textAlignVertical: 'top', paddingRight: 40 }}
           />
           <TouchableOpacity
             style={styles.geoButton}
@@ -800,7 +949,35 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
           >
             <Icon name="crosshairs-gps" size={20} color={Colors.primaryBlue} />
           </TouchableOpacity>
+
+          {showAddressSuggestions && addressSuggestions.length > 0 && (
+            <View style={styles.suggestionsContainer}>
+              <ScrollView
+                style={{ maxHeight: 200 }}
+                nestedScrollEnabled={true}
+                keyboardShouldPersistTaps='handled'
+              >
+                {addressSuggestions.map((item) => (
+                  <TouchableOpacity
+                    key={item.place_id}
+                    style={styles.suggestionItem}
+                    onPress={() => handleAddressSelect(item)}
+                  >
+                    <Icon name="map-marker" size={16} color={Colors.gray} style={{ marginTop: 2, marginRight: 8 }} />
+                    <Text style={styles.suggestionText}>{item.description}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
         </View>
+        <CustomTextInput
+          label="Street Name"
+          placeholder="Enter Street Name"
+          value={streetName}
+          onChangeText={setStreetName}
+          required
+        />
         <CustomTextInput
           label="Town"
           placeholder="Enter Town"
@@ -809,17 +986,17 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
           required
         />
         <CustomTextInput
-          label="Email Address"
-          placeholder="Enter Email Address"
-          value={email}
-          onChangeText={setEmail}
-          required
-        />
-        <CustomTextInput
           label="Postal Code"
           placeholder="Postal Code/ZIP"
           value={postalCode}
           onChangeText={setPostalCode}
+          required
+        />
+        <CustomTextInput
+          label="Email Address"
+          placeholder="Enter Email Address"
+          value={email}
+          onChangeText={setEmail}
           required
         />
         <CustomTextInput
@@ -931,8 +1108,8 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
         </TouchableOpacity>
 
         <View style={styles.centersScroll}>
-          {examCenters.length > 0 ? (
-            examCenters.map(center => {
+          {filteredCenters.length > 0 ? (
+            filteredCenters.map(center => {
               const isSelected = selectedCenterId === center.id;
               return (
                 <TouchableOpacity
@@ -951,12 +1128,12 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
                     />
                   </View>
                   <View>
-                    <Text style={styles.centerName}>{center.center_name}</Text>
+                    <Text style={styles.centerName}>{center.city}</Text>
                     <Text style={styles.centerSeats}>
                       {center.seats} Seats remaining
                     </Text>
-                    {center.city && (
-                      <Text style={styles.centerCity}>{center.city}</Text>
+                    {center.address && (
+                      <Text style={styles.centerCity}>{center.center_name}</Text>
                     )}
                   </View>
                   {isSelected && (
@@ -1509,6 +1686,34 @@ const styles = StyleSheet.create({
     color: Colors.red,
     fontFamily: Fonts.InterMedium,
     fontSize: 16,
+  },
+
+  suggestionsContainer: {
+    position: 'absolute',
+    top: 95, // Adjust based on input height (70) + label + margins approx
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.white,
+    borderRadius: 8,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    zIndex: 2000,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  suggestionText: {
+    fontSize: 14,
+    color: Colors.textGray,
+    flex: 1,
   },
 });
 

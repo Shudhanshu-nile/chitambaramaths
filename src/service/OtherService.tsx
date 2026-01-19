@@ -37,6 +37,13 @@ class OtherService {
     return response;
   }
 
+  public static async getNearestExamCenters(data: any) {
+    const dataType = DataType.FORMDATA;
+    const url = `${API.NEAREST_EXAM_CENTERS}`;
+    const response = await Http.post(url, data, dataType);
+    return response;
+  }
+
   public static async getStudyYears(countryId: any) {
     const url = `${API.GET_STUDY_YEARS}/${countryId}`;
     const response = await Http.get(url);
@@ -240,6 +247,33 @@ class OtherService {
     } catch (error) {
       console.error("Download Error", error);
       throw error;
+    }
+  }
+
+  public static async getGoogleAddressSuggestions(query: string) {
+    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+      query,
+    )}&key=${API.GOOGLE_MAPS_API_KEY}`;
+    // Using simple fetch here since it's an external API, not our backend
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Google Places API Error", error);
+      return null;
+    }
+  }
+
+  public static async getGooglePlaceDetails(placeId: string) {
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=address_component,geometry&key=${API.GOOGLE_MAPS_API_KEY}`;
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Google Place Details API Error", error);
+      return null;
     }
   }
 }

@@ -63,6 +63,7 @@ const ProfileScreen = () => {
   const userProfile = {
     name: user?.fullName || 'Guest User',
     email: user?.email || 'guest@example.com',
+    phone: user?.phone || '+91 0000000000',
     profileImage: require('../assets/images/avatar.png'),
   };
 
@@ -226,8 +227,16 @@ const ProfileScreen = () => {
 
                   <View style={styles.profileInfoContainer}>
                     <Text style={styles.userName}>{userProfile.name}</Text>
+                    <Text style={{ fontSize: 14, fontFamily: Fonts.InterRegular, color: Colors.white, marginBottom: 0 }}>(Parent)</Text>
                     <View style={styles.divider} />
-                    <Text style={styles.userEmail}>{userProfile.email}</Text>
+                    <View style={styles.contactRow}>
+                      <Icon name="email-outline" size={16} color={Colors.white} />
+                      <Text style={styles.userEmail}>{userProfile.email}</Text>
+                    </View>
+                    <View style={styles.contactRow}>
+                      <Icon name="phone-outline" size={16} color={Colors.white} />
+                      <Text style={styles.userEmail}>{userProfile.phone}</Text>
+                    </View>
                   </View>
                 </View>
               </BlurView>
@@ -240,8 +249,16 @@ const ProfileScreen = () => {
 
                   <View style={styles.profileInfoContainer}>
                     <Text style={styles.userName}>{userProfile.name}</Text>
+                    <Text style={{ fontSize: 14, fontFamily: Fonts.InterRegular, color: Colors.white, marginBottom: 0 }}>(Parent)</Text>
                     <View style={styles.divider} />
-                    <Text style={styles.userEmail}>{userProfile.email}</Text>
+                    <View style={styles.contactRow}>
+                      <Icon name="email-outline" size={16} color={Colors.white} />
+                      <Text style={styles.userEmail}>{userProfile.email}</Text>
+                    </View>
+                    <View style={styles.contactRow}>
+                      <Icon name="phone-outline" size={16} color={Colors.white} />
+                      <Text style={styles.userEmail}>{userProfile.phone}</Text>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -304,8 +321,7 @@ const ProfileScreen = () => {
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
                     <Text style={styles.orderPrice}>
-                      {latestOrder.currency === 'GBP' ? '£' : latestOrder.currency}
-                      {latestOrder.amount}
+                      {latestOrder.currency} {latestOrder.amount}
                     </Text>
                     <Text style={styles.orderDate}>{latestOrder.created_at}</Text>
                   </View>
@@ -444,7 +460,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: 208,
-    marginTop: Platform.OS === 'ios' ? 15 : 0,
+    marginTop: Platform.OS === 'ios' ? 15 : -7,
   },
   notificationBtn: {
     width: 44,
@@ -493,7 +509,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: {
-    marginTop: -310,
+    marginTop: -350,
     padding: 20,
     zIndex: 999,
     // paddingBottom: 40,
@@ -512,6 +528,7 @@ const styles = StyleSheet.create({
     // overflow: 'visible',
     // borderWidth: 1,
     // borderColor: 'rgba(255, 255, 255, 0.5)',
+
   },
   cardContainer: {
     position: 'relative',
@@ -546,9 +563,11 @@ const styles = StyleSheet.create({
     // borderBottomColor: Colors.borderGray,
   },
   profileHeading: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: Fonts.InterBold,
     color: Colors.white,
+    marginBottom: 2,
+    marginTop: 12,
   },
   profileImageContainer: {
     overflow: 'visible',
@@ -600,10 +619,15 @@ const styles = StyleSheet.create({
     marginVertical: 7,
   },
   userEmail: {
-    marginTop: 10,
+    marginLeft: 8,
     fontSize: 14,
     fontFamily: Fonts.InterRegular,
     color: Colors.white,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
   },
   buttonsContainer: {
     gap: 12,
