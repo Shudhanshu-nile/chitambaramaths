@@ -38,9 +38,32 @@ const CentersScreen = () => {
     const [currentCountry, setCurrentCountry] = useState<string>('');
 
     useEffect(() => {
+        (Geolocation as any).setRNConfiguration({
+            skipPermissionRequests: true,
+            authorizationLevel: 'whenInUse',
+        });
         // Try to identify location and load centers based on that
         initLocationAndCenters();
     }, []);
+
+    useEffect(() => {
+        if (examCenters.length > 0) {
+            let filtered = examCenters;
+            if (searchText) {
+                const lowerSearch = searchText.toLowerCase();
+                filtered = examCenters.filter(item =>
+                    item.title.toLowerCase().includes(lowerSearch) ||
+                    item.address.toLowerCase().includes(lowerSearch)
+                );
+            }
+            // Maintain sort if we have location info
+            if (userLocation) {
+                calculateDistancesAndSort(userLocation.latitude, userLocation.longitude, filtered);
+            } else {
+                setSortedCenters(filtered);
+            }
+        }
+    }, [searchText, examCenters]);
 
     const initLocationAndCenters = async () => {
         setLoading(true);
@@ -58,7 +81,7 @@ const CentersScreen = () => {
         }
     };
 
-    const loadCenters = async (countryName: string) => {
+    const loadCenters = async (countryName: string, customLocation?: { latitude: number; longitude: number }) => {
         try {
             setLoading(true);
             const countriesRes = await OtherService.getCountries();
@@ -112,8 +135,9 @@ const CentersScreen = () => {
                         setSortedCenters(mappedCenters);
 
                         // If we have user location, sort immediately
-                        if (userLocation) {
-                            calculateDistancesAndSort(userLocation.latitude, userLocation.longitude, mappedCenters);
+                        const locToUse = customLocation || userLocation;
+                        if (locToUse) {
+                            calculateDistancesAndSort(locToUse.latitude, locToUse.longitude, mappedCenters);
                         } else {
                             // Reset distance info if no location
                             setSortedCenters(mappedCenters);
@@ -255,14 +279,7 @@ const CentersScreen = () => {
             }
 
             // If we are initializing, load centers for this country
-            if (isInit) {
-                loadCenters(detectedCountry);
-            } else {
-                // If this was a manual refresh or location button press, we should also probably reload centers for this new location?
-                // The user expects "Use current location" to find centers relevant to them. 
-                // So yes, we should reload.
-                loadCenters(detectedCountry);
-            }
+            loadCenters(detectedCountry, { latitude: lat, longitude: lng });
 
         } catch (error) {
             console.warn('Reverse geocoding failed:', error);

@@ -316,7 +316,7 @@ const ProfileScreen = () => {
                     />
                   </View>
                   <View style={styles.orderHeaderText}>
-                    <Text style={styles.orderTitle}>{latestOrder.order_type}</Text>
+                    <Text style={styles.orderTitle}>{latestOrder.child_name || latestOrder.student_registration_id}</Text>
                     <Text style={styles.orderSubtitle}>{latestOrder.country_name}</Text>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
@@ -561,13 +561,15 @@ const styles = StyleSheet.create({
     // backgroundColor: Colors.lightBlue3,
     // borderBottomWidth: 1,
     // borderBottomColor: Colors.borderGray,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileHeading: {
-    fontSize: 18,
+    fontSize: 24,
     fontFamily: Fonts.InterBold,
     color: Colors.white,
     marginBottom: 2,
-    marginTop: 12,
+    marginTop: 10,
   },
   profileImageContainer: {
     overflow: 'visible',
