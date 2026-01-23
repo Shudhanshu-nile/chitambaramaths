@@ -88,13 +88,13 @@ const ProfileScreen = () => {
         setEmailingAdmitCardId(registration_id);
         const response = await OtherService.emailAdmitCard(registration_id);
         if (response?.status) {
-          Alert.alert('Success', response.message || 'Admit Card emailed successfully.');
+          Alert.alert('Success', response.message || 'Exam Admission Card emailed successfully.');
         } else {
-          Alert.alert('Error', response?.message || 'Failed to email Admit Card.');
+          Alert.alert('Error', response?.message || 'Failed to email Exam Admission Card.');
         }
       } catch (error) {
-        console.error('Email admit card failed:', error);
-        Alert.alert('Error', 'Failed to email Admit Card. Please try again.');
+        console.error('Email Exam Admission Card failed:', error);
+        Alert.alert('Error', 'Failed to email Exam Admission Card. Please try again.');
       } finally {
         setEmailingAdmitCardId(null);
       }
@@ -127,10 +127,10 @@ const ProfileScreen = () => {
         setDownloadingAdmitCardId(registration_id);
         const fileName = `admit-card-${order.student_registration_id ? order.student_registration_id.replace(/[^a-zA-Z0-9-_]/g, '_') : 'unknown'}`;
         await OtherService.downloadAdmitCard(registration_id, fileName);
-        Alert.alert('Success', 'Admit Card downloaded successfully.');
+        Alert.alert('Success', 'Exam Admission Card downloaded successfully.');
       } catch (error) {
         console.error('Download failed:', error);
-        Alert.alert('Error', 'Failed to download Admit Card. Please try again.');
+        Alert.alert('Error', 'Failed to download Exam Admission Card. Please try again.');
       } finally {
         setDownloadingAdmitCardId(null);
       }
@@ -227,7 +227,7 @@ const ProfileScreen = () => {
 
                   <View style={styles.profileInfoContainer}>
                     <Text style={styles.userName}>{userProfile.name}</Text>
-                    <Text style={{ fontSize: 14, fontFamily: Fonts.InterRegular, color: Colors.white, marginBottom: 0 }}>(Parent)</Text>
+                    {/* <Text style={{ fontSize: 14, fontFamily: Fonts.InterRegular, color: Colors.white, marginBottom: 0 }}>(Parent)</Text> */}
                     <View style={styles.divider} />
                     <View style={styles.contactRow}>
                       <Icon name="email-outline" size={16} color={Colors.white} />
@@ -249,7 +249,7 @@ const ProfileScreen = () => {
 
                   <View style={styles.profileInfoContainer}>
                     <Text style={styles.userName}>{userProfile.name}</Text>
-                    <Text style={{ fontSize: 14, fontFamily: Fonts.InterRegular, color: Colors.white, marginBottom: 0 }}>(Parent)</Text>
+                    {/* <Text style={{ fontSize: 14, fontFamily: Fonts.InterRegular, color: Colors.white, marginBottom: 0 }}>(Parent)</Text> */}
                     <View style={styles.divider} />
                     <View style={styles.contactRow}>
                       <Icon name="email-outline" size={16} color={Colors.white} />
@@ -355,7 +355,7 @@ const ProfileScreen = () => {
                       color="#005884"
                     />
                     <Text style={styles.invoiceBtnText}>
-                      {emailingAdmitCardId === (latestOrder.registration_id || latestOrder.id) ? 'Emailing...' : 'Email Admit Card'}
+                      {emailingAdmitCardId === (latestOrder.registration_id || latestOrder.id) ? 'Emailing...' : 'Email Exam Admission Card'}
                     </Text>
                   </TouchableOpacity>
 
@@ -370,7 +370,7 @@ const ProfileScreen = () => {
                       color="#005884"
                     />
                     <Text style={styles.invoiceBtnText}>
-                      {downloadingAdmitCardId === (latestOrder.registration_id || latestOrder.id) ? 'Downloading...' : 'Download Admit Card'}
+                      {downloadingAdmitCardId === (latestOrder.registration_id || latestOrder.id) ? 'Downloading...' : 'Download Exam Admission Card'}
                     </Text>
                   </TouchableOpacity>
 
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
     color: Colors.primaryBlue,
   },
   profileInfoContainer: {
-    paddingBottom: 20,
+    paddingBottom: 10,
     paddingHorizontal: 20,
     alignItems: 'center',
     marginTop: 12,
@@ -707,7 +707,7 @@ const styles = StyleSheet.create({
 
   // Orders Section
   ordersSection: {
-    marginTop: 20,
+    marginTop: 40,
     paddingHorizontal: 0,
     paddingTop: Platform.OS === 'ios' ? 20 : 0,
   },

@@ -170,13 +170,13 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
                 setIsEmailingAdmitCard(true);
                 const response = await OtherService.emailAdmitCard(registration_id);
                 if (response?.status) {
-                    Alert.alert('Success', response.message || 'Admit Card emailed successfully.');
+                    Alert.alert('Success', response.message || 'Exam Admission Card emailed successfully.');
                 } else {
-                    Alert.alert('Error', response?.message || 'Failed to email Admit Card.');
+                    Alert.alert('Error', response?.message || 'Failed to email Exam Admission Card.');
                 }
             } catch (error) {
-                console.error('Email admit card failed:', error);
-                Alert.alert('Error', 'Failed to email Admit Card. Please try again.');
+                console.error('Email Exam Admission Card failed:', error);
+                Alert.alert('Error', 'Failed to email Exam Admission Card. Please try again.');
             } finally {
                 setIsEmailingAdmitCard(false);
             }
@@ -190,10 +190,10 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
                 setIsDownloadingAdmitCard(true);
                 const fileName = `admit-card-${recentOrder.student_registration_id}`;
                 await OtherService.downloadAdmitCard(registration_id, fileName);
-                Alert.alert('Success', 'Admit Card downloaded successfully.');
+                Alert.alert('Success', 'Exam Admission Card downloaded successfully.');
             } catch (error) {
                 console.error('Download failed:', error);
-                Alert.alert('Error', 'Failed to download Admit Card. Please try again.');
+                Alert.alert('Error', 'Failed to download Exam Admission Card. Please try again.');
             } finally {
                 setIsDownloadingAdmitCard(false);
             }
@@ -400,7 +400,7 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
                         >
                             <Icon name="email-outline" size={20} color={Colors.primaryDarkBlue} />
                             <Text style={styles.outlineButtonText}>
-                                {isEmailingAdmitCard ? 'Emailing...' : 'Email Admit Card'}
+                                {isEmailingAdmitCard ? 'Emailing...' : 'Email Exam Admission Card'}
                             </Text>
                         </TouchableOpacity>
 
@@ -411,7 +411,7 @@ const PaymentSuccessScreen = ({ navigation, route }: any) => {
                         >
                             <Icon name="download" size={20} color={Colors.primaryDarkBlue} />
                             <Text style={styles.outlineButtonText}>
-                                {isDownloadingAdmitCard ? 'Downloading...' : 'Download Admit Card'}
+                                {isDownloadingAdmitCard ? 'Downloading...' : 'Exam Admission Card'}
                             </Text>
                         </TouchableOpacity>
 

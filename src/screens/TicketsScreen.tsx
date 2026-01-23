@@ -133,13 +133,13 @@ const TicketsScreen = () => {
                 setEmailingAdmitCardId(registration_id);
                 const response = await OtherService.emailAdmitCard(registration_id);
                 if (response?.status) {
-                    Alert.alert('Success', response.message || 'Admit Card emailed successfully.');
+                    Alert.alert('Success', response.message || 'Exam Admission Card emailed successfully.');
                 } else {
-                    Alert.alert('Error', response?.message || 'Failed to email Admit Card.');
+                    Alert.alert('Error', response?.message || 'Failed to email Exam Admission Card.');
                 }
             } catch (error) {
-                console.error('Email admit card failed:', error);
-                Alert.alert('Error', 'Failed to email Admit Card. Please try again.');
+                console.error('Email Exam Admission Card failed:', error);
+                Alert.alert('Error', 'Failed to email Exam Admission Card. Please try again.');
             } finally {
                 setEmailingAdmitCardId(null);
             }
@@ -173,10 +173,10 @@ const TicketsScreen = () => {
                 setDownloadingAdmitCardId(registration_id);
                 const fileName = `admit-card-${order.student_registration_id}`;
                 await OtherService.downloadAdmitCard(registration_id, fileName);
-                Alert.alert('Success', 'Admit Card downloaded successfully.');
+                Alert.alert('Success', 'Exam Admission Card downloaded successfully.');
             } catch (error) {
                 console.error('Download failed:', error);
-                Alert.alert('Error', 'Failed to download Admit Card. Please try again.');
+                Alert.alert('Error', 'Failed to download Exam Admission Card. Please try again.');
             } finally {
                 setDownloadingAdmitCardId(null);
             }
@@ -253,7 +253,7 @@ const TicketsScreen = () => {
                                 color="#005884"
                             />
                             <Text style={styles.invoiceBtnText}>
-                                {emailingAdmitCardId === (item.registration_id || item.id) ? 'Emailing...' : 'Email Admit Card'}
+                                {emailingAdmitCardId === (item.registration_id || item.id) ? 'Emailing...' : 'Email Exam Admission Card'}
                             </Text>
                         </TouchableOpacity>
 
@@ -268,7 +268,7 @@ const TicketsScreen = () => {
                                 color="#005884"
                             />
                             <Text style={styles.invoiceBtnText}>
-                                {downloadingAdmitCardId === (item.registration_id || item.id) ? 'Downloading...' : 'Download Admit Card'}
+                                {downloadingAdmitCardId === (item.registration_id || item.id) ? 'Downloading...' : 'Download Exam Admission Card'}
                             </Text>
                         </TouchableOpacity>
 

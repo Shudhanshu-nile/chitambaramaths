@@ -716,11 +716,11 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
               <Icon name="account-child" size={24} color={Colors.primaryBlue} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.registeringLabel}>Select Child</Text>
+              <Text style={styles.registeringLabel}>Select Student</Text>
               <Text style={styles.registeringValue}>
                 {selectedChild
                   ? selectedChild.name
-                  : 'Select Child (Optional)'}
+                  : 'Select Student (Optional)'}
               </Text>
             </View>
             <TouchableOpacity
@@ -741,7 +741,7 @@ const RegisterExamScreen = ({ navigation, route }: any) => {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Select Child</Text>
+              <Text style={styles.modalTitle}>Select Student</Text>
 
               <FlatList
                 data={children}
